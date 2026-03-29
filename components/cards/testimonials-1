@@ -1,0 +1,235 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+testimonials-1.tsx
+import { Card, CardHeader, CardFooter, CardContent } from "@/components/ui/card";
+import { Star } from "lucide-react";
+
+export interface Testimonial {
+  name: string;
+  role: string;
+  text: string;
+  avatar: string;
+  rating?: number;
+}
+
+interface TestimonialsSectionProps {
+  title?: string;
+  subtitle?: string;
+  badgeText?: string;
+  testimonials: Testimonial[];
+}
+
+export function TestimonialsSection({
+  title = "Trusted by thousands of teams",
+  subtitle = "See what our customers have to say about us.",
+  badgeText = "Testimonials",
+  testimonials,
+}: TestimonialsSectionProps) {
+  return (
+    <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32">
+      <div className="container px-4 md:px-6">
+        <div className="flex flex-col items-center justify-center space-y-4 text-center">
+          <div className="space-y-2">
+            <div className="inline-block rounded-lg bg-primary px-3 py-1 text-sm text-primary-foreground">
+              {badgeText}
+            </div>
+            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
+              {title}
+            </h2>
+            <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+              {subtitle}
+            </p>
+          </div>
+        </div>
+        <div className="mx-auto grid max-w-5xl gap-6 py-12 lg:grid-cols-2">
+          {testimonials.map((t, i) => {
+            const stars = typeof t.rating === "number" ? t.rating : 0;
+            return (
+              <Card key={i} className="flex flex-col h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <div className="flex">
+                      {Array.from({ length: stars }).map((_, idx) => (
+                        <Star
+                          key={idx}
+                          className={`h-4 w-4 ${
+                            idx < stars
+                              ? "fill-primary text-primary"
+                              : "text-muted fill-muted"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">"{t.text}"</p>
+                </CardContent>
+                <CardFooter className="mt-auto">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={t.avatar}
+                      alt={t.name}
+                      className="rounded-xl w-8 h-8 object-cover"
+                    />
+                    <div>
+                      <p className="text-sm font-medium">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.role}</p>
+                    </div>
+                  </div>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+demo.tsx
+import { TestimonialsSection } from "@/components/blocks/testimonials-1"
+
+const demoTestimonials = [
+  {
+    name: "Sir kitty cat the cat the third",
+    rating: 4,
+    role: "Lead cuteness manager",
+    text: `MeowCorp has purr-transformed how our clowder prowls together. The pawsome interface and claw-some features have boosted our productivity by 30%... or at least that's what the hoomans think. Meow.`,
+    avatar:
+      "https://media.istockphoto.com/id/1281804798/photo/very-closeup-view-of-amazing-domestic-pet-in-mirror-round-fashion-sunglasses-is-isolated-on.jpg?s=612x612&w=0&k=20&c=oMoz9rUr-rDhMGNmEepCkr7F1g3AXs9416hvVnT_4CI=",
+  },
+  {
+    name: "Mr. Barkinson Barker",
+    rating: 3,
+    role: "CEO, Anti-cat league",
+    text: `bcuz we got meowcorp earlier, we were able to beat the cats in revenue by 69%`,
+    avatar:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBgI7Hw5mF3_1vJcls5z33y4272nPT7pBWNw&s",
+  },
+];
+
+export function Demo() {
+  return <TestimonialsSection testimonials={demoTestimonials} />;
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/card
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className,
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className,
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

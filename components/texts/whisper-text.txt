@@ -1,0 +1,133 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+whisper-text.tsx
+import React, { useLayoutEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
+
+interface WhisperTextProps {
+  text: string;
+  className?: string;
+  delay?: number; 
+  duration?: number; 
+  x?: number;   
+  y?: number;  
+  triggerStart?: string;
+}
+
+const WhisperText: React.FC<WhisperTextProps> = ({
+  text,
+  className = "",
+  delay = 80,
+  duration = 0.4,
+  x = 0,
+  y = 0,
+  triggerStart = "top 90%",
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const targets = gsap.utils.toArray<HTMLElement>("[data-word]");
+
+      gsap.set(targets, { opacity: 0, x, y });
+
+      gsap.to(targets, {
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: triggerStart,
+          toggleActions: "play none none none",
+          once: true,
+        },
+        opacity: 1,
+        x: 0,
+        y: 0,
+        duration,
+        ease: "power2.out",
+        stagger: delay / 1000,
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, [text, delay, duration, x, y, triggerStart]);
+
+  const renderWords = () =>
+    text.split(" ").map((word, i) => (
+      <span
+        key={i}
+        data-word
+        className="inline-block whitespace-nowrap"
+        style={{ position: "relative" }}
+      >
+        {word}
+      </span>
+    ));
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative inline-flex flex-wrap gap-x-2 ${className}`}
+      style={{ overflow: "visible" }}
+    >
+      {renderWords()}
+    </div>
+  );
+};
+
+export default WhisperText;
+
+
+demo.tsx
+
+import WhisperText from "@/components/ui/whisper-text";
+
+export default function WhisperPreview() {
+  return (
+      <div className="flex justify-center items-center min-h-screen w-full select-none">
+      <WhisperText
+        text="Your ideas, whisper style."
+        className="font-semibold text-primary text-2xl sm:text-4xl"
+        delay={100}
+        duration={0.5}
+        x={-20}
+        y={0}
+      />
+    </div>
+  );
+}
+```
+
+Install NPM dependencies:
+```bash
+gsap
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

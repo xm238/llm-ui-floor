@@ -1,0 +1,173 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+radio-group-colors-demo.tsx
+"use client";
+
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+const RadioGroupColorsDemo = () => {
+  return (
+    <RadioGroup
+      defaultValue="destructive"
+      className="flex items-center gap-6 justify-center"
+    >
+      <div className="flex items-center gap-2">
+        <RadioGroupItem
+          value="destructive"
+          id="color-destructive"
+          className="border-destructive text-destructive cursor-pointer"
+        />
+        <Label htmlFor="color-destructive" className="text-destructive cursor-pointer font-medium leading-none">
+          Error
+        </Label>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <RadioGroupItem
+          value="success"
+          id="color-success"
+          className="border-teal-500 text-teal-500 cursor-pointer"
+        />
+        <Label htmlFor="color-success" className="text-teal-500 cursor-pointer font-medium leading-none">
+          Approved
+        </Label>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <RadioGroupItem
+          value="info"
+          id="color-info"
+          className="border-amber-500 text-amber-500 cursor-pointer"
+        />
+        <Label htmlFor="color-info" className="text-amber-500 cursor-pointer font-medium leading-none">
+          Alert
+        </Label>
+      </div>
+    </RadioGroup>
+  );
+};
+
+export default RadioGroupColorsDemo;
+
+demo.tsx
+import RadioGroupColorsDemo from "@/components/ui/radio-group-colors-demo";
+
+export default function DemoOne() {
+  return <RadioGroupColorsDemo/>;
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/label
+"use client"
+
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+)
+
+const Label = React.forwardRef<
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof labelVariants>
+>(({ className, ...props }, ref) => (
+  <LabelPrimitive.Root
+    ref={ref}
+    className={cn(labelVariants(), className)}
+    {...props}
+  />
+))
+Label.displayName = LabelPrimitive.Root.displayName
+
+export { Label }
+
+```
+```tsx
+shadcn/radio-group
+"use client"
+
+import * as React from "react"
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
+import { Circle } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const RadioGroup = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
+>(({ className, ...props }, ref) => {
+  return (
+    <RadioGroupPrimitive.Root
+      className={cn("grid gap-2", className)}
+      {...props}
+      ref={ref}
+    />
+  )
+})
+RadioGroup.displayName = RadioGroupPrimitive.Root.displayName
+
+const RadioGroupItem = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
+>(({ className, ...props }, ref) => {
+  return (
+    <RadioGroupPrimitive.Item
+      ref={ref}
+      className={cn(
+        "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    >
+      <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+        <Circle className="h-2.5 w-2.5 fill-current text-current" />
+      </RadioGroupPrimitive.Indicator>
+    </RadioGroupPrimitive.Item>
+  )
+})
+RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
+
+export { RadioGroup, RadioGroupItem }
+
+```
+
+Install NPM dependencies:
+```bash
+@radix-ui/react-label, class-variance-authority, lucide-react, @radix-ui/react-radio-group
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

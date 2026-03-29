@@ -1,0 +1,301 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+publish-button.tsx
+"use client"
+
+import * as React from "react"
+import { Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+
+interface PublishButtonProps {
+  onPublish?: () => void
+  holdDuration?: number
+  className?: string
+}
+
+export function PublishButton({
+  onPublish,
+  holdDuration = 2000,
+  className
+}: PublishButtonProps) {
+  const [state, setState] = React.useState<"idle" | "holding" | "publishing" | "published">("idle")
+  const [progress, setProgress] = React.useState(0)
+  const [animKey, setAnimKey] = React.useState(0)
+
+  const holdTimerRef = React.useRef<NodeJS.Timeout | null>(null)
+  const progressIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
+  const startTimeRef = React.useRef<number>(0)
+
+  const startHolding = () => {
+    if (state !== "idle") return
+
+    setState("holding")
+    setProgress(0)
+    setAnimKey((k) => k + 1)
+    startTimeRef.current = Date.now()
+
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current
+      const pct = Math.min((elapsed / holdDuration) * 100, 100)
+      setProgress(pct)
+      if (pct >= 100) {
+        clearInterval(progressIntervalRef.current!)
+      }
+    }, 30)
+
+    holdTimerRef.current = setTimeout(() => {
+      confirmPublish()
+    }, holdDuration)
+  }
+
+  const cancelHolding = () => {
+    if (state !== "holding") return
+    if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
+    setProgress(0)
+    setState("idle")
+    setAnimKey((k) => k + 1)
+  }
+
+  const confirmPublish = () => {
+    setState("publishing")
+    setAnimKey((k) => k + 1)
+    setProgress(100)
+    onPublish?.()
+
+    setTimeout(() => {
+      setState("published")
+      setAnimKey((k) => k + 1)
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.(60)
+      }
+      setTimeout(() => setState("idle"), 3000)
+    }, 600)
+  }
+
+  React.useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
+    }
+  }, [])
+
+  const getLabel = () => {
+    switch (state) {
+      case "holding":
+        return "Sure?"
+      case "publishing":
+        return "Publishing..."
+      case "published":
+        return "Published"
+      default:
+        return "Publish"
+    }
+  }
+
+  return (
+    <Button
+      variant={state === "published" ? "secondary" : "default"}
+      className={cn(
+        "relative flex items-center justify-center gap-2 min-w-[140px] select-none transition-all duration-300 ease-in-out",
+        state === "holding" && "cursor-grabbing scale-[0.98]",
+        state === "published" &&
+          "bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))] hover:bg-[hsl(var(--success))]",
+        className
+      )}
+      onMouseDown={startHolding}
+      onMouseUp={cancelHolding}
+      onMouseLeave={cancelHolding}
+      onTouchStart={startHolding}
+      onTouchEnd={cancelHolding}
+      disabled={state === "publishing"}
+    >
+      {state === "holding" && (
+  <svg
+    key={`progress-${animKey}`}
+    className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 animate-in fade-in"
+    viewBox="0 0 36 36"
+  >
+    <path
+      strokeWidth="3"
+      fill="none"
+      strokeLinecap="round"
+      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+      style={{
+        stroke: "var(--muted-foreground)",
+        opacity: 0.3,
+        transition: "stroke 0.2s ease"
+      }}
+    />
+
+    <path
+      strokeWidth="3"
+      fill="none"
+      strokeLinecap="round"
+      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+      style={{
+        stroke: "var(--destructive)",
+        strokeDasharray: `${progress}, 100`,
+        transition: "stroke-dasharray 0.08s linear, stroke 0.3s ease"
+      }}
+    />
+  </svg>
+)}
+
+      {state === "published" && (
+        <Check
+          key={`check-${animKey}`}
+          className="h-4 w-4 animate-pop-in"
+          style={{ color: "hsl(var(--success-foreground))" }}
+        />
+      )}
+
+      <span
+        key={`label-${animKey}`}
+        className={cn(
+          "transition-all duration-300 ease-in-out animate-in fade-in slide-in-from-bottom-1",
+          state === "published" && "font-semibold"
+        )}
+      >
+        {getLabel()}
+      </span>
+    </Button>
+  )
+}
+
+
+demo.tsx
+import { PublishButton } from "@/components/ui/publish-button";
+
+export default function DemoOne() {
+  return <PublishButton />;
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, @radix-ui/react-slot, class-variance-authority
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --success: 142 76% 36%;
+  --success-foreground: 144 100% 97%;
+}
+
+.dark {
+  --success: 142 70% 45%;
+  --success-foreground: 144 100% 97%;
+}
+
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

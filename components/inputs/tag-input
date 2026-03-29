@@ -1,0 +1,194 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+tag-input.tsx
+// component.tsx
+import * as React from "react";
+import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
+
+export type Tag = {
+  id: string;
+  label: string;
+};
+
+export interface TagInputProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> {
+  options: Tag[];
+  value: Tag[];
+  onChange: (tags: Tag[]) => void;
+}
+
+const TagInput = React.forwardRef<HTMLDivElement, TagInputProps>(
+  ({ options, value, onChange, className, ...props }, ref) => {
+    const selectedsContainerRef = useRef<HTMLDivElement>(null);
+
+    const removeTag = (tagToRemove: Tag) => {
+      onChange(value.filter((tag) => tag.id !== tagToRemove.id));
+    };
+
+    const addTag = (tagToAdd: Tag) => {
+      onChange([...value, tagToAdd]);
+    };
+
+    useEffect(() => {
+      if (selectedsContainerRef.current) {
+        selectedsContainerRef.current.scrollTo({
+          left: selectedsContainerRef.current.scrollWidth,
+          behavior: "smooth",
+        });
+      }
+    }, [value]);
+
+    const unselectedTags = options.filter(
+      (tag) => !value.some((selected) => selected.id === tag.id)
+    );
+
+    return (
+      <div ref={ref} className={className} {...props}>
+        <motion.h2 layout className="text-xl font-semibold">
+          TAGS
+        </motion.h2>
+        <motion.div
+          className="w-full flex items-center justify-start gap-1.5 bg-white border h-14 mt-2 mb-3 overflow-x-auto p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{
+            borderRadius: 16,
+          }}
+          ref={selectedsContainerRef}
+          layout
+        >
+          {value.map((tag) => (
+            <motion.div
+              key={tag.id}
+              className="flex items-center gap-1 pl-3 pr-1 py-1 bg-white shadow-md border h-full shrink-0"
+              style={{
+                borderRadius: 14,
+              }}
+              layoutId={`tag-${tag.id}`}
+            >
+              <motion.span
+                layoutId={`tag-${tag.id}-label`}
+                className="text-gray-700 font-medium"
+              >
+                {tag.label}
+              </motion.span>
+              <button
+                onClick={() => removeTag(tag)}
+                className="p-1 rounded-full"
+              >
+                <X className="size-5 text-gray-500" />
+              </button>
+            </motion.div>
+          ))}
+        </motion.div>
+        {unselectedTags.length > 0 && (
+          <motion.div
+            className="bg-white shadow-sm p-2 border w-full"
+            style={{
+              borderRadius: 16,
+            }}
+            layout
+          >
+            <motion.div className="flex flex-wrap gap-2">
+              {unselectedTags.map((tag) => (
+                <motion.button
+                  key={tag.id}
+                  layoutId={`tag-${tag.id}`}
+                  className="flex items-center gap-1 px-4 py-2.5 bg-gray-100/60 shrink-0"
+                  onClick={() => addTag(tag)}
+                  style={{
+                    borderRadius: 14,
+                  }}
+                >
+                  <motion.span
+                    layoutId={`tag-${tag.id}-label`}
+                    className="text-gray-700 font-medium"
+                  >
+                    {tag.label}
+                  </motion.span>
+                </motion.button>
+              ))}
+            </motion.div>
+          </motion.div>
+        )}
+      </div>
+    );
+  }
+);
+
+TagInput.displayName = "TagInput";
+
+export default TagInput;
+
+demo.tsx
+// demo.tsx
+import * as React from "react";
+import TagInput, { type Tag } from "@/components/ui/tag-input";
+
+const TagInputDemo = () => {
+  const TAGS: Tag[] = [
+    { id: "docker", label: "Docker" },
+    { id: "kubernetes", label: "Kubernetes" },
+    { id: "aws", label: "AWS" },
+    { id: "graphql", label: "GraphQL" },
+    { id: "mongodb", label: "MongoDB" },
+    { id: "postgresql", label: "PostgreSQL" },
+    { id: "redis", label: "Redis" },
+    { id: "git", label: "Git" },
+    { id: "webpack", label: "Webpack" },
+    { id: "vite", label: "Vite" },
+    { id: "cypress", label: "Cypress" },
+    { id: "storybook", label: "Storybook" },
+    { id: "tailwind", label: "Tailwind" },
+    { id: "prisma", label: "Prisma" },
+    { id: "nginx", label: "Nginx" },
+  ];
+  const [selectedTags, setSelectedTags] = vReact.useState<Tag[]>([]);
+
+  return (
+    <div className="relative w-full min-h-[450px] flex items-start md:items-center justify-center px-4 py-10">
+      <TagInput
+        options={TAGS}
+        value={selectedTags}
+        onChange={setSelectedTags}
+        className="p-6 max-w-lg w-full flex flex-col"
+      />
+    </div>
+  );
+};
+
+export { TagInputDemo as DemoOne };
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

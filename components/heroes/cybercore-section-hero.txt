@@ -1,0 +1,194 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+cybercore-section-hero.tsx
+import React, { useState, useEffect, CSSProperties } from 'react'
+
+export interface CybercoreBackgroundProps {
+  /** Number of animated light beams */
+  beamCount?: number
+}
+
+const DEFAULT_BEAM_COUNT = 70
+
+const CybercoreBackground: React.FC<CybercoreBackgroundProps> = ({
+  beamCount = DEFAULT_BEAM_COUNT,
+}) => {
+  const [beams, setBeams] = useState<
+    Array<{ id: number; type: 'primary' | 'secondary'; style: CSSProperties }>
+  >([])
+
+  useEffect(() => {
+    const generated = Array.from({ length: beamCount }).map((_, i) => {
+      const riseDur = Math.random() * 3 + 5   // 5–8s rise
+      const fadeDur = riseDur                // sync fade
+      const type = Math.random() < 0.15 ? 'secondary' : 'primary'
+      return {
+        id: i,
+        type,
+        style: {
+          left: `${Math.random() * 100}%`,
+          width: `${Math.floor(Math.random() * 2) + 1}px`,
+          animationDelay: `${Math.random() * 6}s`,
+          animationDuration: `${riseDur}s, ${fadeDur}s`,
+        },
+      }
+    })
+    setBeams(generated)
+  }, [beamCount])
+
+  return (
+    <div
+      className="scene"
+      role="img"
+      aria-label="Animated cybercore grid background"
+    >
+      <div className="floor" />
+      <div className="main-column" />
+      <div className="light-stream-container">
+        {beams.map((beam) => (
+          <div
+            key={beam.id}
+            className={`light-beam ${beam.type}`}
+            style={beam.style}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default CybercoreBackground
+
+
+demo.tsx
+import React from 'react'
+import CybercoreBackground from '@/components/ui/cybercore-section-hero'
+
+const App: React.FC = () => (
+  <>
+    <CybercoreBackground beamCount={70} />
+
+    <div className="content-wrapper">
+      <header className="main-header">
+        <div className="logo">CYBERCORE</div>
+        <nav>
+          <a href="#">Protocols</a>
+          <a href="#">Network</a>
+          <a href="#">Developers</a>
+          <a href="#">Connect</a>
+        </nav>
+      </header>
+
+      <main className="hero-section">
+        <h1>Enter the Grid</h1>
+        <p>
+          Experience the next evolution of decentralized infrastructure, where data
+          flows with unparalleled speed and security.
+        </p>
+        <button className="cta-button">Explore the Network</button>
+      </main>
+    </div>
+  </>
+)
+
+export default App
+
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --bg-color: #000308;
+  --light-color: #00e5ff;
+  --highlight-color: #ffb86c;
+  --glow-color-1: rgba(0, 229, 255, 0.8);
+  --glow-color-2: rgba(0, 150, 255, 0.6);
+  --highlight-glow: rgba(255, 184, 108, 0.7);
+}
+
+
+@keyframes rise {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-5%);
+    opacity: 0;
+  }
+}
+
+@keyframes fade {
+  0%, 100% {
+    opacity: 0;
+  }
+  5%, 85% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes floorGlow {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes mainGlow {
+  from {
+    opacity: 0.5;
+    filter: blur(30px);
+  }
+  to {
+    opacity: 0.7;
+    filter: blur(20px);
+  }
+}
+
+@keyframes moveGrid {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -100px -50px;
+  }
+}
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

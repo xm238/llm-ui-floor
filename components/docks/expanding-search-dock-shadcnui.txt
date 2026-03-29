@@ -1,0 +1,144 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+expanding-search-dock-shadcnui.tsx
+import { AnimatePresence, motion } from "framer-motion";
+import { Search, X } from "lucide-react";
+import { useState } from "react";
+
+type ExpandingSearchDockProps = {
+  onSearch?: (query: string) => void;
+  placeholder?: string;
+};
+
+export function ExpandingSearchDock({
+  onSearch,
+  placeholder = "Search...",
+}: ExpandingSearchDockProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const handleExpand = () => {
+    setIsExpanded(true);
+  };
+
+  const handleCollapse = () => {
+    setIsExpanded(false);
+    setQuery("");
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSearch && query) {
+      onSearch(query);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <AnimatePresence mode="wait">
+        {!isExpanded ? (
+          <motion.button
+            key="icon"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            onClick={handleExpand}
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card transition-colors hover:bg-muted"
+          >
+            <Search className="h-5 w-5" />
+          </motion.button>
+        ) : (
+          <motion.form
+            key="input"
+            initial={{ width: 48, opacity: 0 }}
+            animate={{ width: 320, opacity: 1 }}
+            exit={{ width: 48, opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+            }}
+            onSubmit={handleSubmit}
+            className="relative"
+          >
+            <motion.div
+              initial={{ backdropFilter: "blur(0px)" }}
+              animate={{ backdropFilter: "blur(12px)" }}
+              className="relative flex items-center gap-2 overflow-hidden rounded-full border border-border bg-card/80 backdrop-blur-md"
+            >
+              <div className="ml-4">
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={placeholder}
+                autoFocus
+                className="h-12 flex-1 bg-transparent pr-4 text-sm outline-none placeholder:text-muted-foreground"
+              />
+              <motion.button
+                type="button"
+                onClick={handleCollapse}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="mr-2 flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </motion.button>
+            </motion.div>
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+
+demo.tsx
+import { ExpandingSearchDock } from "@/components/ui/expanding-search-dock-shadcnui"
+
+export default function Demo() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-8">
+      <ExpandingSearchDock />
+    </div>
+  )
+}
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

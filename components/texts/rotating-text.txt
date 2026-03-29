@@ -1,0 +1,182 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+rotating-text.tsx
+"use client";
+
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+
+type AnimationMode = "slide" | "fade" | "blur" | "flip" | "drop";
+
+interface RotatingTextProps {
+  words: string[];
+  interval?: number;
+  mode?: AnimationMode;
+  className?: string;
+}
+
+const animations: Record<
+  AnimationMode,
+  { initial: object; animate: object; exit: object }
+> = {
+  slide: {
+    initial: { y: "100%", opacity: 0 },
+    animate: { y: "0%", opacity: 1 },
+    exit: { y: "-100%", opacity: 0 },
+  },
+  fade: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+  },
+  blur: {
+    initial: { opacity: 0, filter: "blur(12px)" },
+    animate: { opacity: 1, filter: "blur(0px)" },
+    exit: { opacity: 0, filter: "blur(12px)" },
+  },
+  flip: {
+    initial: { rotateX: 90, opacity: 0 },
+    animate: { rotateX: 0, opacity: 1 },
+    exit: { rotateX: -90, opacity: 0 },
+  },
+  drop: {
+    initial: { y: "-80%", opacity: 0, scale: 0.8 },
+    animate: { y: "0%", opacity: 1, scale: 1 },
+    exit: { y: "80%", opacity: 0, scale: 0.8 },
+  },
+};
+
+export function Component({
+  words,
+  interval = 2500,
+  mode = "slide",
+  className,
+}: RotatingTextProps) {
+  const [index, setIndex] = useState(0);
+
+  const next = useCallback(() => {
+    setIndex((i) => (i + 1) % words.length);
+  }, [words.length]);
+
+  useEffect(() => {
+    const id = setInterval(next, interval);
+    return () => clearInterval(id);
+  }, [next, interval]);
+
+  const { initial, animate, exit } = animations[mode];
+
+  return (
+    <span
+      className={cn(
+        "relative inline-flex overflow-hidden",
+        className
+      )}
+      style={{ perspective: mode === "flip" ? 600 : undefined }}
+    >
+      {/* invisible placeholder for width */}
+      <span className="invisible">
+        {words.reduce((a, b) => (a.length > b.length ? a : b), "")}
+      </span>
+
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={words[index]}
+          className="absolute inset-0 flex items-center justify-center"
+          initial={initial}
+          animate={animate}
+          exit={exit}
+          transition={{
+            duration: 0.5,
+            ease: [0.32, 0.72, 0, 1],
+          }}
+        >
+          {words[index]}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
+
+demo.tsx
+import { Component as RotatingText } from "@/components/ui/rotating-text";
+
+const words = ["faster", "better", "smarter", "together"];
+
+export default function Demo() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-20 bg-background px-6 py-20">
+      {/* Hero showcase */}
+      <div className="text-center space-y-4">
+        <p className="text-sm font-medium tracking-widest uppercase text-muted-foreground">
+          5 animation modes
+        </p>
+        <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">
+          Build{" "}
+          <RotatingText
+            words={words}
+            mode="slide"
+            className="text-foreground"
+          />
+        </h1>
+      </div>
+
+      {/* All modes grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-3xl">
+        {(["slide", "fade", "blur", "flip", "drop"] as const).map((mode, i) => (
+          <div
+            key={mode}
+            className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-8"
+          >
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground">
+              {mode}
+            </span>
+            <p className="text-xl font-bold tracking-tight text-foreground">
+              Ship{" "}
+              <RotatingText
+                words={["today", "now", "fast", "more"]}
+                mode={mode}
+                interval={2000 + i * 300}
+                className="text-foreground"
+              />
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+Install NPM dependencies:
+```bash
+framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

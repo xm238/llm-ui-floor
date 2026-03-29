@@ -1,0 +1,363 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+bluetooth-key.tsx
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+
+export const Component = () => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <>
+  <label htmlFor="button" className="wrap">
+    <input id="button" aria-label="Bluetooth" type="checkbox" />
+    <button className="button">
+      <div className="corner" />
+      <div className="inner">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 390 430"
+          height={430}
+          width={390}
+        >
+          <g filter="url(#inset-shadow)" className="symbol">
+            <path
+              d="M202.884 13.3026C196.814 7.84601 188.099 6.46854 180.642 9.78694C173.182 13.1055 168.377 20.4983 168.377 28.6551V164.683L78.6175 75.0327C70.5431 66.9664 57.4523 66.9664 49.3779 75.0327C41.3037 83.0988 41.3037 96.1768 49.3779 104.243L159.813 214.548L49.3787 324.853C41.3045 332.919 41.3045 345.997 49.3787 354.063C57.453 362.129 70.5439 362.129 78.6182 354.063L168.377 264.413V400.441C168.377 408.598 173.182 415.99 180.642 419.309C188.099 422.629 196.814 421.251 202.884 415.794L306.262 322.847C310.618 318.931 313.105 313.35 313.105 307.495C313.105 301.639 310.618 296.06 306.262 292.142L219.958 214.548L306.262 136.954C310.618 133.037 313.105 127.457 313.105 121.602C313.105 115.746 310.618 110.166 306.262 106.249L202.884 13.3026ZM261.524 307.495L209.728 260.926V354.063L261.524 307.495ZM261.524 121.602L209.728 168.171V75.0327L261.524 121.602Z"
+              clipRule="evenodd"
+              fillRule="evenodd"
+            />
+            <circle r={30} cy={215} cx={343} />
+            <circle r={30} cy={215} cx={46} />
+          </g>
+          <g className="symbol-path symbol-path-glow">
+            <circle r={30} cy={215} cx={343} />
+            <circle r={30} cy={215} cx={46} />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              d="M188.5 213.5L189.5 29L291.5 122C200.028 205.699 151.078 251.942 64 340"
+            />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              d="M188.5 215.5L189.5 400L291.5 307C200.028 223.301 151.078 177.058 64 89"
+            />
+          </g>
+          <g className="symbol-path">
+            <circle r={10} cy={215} cx={343} />
+            <circle r={10} cy={215} cx={46} />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              d="M188.5 213.5L189.5 29L291.5 122C200.028 205.699 151.078 251.942 64 340"
+            />
+            <path
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              d="M188.5 215.5L189.5 400L291.5 307C200.028 223.301 151.078 177.058 64 89"
+            />
+          </g>
+          <defs>
+            <defs>
+              <filter id="inset-shadow">
+                <feOffset dy={0} dx={0} />
+                <feGaussianBlur result="offset-blur" stdDeviation={10} />
+                <feComposite
+                  result="inverse"
+                  in2="offset-blur"
+                  in="SourceGraphic"
+                  operator="out"
+                />
+                <feFlood result="color" floodOpacity={1} floodColor="black" />
+                <feComposite
+                  result="shadow"
+                  in2="inverse"
+                  in="color"
+                  operator="in"
+                />
+                <feComposite in2="SourceGraphic" in="shadow" operator="over" />
+                <feDropShadow
+                  floodColor="white"
+                  floodOpacity="0.2"
+                  stdDeviation={0}
+                  dy={5}
+                  dx={5}
+                />
+              </filter>
+            </defs>
+          </defs>
+        </svg>
+      </div>
+    </button>
+    <div className="led" />
+    <div className="bg">
+      <div className="shine-1" />
+      <div className="shine-2" />
+    </div>
+    <div className="bg-glow" />
+  </label>
+  <div className="noise">
+    <svg height="100%" width="100%">
+      <defs>
+        <pattern
+          height={500}
+          width={500}
+          patternUnits="userSpaceOnUse"
+          id="noise-pattern"
+        >
+          <filter y={0} x={0} id="noise">
+            <feTurbulence
+              stitchTiles="stitch"
+              numOctaves={3}
+              baseFrequency="0.65"
+              type="fractalNoise"
+            />
+            <feBlend mode="screen" />
+          </filter>
+          <rect filter="url(#noise)" height={500} width={500} />
+        </pattern>
+      </defs>
+      <rect fill="url(#noise-pattern)" height="100%" width="100%" />
+    </svg>
+  </div>
+</>
+
+  );
+};
+
+
+demo.tsx
+import { Component } from "@/components/ui/bluetooth-key";
+
+export default function DemoOne() {
+  return <Component />;
+}
+
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --bkg: #fff;
+}
+
+.dark {
+  --bkg: #000;
+}
+
+
+@keyframes bgGlow {
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes bgGlow2 {
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  70%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ledTurnOff {
+  30%,
+  60% {
+    background-color: #ffdf4e;
+    box-shadow: 0 -10px 35px 17px rgba(255, 200, 0, 0.6),
+      inset 0 1px 2px 0px white,
+      0 0 0px 3px rgb(0 0 0 / 60%),
+      0 0 2px 4px rgba(152, 119, 0, 0.3);
+  }
+  60.1%,
+  65% {
+    background-color: black;
+    box-shadow: 0 -10px 35px 17px transparent,
+      inset 0 1px 2px 0px transparent,
+      0 0 0px 3px rgb(0 0 0 / 10%),
+      0 0 2px 4px transparent;
+  }
+  65.1%,
+  70% {
+    background-color: #ffdf4e;
+    box-shadow: 0 -10px 35px 17px rgba(255, 200, 0, 0.6),
+      inset 0 1px 2px 0px white,
+      0 0 0px 3px rgb(0 0 0 / 60%),
+      0 0 2px 4px rgba(152, 119, 0, 0.3);
+  }
+  70.1%,
+  100% {
+    background-color: black;
+    box-shadow: 0 -10px 35px 17px transparent,
+      inset 0 1px 2px 0px transparent,
+      0 0 0px 3px rgb(0 0 0 / 10%),
+      0 0 2px 4px transparent;
+  }
+}
+
+@keyframes reflexLedTurnOff {
+  30%,
+  60% {
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4),
+      inset 0 -6px 1px -4px #9b8100,
+      inset 0 -15px 6px -8px #373326;
+  }
+  60.1%,
+  65% {
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4),
+      inset 0 -6px 1px -4px rgba(255, 255, 255, 0.1),
+      inset 0 -15px 6px -8px rgba(255, 255, 255, 0.1);
+  }
+  65.1%,
+  70% {
+    box-shadow: inset 0 1px 1px rgb(255 255 255 / 40%),
+      inset 0 -6px 1px -4px #9b8100,
+      inset 0 -15px 6px -8px #373326;
+  }
+  70.1%,
+  100% {
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4),
+      inset 0 -6px 1px -4px rgba(255, 255, 255, 0.1),
+      inset 0 -15px 6px -8px rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes reflexLedBlurTurnOff {
+  30%,
+  60% {
+    background: #ffc400;
+  }
+  60.1%,
+  65% {
+    background: transparent;
+  }
+  65.1%,
+  70% {
+    background: #ffc400;
+  }
+  70.1%,
+  100% {
+    background: transparent;
+  }
+}
+
+@keyframes bgBeforeTurnOff {
+  30%,
+  60% {
+    box-shadow: inset 0 -2px 0px -1px rgba(255, 230, 120, 0.3),
+      inset 0 0 5px 1px black,
+      inset 0 0 0 1px black;
+  }
+  60.1%,
+  65% {
+    box-shadow: inset 0 -2px 0px -1px rgba(160, 160, 160, 0.3),
+      inset 0 0 5px 1px black,
+      inset 0 0 0 1px black;
+  }
+  65.1%,
+  70% {
+    box-shadow: inset 0 -2px 0px -1px rgba(255, 230, 120, 0.3),
+      inset 0 0 5px 1px black,
+      inset 0 0 0 1px black;
+  }
+  70.1%,
+  100% {
+    box-shadow: inset 0 -2px 0px -1px rgba(160, 160, 160, 0.3),
+      inset 0 0 5px 1px black,
+      inset 0 0 0 1px black;
+  }
+}
+
+@keyframes bg {
+  0% {
+    transform: translateY(0) scale(0);
+  }
+  12% {
+    transform: translateY(0) scale(25);
+  }
+  60%,
+  100% {
+    transform: translateY(-280px) scale(20, 18);
+  }
+}
+
+@keyframes symbolPath {
+  0% {
+    stroke-dashoffset: -650;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 650;
+  }
+}
+
+@keyframes symbolPath2 {
+  0% {
+    stroke-dashoffset: -650;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 650;
+  }
+}
+
+@keyframes symbolCircle {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

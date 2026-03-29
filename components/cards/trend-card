@@ -1,0 +1,214 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+trend-card.tsx
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowUpRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export interface TrendDataPoint {
+  month: string;
+  value: number;
+}
+
+export interface InteractiveTrendCardProps {
+  title: string;
+  subtitle: string;
+  totalValue: number;
+  newValue: number;
+  totalValueLabel?: string;
+  newValueLabel?: string;
+  chartData: TrendDataPoint[];
+  className?: string;
+  icon?: React.ReactNode;
+  // New props for customizing bar colors
+  defaultBarColor?: string;
+  barColor?: string;
+  adjacentBarColor?: string;
+}
+
+export const InteractiveTrendCard: React.FC<InteractiveTrendCardProps> = ({
+  title,
+  subtitle,
+  totalValue,
+  newValue,
+  totalValueLabel = 'Total Followers',
+  newValueLabel = 'New Followers',
+  chartData,
+  className,
+  icon = <ArrowUpRight className="h-4 w-4" />,
+  // Set default theme-based colors
+  defaultBarColor = 'hsl(var(--muted))',
+  barColor = 'hsl(var(--primary))',
+  adjacentBarColor = 'hsl(var(--primary) / 0.5)',
+}) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const maxValue = useMemo(() => Math.max(...chartData.map((d) => d.value)), [chartData]);
+
+  return (
+    <div
+      className={cn(
+        'w-full max-w-sm rounded-2xl border bg-card p-6 text-card-foreground shadow-sm',
+        className
+      )}
+    >
+      {/* Card Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+          <p className="text-2xl font-bold tracking-tight text-muted-foreground">{subtitle}</p>
+        </div>
+        <button className="rounded-full border bg-background p-2 transition-colors hover:bg-muted">
+          {icon}
+        </button>
+      </div>
+
+      {/* Interactive Chart */}
+      <div
+        className="relative mt-16 h-40"
+        onMouseLeave={() => setHoveredIndex(null)}
+        role="figure"
+        aria-label={`Followers trend chart showing data for ${chartData.length} months.`}
+      >
+        {/* Tooltip */}
+        <AnimatePresence>
+          {hoveredIndex !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="pointer-events-none absolute -top-8 left-centre w-10"
+              style={{
+                transform: `translateX(${(hoveredIndex / (chartData.length - 1)) * 100}%) translateX(-50%)`,
+              }}
+            >
+              <div className="rounded-md bg-foreground px-2 py-1 text-xs font-semibold text-background shadow-lg">
+                {chartData[hoveredIndex].value}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bars and Labels */}
+        <div className="flex h-full w-full items-end justify-between gap-1">
+          {chartData.map((data, index) => {
+            const barHeight = `${(data.value / maxValue) * 100}%`;
+            const isHovered = hoveredIndex === index;
+            const isAdjacent = hoveredIndex !== null && Math.abs(hoveredIndex - index) === 1;
+
+            return (
+              <div key={index} className="flex h-full flex-1 flex-col items-center justify-end">
+                <div
+                  className="group relative h-full w-full flex items-end"
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  aria-label={`${data.month}: ${data.value} followers`}
+                  role="img"
+                >
+                  <motion.div
+                    className="w-full rounded-t-sm"
+                    style={{ height: barHeight }}
+                    initial={{ backgroundColor: defaultBarColor }}
+                    animate={{
+                      backgroundColor: isHovered
+                        ? barColor
+                        : isAdjacent
+                        ? adjacentBarColor
+                        : defaultBarColor,
+                    }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  />
+                </div>
+                <span className="mt-2 text-xs text-muted-foreground">{data.month}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Card Footer Stats */}
+      <div className="mt-8 flex justify-between border-t pt-4">
+        <div>
+          <p className="text-xs font-medium uppercase text-muted-foreground">{totalValueLabel}</p>
+          <p className="text-3xl font-bold">{totalValue.toLocaleString()}</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium uppercase text-muted-foreground">{newValueLabel}</p>
+          <p className="text-3xl font-bold">{newValue.toLocaleString()}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+demo.tsx
+import { InteractiveTrendCard, TrendDataPoint } from '@/components/ui/trend-card';
+
+const followerData: TrendDataPoint[] = [
+  { month: '1', value: 520 },
+  { month: '2', value: 550 },
+  { month: '3', value: 580 },
+  { month: '4', value: 553 },
+  { month: '5', value: 520 },
+  { month: '6', value: 520 },
+  { month: '7', value: 550 },
+  { month: '8', value: 580 },
+  { month: '9', value: 553 },
+  { month: '10', value: 520 },
+  { month: '11', value: 520 },
+  { month: '12', value: 550 },
+];
+
+const Demo = () => {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-background p-4">
+      <InteractiveTrendCard
+        title="Followers"
+        subtitle="Trend"
+        totalValue={587}
+        newValue={116}
+        chartData={followerData}
+        // FIXED: Using distinct, hardcoded colors to demonstrate the props are working.
+        defaultBarColor="#e5e7eb"      // A light, neutral gray
+        barColor="#4f46e5"             // A vibrant indigo for the hovered bar
+        adjacentBarColor="#a5b4fc"     // A lighter indigo for adjacent bars
+      />
+    </div>
+  );
+};
+
+export default Demo;
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

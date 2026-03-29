@@ -1,0 +1,162 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+text-disperse.tsx
+'use client';
+import { useState } from 'react';
+import type { JSX, ComponentProps } from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+interface Transform {
+	x: number;
+	y: number;
+	rotationZ: number;
+}
+
+const transforms: Transform[] = [
+	{ x: -0.8, y: -0.6, rotationZ: -29 },
+	{ x: -0.2, y: -0.4, rotationZ: -6 },
+	{ x: -0.05, y: 0.1, rotationZ: 12 },
+	{ x: -0.05, y: -0.1, rotationZ: -9 },
+	{ x: -0.1, y: 0.55, rotationZ: 3 },
+	{ x: 0, y: -0.1, rotationZ: 9 },
+	{ x: 0, y: 0.15, rotationZ: -12 },
+	{ x: 0, y: 0.15, rotationZ: -17 },
+	{ x: 0, y: -0.65, rotationZ: 9 },
+	{ x: 0.1, y: 0.4, rotationZ: 12 },
+	{ x: 0, y: -0.15, rotationZ: -9 },
+	{ x: 0.2, y: 0.15, rotationZ: 12 },
+	{ x: 0.8, y: 0.6, rotationZ: 20 },
+];
+
+type TextDisperseProps = ComponentProps<'div'> & {
+	/** children should be string (max 13 chars) */
+	children: string;
+	onHover?: (isActive: boolean) => void;
+};
+
+export function TextDisperse({
+	children,
+	onHover,
+	className,
+	...props
+}: Omit<TextDisperseProps, 'onMouseEnter' | 'onMouseLeave'>) {
+	const [isAnimated, setIsAnimated] = useState(false);
+
+	const splitWord = (word: string) => {
+		let chars: JSX.Element[] = [];
+		word.split('').forEach((char, i) => {
+			chars.push(
+				<motion.span
+					custom={i}
+					variants={{
+						open: (i: number) => ({
+							x: transforms[i].x + 'em',
+							y: transforms[i].y + 'em',
+							rotateZ: transforms[i].rotationZ,
+							transition: { duration: 0.75, ease: [0.33, 1, 0.68, 1] },
+							zIndex: 1,
+						}),
+						closed: {
+							x: 0,
+							y: 0,
+							rotateZ: 0,
+							transition: { duration: 0.75, ease: [0.33, 1, 0.68, 1] },
+							zIndex: 0,
+						},
+					}}
+					animate={isAnimated ? 'open' : 'closed'}
+					key={char + i}
+				>
+					{char}
+				</motion.span>,
+			);
+		});
+		return chars;
+	};
+
+	const manageMouseEnter = () => {
+		onHover?.(true);
+		setIsAnimated(true);
+	};
+
+	const manageMouseLeave = () => {
+		onHover?.(false);
+		setIsAnimated(false);
+	};
+
+	return (
+		<div
+			className={cn(
+				"relative flex cursor-pointer justify-between text-[6vw] data-[index='4']:inline-flex data-[index='5']:right-[-40px] data-[index='5']:inline-flex",
+				className,
+			)}
+			onMouseEnter={manageMouseEnter}
+			onMouseLeave={manageMouseLeave}
+			{...props}
+		>
+			{splitWord(children)}
+		</div>
+	);
+}
+
+
+demo.tsx
+'use client';
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { TextDisperse } from "@/components/ui/text-disperse";
+
+export default function DefaultDemo() {
+	return (
+		<div className="relative flex min-h-screen w-full items-center justify-center">
+			<div
+				aria-hidden="true"
+				className={cn(
+					'pointer-events-none absolute -top-10 left-1/2 size-full -translate-x-1/2 rounded-full',
+					'bg-[radial-gradient(ellipse_at_center,--theme(--color-foreground/.1),transparent_50%)]',
+					'blur-[30px]',
+				)}
+			/>
+			<div className="w-[50vw]">
+				<TextDisperse className="text-[6vw]">
+					+923123456789
+				</TextDisperse>
+			</div>
+		</div>
+	);
+}
+```
+
+Install NPM dependencies:
+```bash
+framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

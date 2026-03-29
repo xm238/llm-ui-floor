@@ -1,0 +1,166 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+label-badges.tsx
+// component.tsx
+'use client';
+
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+
+export interface LabelInterface {
+   id: string;
+   name: string;
+   color: string;
+}
+
+export const labels: LabelInterface[] = [
+   { id: 'ui', name: 'UI Enhancement', color: '#a2eeef' },
+   { id: 'bug', name: 'Bug', color: '#d73a4a' },
+   { id: 'feature', name: 'Feature', color: '#0e8a16' },
+   { id: 'documentation', name: 'Documentation', color: '#534cb3' },
+   { id: 'refactor', name: 'Refactor', color: '#fcca42' },
+   { id: 'performance', name: 'Performance', color: '#fbca04' },
+   { id: 'design', name: 'Design', color: '#d876e3' },
+   { id: 'security', name: 'Security', color: '#6a737d' },
+   { id: 'accessibility', name: 'Accessibility', color: '#0052cc' },
+   { id: 'testing', name: 'Testing', color: '#008672' },
+];
+
+interface LabelBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+   labels: LabelInterface[];
+}
+
+const LabelBadge = React.forwardRef<HTMLDivElement, LabelBadgeProps>(
+   ({ labels, className, ...props }, ref) => {
+      if (!labels || labels.length === 0) {
+         return null;
+      }
+
+      return (
+         <div ref={ref} className={cn('flex flex-wrap gap-2', className)} {...props}>
+            {labels.map((l) => (
+               <Badge
+                  key={l.id}
+                  variant="outline"
+                  className="gap-1.5 rounded-full border bg-background text-foreground"
+               >
+                  <span
+                     className="size-2 rounded-full"
+                     style={{ backgroundColor: l.color }}
+                     aria-hidden="true"
+                  ></span>
+                  {l.name}
+               </Badge>
+            ))}
+         </div>
+      );
+   }
+);
+LabelBadge.displayName = 'LabelBadge';
+
+export default LabelBadge;
+
+demo.tsx
+// demo.tsx
+'use client';
+
+import { BookOpen, Bug, Sparkles } from 'lucide-react';
+import LabelBadge, { labels } from '@/components/ui/label-badges';
+
+const LabelBadgeDemo = () => {
+   return (
+      <div className="flex w-full flex-col items-center justify-center gap-10 p-4">
+         <div className="flex flex-col items-center gap-2 text-center">
+            <h2 className="text-lg font-semibold">Label Badges</h2>
+            <p className="text-sm text-muted-foreground">
+               Demonstrating how labels can be displayed on items.
+            </p>
+         </div>
+
+         <div className="w-full max-w-md space-y-4">
+            <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 text-card-foreground">
+               <div className="flex items-start justify-between">
+                  <p className="font-medium">Fix authentication flow redirect</p>
+                  <Bug className="size-5 shrink-0 text-red-500" />
+               </div>
+               <LabelBadge labels={[labels[1], labels[7]]} />
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 text-card-foreground">
+               <div className="flex items-start justify-between">
+                  <p className="font-medium">Implement new dashboard design</p>
+                  <Sparkles className="size-5 shrink-0 text-blue-500" />
+               </div>
+               <LabelBadge labels={[labels[2], labels[0], labels[6]]} />
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 text-card-foreground">
+               <div className="flex items-start justify-between">
+                  <p className="font-medium">Update contribution guidelines</p>
+                  <BookOpen className="size-5 shrink-0 text-green-500" />
+               </div>
+               <LabelBadge labels={[labels[3]]} />
+            </div>
+         </div>
+      </div>
+   );
+};
+
+export { LabelBadgeDemo as DemoOne };
+```
+
+Copy-paste these files for dependencies:
+```tsx
+originui/label
+"use client";
+
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(
+  ({ className, ...props }, ref) => (
+    <label
+      ref={ref}
+      className={cn(
+        "text-sm font-medium leading-4 text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
+Label.displayName = "Label";
+
+export { Label };
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

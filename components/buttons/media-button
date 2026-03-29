@@ -1,0 +1,102 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+media-button.tsx
+'use client';
+
+import React from 'react';
+import { motion } from 'framer-motion';
+
+type MediaButtonProps = {
+  label: string;
+  mediaUrl: string; // .mp4, .webm, or .gif
+};
+
+export const MediaButton: React.FC<MediaButtonProps> = ({ label, mediaUrl }) => {
+  const isVideo = /\.(mp4|webm)$/i.test(mediaUrl);
+
+  return (
+    <motion.button
+      className="relative overflow-hidden rounded-2xl px-6 py-3 text-white font-semibold text-lg bg-black group shadow-lg hover:cursor-pointer"
+      whileHover="hover"
+      initial="rest"
+      animate="rest"
+    >
+      {isVideo ? (
+        <motion.video
+          className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          src={mediaUrl}
+          muted
+          loop
+          playsInline
+          autoPlay
+        />
+      ) : (
+        <motion.img
+          className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          src={mediaUrl}
+          alt="Background"
+        />
+      )}
+
+      {/* Black Overlay */}
+      <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none group-hover:opacity-100 transition-opacity duration-300" />
+
+      {/* Button Text */}
+      <span className="relative z-20 text-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">{label}</span>
+    </motion.button>
+  );
+};
+
+demo.tsx
+import React from 'react';
+import { MediaButton } from "@/components/ui/media-button";
+
+export default function Demo() {
+  return (
+    <div className="h-screen flex flex-col items-center justify-center gap-10 bg-muted">
+      <MediaButton
+        label="Button (Video)"
+        mediaUrl="https://www.w3schools.com/howto/rain.mp4"
+      />
+      <MediaButton
+        label="Button (GIF)"
+        mediaUrl="https://i.pinimg.com/originals/71/fb/91/71fb9176f16357776802391df14b4e40.gif"
+      />
+    </div>
+  );
+}
+
+```
+
+Install NPM dependencies:
+```bash
+framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

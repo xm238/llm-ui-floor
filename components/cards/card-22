@@ -1,0 +1,330 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+card-22.tsx
+import * as React from 'react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Star, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
+// Interface for component props for type safety and reusability
+interface PlaceCardProps {
+  images: string[];
+  tags: string[];
+  rating: number;
+  title: string;
+  dateRange: string;
+  hostType: string;
+  isTopRated?: boolean;
+  description: string;
+  pricePerNight: number;
+  className?: string;
+}
+
+export const PlaceCard = ({
+  images,
+  tags,
+  rating,
+  title,
+  dateRange,
+  hostType,
+  isTopRated = false,
+  description,
+  pricePerNight,
+  className,
+}: PlaceCardProps) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  // Carousel image change handler
+  const changeImage = (newDirection: number) => {
+    setDirection(newDirection);
+    setCurrentIndex((prevIndex) => {
+      const nextIndex = prevIndex + newDirection;
+      if (nextIndex < 0) return images.length - 1;
+      if (nextIndex >= images.length) return 0;
+      return nextIndex;
+    });
+  };
+
+  // Animation variants for the carousel
+  const carouselVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 0,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? '100%' : '-100%',
+      opacity: 0,
+    }),
+  };
+
+  // Animation variants for staggering content
+  const contentVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  return (
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5 }}
+      variants={contentVariants}
+      // --- NEW: Added hover animation ---
+      whileHover={{ 
+        scale: 1.03, 
+        boxShadow: '0px 10px 30px -5px hsl(var(--foreground) / 0.1)',
+        transition: { type: 'spring', stiffness: 300, damping: 20 }
+      }}
+      // --- END NEW ---
+      className={cn(
+        'w-full max-w-sm overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-lg cursor-pointer',
+        className
+      )}
+    >
+      {/* Image Carousel Section */}
+      <div className="relative group h-64">
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.img
+            key={currentIndex}
+            src={images[currentIndex]}
+            alt={title}
+            custom={direction}
+            variants={carouselVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: 'spring', stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 },
+            }}
+            className="absolute h-full w-full object-cover"
+          />
+        </AnimatePresence>
+        
+        {/* Carousel Navigation */}
+        <div className="absolute inset-0 flex items-center justify-between p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 hover:bg-black/50 text-white" onClick={() => changeImage(-1)}>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 hover:bg-black/50 text-white" onClick={() => changeImage(1)}>
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Top Badges and Rating */}
+        <div className="absolute top-3 left-3 flex gap-2">
+          {tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="bg-background/70 backdrop-blur-sm">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+        <div className="absolute top-3 right-3">
+          <Badge variant="secondary" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm">
+            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" /> {rating}
+          </Badge>
+        </div>
+
+        {/* Pagination Dots */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={cn(
+                'h-1.5 w-1.5 rounded-full transition-all',
+                currentIndex === index ? 'w-4 bg-white' : 'bg-white/50'
+              )}
+              aria-label={`Go to image ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <motion.div variants={contentVariants} className="p-5 space-y-4">
+        <motion.div variants={itemVariants} className="flex justify-between items-start">
+          <h3 className="text-xl font-bold">{title}</h3>
+          {isTopRated && <Badge variant="outline">Top rated</Badge>}
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="text-m text-muted-foreground">
+          <span>{dateRange}</span> &bull; <span>{hostType}</span>
+        </motion.div>
+
+        <motion.p variants={itemVariants} className="text-sm text-muted-foreground leading-relaxed">
+          {description}
+        </motion.p>
+
+        <motion.div variants={itemVariants} className="flex justify-between items-center pt-2">
+          <p className="font-semibold">
+            ${pricePerNight}{' '}
+            <span className="text-sm font-normal text-muted-foreground">/ night</span>
+          </p>
+          <Button className="group">
+            Book Now
+            <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+          </Button>
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+demo.tsx
+import { PlaceCard } from '@/components/ui/card-22';
+
+// Sample data to be passed as props
+const demoPlaceData = {
+  images: [
+    'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?q=80&w=2940&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1596622247990-84877175438a?q=80&w=2864&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1543332164-6e82f355badc?q=80&w=2940&auto=format&fit=crop',
+  ],
+  tags: ['Adventure', 'Ancient Monuments'],
+  rating: 4.8,
+  title: 'Petra, Jordan',
+  dateRange: 'May 1 - 6',
+  hostType: 'Business host',
+  isTopRated: true,
+  description: 'A lost city carved in rose-colored stone, hidden in majestic desert canyons.',
+  pricePerNight: 139,
+};
+
+const PlaceCardDemo = () => {
+  return (
+    <div className="flex min-h-[500px] w-full items-center justify-center bg-background p-4">
+      <PlaceCard
+        images={demoPlaceData.images}
+        tags={demoPlaceData.tags}
+        rating={demoPlaceData.rating}
+        title={demoPlaceData.title}
+        dateRange={demoPlaceData.dateRange}
+        hostType={demoPlaceData.hostType}
+        isTopRated={demoPlaceData.isTopRated}
+        description={demoPlaceData.description}
+        pricePerNight={demoPlaceData.pricePerNight}
+      />
+    </div>
+  );
+};
+
+export default PlaceCardDemo;
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,108 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+animated-button.tsx
+import React, { useEffect, useRef } from "react";
+
+export const Component = () => {
+  const glowRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const glow = glowRef.current;
+    if (!glow) return;
+
+    const onMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) * 100;
+      const y = (e.clientY / window.innerHeight) * 100;
+      glow.style.transform = `translate(-${50 - (x - 50) / 5}%, -${50 - (y - 50) / 5
+        }%)`;
+    };
+
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
+  return (
+    <div>
+
+    <style>{`
+        @keyframes subtlePulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.6; }
+        }
+      `}</style>
+
+  < div className = "relative inline-flex items-center justify-center group" >
+
+    <div
+          ref={ glowRef }
+className = "pointer-events-none absolute w-[200%] h-[200%] rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 blur-3xl opacity-40"
+style = {{
+  top: "50%",
+    left: "50%",
+      transform: "translate(-50%, -50%)",
+        transition: "transform 150ms ease-out",
+          animation: "subtlePulse 6s ease-in-out infinite",
+          }}
+/>
+
+
+  < a
+role = "button"
+className = "relative inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-md border border-white/20 transition-all duration-300 hover:bg-white/20 hover:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/40"
+href = "https://uicat.vercel.app/"
+target = "_blank"
+title = "payment"
+  >
+  Get Started UI CAT
+
+    < /a>
+    < /div>
+    < /div>
+  );
+};
+
+
+demo.tsx
+import { Component } from "@/components/ui/animated-button";
+
+export default function DemoOne() {
+  return <div className="w-full h-screen flex items-center justify-center mx-auto relative" > <Component /> <div
+  className = "absolute w-full h-full -z-10"
+  style = {{
+    backgroundImage:
+    "url('data:image/svg+xml,%3Csvg width=\\'4\\' height=\\'4\\' viewBox=\\'0 0 6 6\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Ccircle cx=\\'6\\' cy=\\'6\\' r=\\'1\\' fill=\\'%23aaa\\' fill-opacity=\\'0.25\\' /%3E%3C/svg%3E')",
+      backgroundColor: "transparent",
+                }
+}
+              > </div></div >;
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

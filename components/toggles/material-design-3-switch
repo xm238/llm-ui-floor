@@ -1,0 +1,391 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+material-design-3-switch.tsx
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { Check, X } from "lucide-react";
+
+// --- MATERIAL DESIGN 3 PHYSICS ---
+const SWITCH_THEME = {
+  "--ease-spring": "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+} as React.CSSProperties;
+
+const switchVariants = cva(
+  "peer inline-flex shrink-0 cursor-pointer items-center rounded-full border-2 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        primary: "peer-checked:bg-primary peer-checked:border-primary",
+        destructive: "peer-checked:bg-destructive peer-checked:border-destructive",
+      },
+      size: {
+        default: "h-8 w-[52px]", // Standard M3
+        sm: "h-6 w-10",          // Compact
+      },
+    },
+    defaultVariants: {
+      variant: "primary",
+      size: "default",
+    },
+  }
+);
+
+// --- AUDIO HAPTIC ENGINE ---
+const playHapticFeedback = (type: "heavy" | "light" | "none") => {
+  if (type === "none" || typeof window === "undefined") return;
+
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContext) return;
+    
+    const ctx = new AudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+
+    if (type === "heavy") {
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(180, now);
+      oscillator.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+      
+      gainNode.gain.setValueAtTime(0.4, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+      
+      oscillator.start(now);
+      oscillator.stop(now + 0.15);
+    } else {
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(800, now);
+      
+      gainNode.gain.setValueAtTime(0.15, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      
+      oscillator.start(now);
+      oscillator.stop(now + 0.08);
+    }
+  } catch (e) {
+    console.error("Audio haptic failed", e);
+  }
+};
+
+export interface SwitchProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
+    VariantProps<typeof switchVariants> {
+  onCheckedChange?: (checked: boolean) => void;
+  showIcons?: boolean;
+  checkedIcon?: React.ReactNode;   // Custom Icon for On State
+  uncheckedIcon?: React.ReactNode; // Custom Icon for Off State
+  haptic?: "heavy" | "light" | "none";
+}
+
+const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
+  ({ 
+    className, 
+    size, 
+    variant, 
+    checked, 
+    defaultChecked, 
+    onCheckedChange, 
+    showIcons = false, 
+    checkedIcon, 
+    uncheckedIcon, 
+    haptic = "none", 
+    style, 
+    disabled, 
+    ...props 
+  }, ref) => {
+    const [isChecked, setIsChecked] = React.useState(defaultChecked ?? false);
+    const [isPressed, setIsPressed] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
+
+    React.useEffect(() => {
+      if (checked !== undefined) {
+        setIsChecked(checked);
+      }
+    }, [checked]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (disabled) return;
+      const newValue = e.target.checked;
+      
+      playHapticFeedback(haptic);
+
+      if (checked === undefined) {
+        setIsChecked(newValue);
+      }
+      onCheckedChange?.(newValue);
+    };
+
+    // Size Calcs
+    const isSmall = size === "sm";
+    const translateDist = isSmall ? "translate-x-[16px]" : "translate-x-[20px]";
+    const handleSizeUnchecked = isSmall ? "w-3 h-3 ml-[2px]" : "w-4 h-4 ml-[2px]";
+    const handleSizeChecked = isSmall ? "w-4 h-4" : "w-6 h-6";
+    const handleSizePressed = isSmall ? "w-5 h-5 -ml-[2px]" : "w-7 h-7 -ml-[2px]";
+    
+    // Icon sizing classes
+    const iconClasses = isSmall ? "w-2.5 h-2.5" : "w-3.5 h-3.5";
+
+    // Logic to determine if we render any icons
+    const shouldRenderIcons = showIcons || checkedIcon || uncheckedIcon;
+
+    return (
+      <label 
+        className={cn(
+          "group relative inline-flex items-center justify-center", 
+          disabled && "cursor-not-allowed opacity-50",
+          "min-w-[48px] min-h-[48px]" 
+        )}
+        style={{ ...SWITCH_THEME, ...style }}
+        onPointerDown={() => !disabled && setIsPressed(true)}
+        onPointerUp={() => setIsPressed(false)}
+        onPointerLeave={() => {
+          setIsPressed(false);
+          setIsHovered(false);
+        }}
+        onPointerEnter={() => !disabled && setIsHovered(true)}
+      >
+        <input
+          type="checkbox"
+          className="peer sr-only"
+          ref={ref}
+          checked={isChecked}
+          onChange={handleChange}
+          disabled={disabled}
+          {...props}
+        />
+
+        {/* --- TRACK --- */}
+        <div
+          className={cn(
+            switchVariants({ variant, size }),
+            "bg-muted border-border",
+            "peer-checked:bg-primary peer-checked:border-primary",
+            className
+          )}
+        >
+          {/* --- HANDLE CONTAINER --- */}
+          <div
+            className={cn(
+              "pointer-events-none block h-full w-full transition-all duration-300 ease-[var(--ease-spring)]",
+              isChecked ? translateDist : "translate-x-0"
+            )}
+          >
+            {/* --- HANDLE --- */}
+            <div
+              className={cn(
+                "absolute top-1/2 -translate-y-1/2 shadow-sm transition-all duration-300 flex items-center justify-center rounded-full left-[2px]",
+                
+                isChecked 
+                  ? "bg-primary-foreground" 
+                  : "bg-foreground text-muted",
+
+                isChecked && variant === "primary" && "text-primary",
+                isChecked && variant === "destructive" && "text-destructive",
+                
+                isPressed 
+                  ? handleSizePressed
+                  : isChecked || (shouldRenderIcons && !isSmall)
+                    ? handleSizeChecked
+                    : handleSizeUnchecked
+              )}
+            >
+              {/* --- ICONS RENDERING --- */}
+              {shouldRenderIcons && (
+                <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                    
+                    {/* CHECKED STATE ICON */}
+                    <div className={cn(
+                        "absolute inset-0 flex items-center justify-center transition-all duration-300",
+                        isChecked ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 -rotate-45"
+                    )}>
+                        {checkedIcon ? (
+                             // If custom icon, render it. 
+                             // We don't force size classes on custom nodes to allow flexibility, 
+                             // but we provide a wrapper that centers it.
+                             checkedIcon
+                        ) : (
+                             <Check className={iconClasses} strokeWidth={4} />
+                        )}
+                    </div>
+
+                    {/* UNCHECKED STATE ICON */}
+                    <div className={cn(
+                        "absolute inset-0 flex items-center justify-center transition-all duration-300 text-muted-foreground",
+                        !isChecked ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 rotate-45"
+                    )}>
+                        {uncheckedIcon ? (
+                            uncheckedIcon
+                        ) : (
+                            <X className={iconClasses} strokeWidth={4} />
+                        )}
+                    </div>
+                </div>
+              )}
+            </div>
+
+            {/* --- HALO --- */}
+            <div 
+                className={cn(
+                    "absolute top-1/2 left-[2px] -translate-y-1/2 -translate-x-1/2 rounded-full pointer-events-none transition-all duration-200",
+                    isSmall ? "w-8 h-8" : "w-10 h-10",
+                    isChecked 
+                      ? (variant === 'destructive' ? "bg-destructive" : "bg-primary") 
+                      : "bg-foreground",
+                    isPressed ? "opacity-10 scale-100" : isHovered ? "opacity-5 scale-100" : "opacity-0 scale-50",
+                    isChecked ? "left-[14px]" : (shouldRenderIcons && !isSmall) ? "left-[14px]" : "left-[10px]",
+                    isSmall && (isChecked ? "left-[10px]" : "left-[8px]")
+                )}
+            />
+          </div>
+        </div>
+      </label>
+    );
+  }
+);
+Switch.displayName = "Switch";
+
+export { Switch };
+
+demo.tsx
+import React, { useState } from "react";
+import { Switch } from "@/components/ui/material-design-3-switch";
+import { Moon, Sun, Lock, Unlock } from "lucide-react";
+
+export default function SwitchShowcase() {
+  const [standard, setStandard] = useState(false);
+  const [icons, setIcons] = useState(true);
+  const [haptic, setHaptic] = useState(false);
+  const [custom, setCustom] = useState(true);
+  const [danger, setDanger] = useState(false);
+
+  return (
+    <div className="min-h-screen w-full flex flex-wrap items-center justify-center gap-8 bg-muted/30 py-18 font-sans">
+      
+      {/* CARD 1: Standard M3 Switch */}
+      <div className="group relative w-full max-w-[220px] aspect-[4/3] bg-card text-card-foreground rounded-[40px] shadow-xl flex flex-col items-center border border-border/50">
+        <div className="absolute top-4 text-center space-y-1 px-4">
+          <h3 className="text-xl font-bold tracking-tight">Standard</h3>
+          <p className="text-muted-foreground text-sm font-medium">Spring Physics</p>
+        </div>
+        
+        <div className="scale-[1.5] absolute bottom-6">
+          <Switch 
+            checked={standard} 
+            onCheckedChange={setStandard} 
+          />
+        </div>
+      </div>
+
+      {/* CARD 2: Icon Mode */}
+      <div className="group relative w-full max-w-[220px] aspect-[4/3] bg-card text-card-foreground rounded-[40px] shadow-xl flex flex-col items-center border border-border/50">
+         <div className="absolute top-4 text-center space-y-1 px-4">
+          <h3 className="text-xl font-bold tracking-tight">Icon Mode</h3>
+          <p className="text-muted-foreground text-sm font-medium">Morphing Handle</p>
+        </div>
+
+        <div className="scale-[1.5] absolute bottom-6">
+          <Switch 
+            checked={icons} 
+            onCheckedChange={setIcons} 
+            showIcons={true}
+          />
+        </div>
+      </div>
+
+      {/* CARD 3: Haptic Audio */}
+      <div className="group relative w-full max-w-[220px] aspect-[4/3] bg-card text-card-foreground rounded-[40px] shadow-xl flex flex-col items-center border border-border/50">
+         <div className="absolute top-4 text-center space-y-1 px-4">
+          <h3 className="text-xl font-bold tracking-tight">Haptic Audio</h3>
+          <p className="text-muted-foreground text-sm font-medium">Heavy "Thud" Sound</p>
+        </div>
+
+        <div className="scale-[1.5] absolute bottom-6">
+          <Switch 
+            checked={haptic} 
+            onCheckedChange={setHaptic} 
+            haptic="heavy" // Triggers the synthetic audio engine
+          />
+        </div>
+      </div>
+
+      {/* CARD 4: Custom Icons */}
+      <div className="group relative w-full max-w-[220px] aspect-[4/3] bg-card text-card-foreground rounded-[40px] shadow-xl flex flex-col items-center border border-border/50">
+         <div className="absolute top-4 text-center space-y-1 px-4">
+          <h3 className="text-xl font-bold tracking-tight">Custom Icons</h3>
+          <p className="text-muted-foreground text-sm font-medium">React Node Support</p>
+        </div>
+
+        <div className="scale-[1.5] absolute bottom-6">
+          <Switch 
+            checked={custom} 
+            onCheckedChange={setCustom} 
+            haptic="light"
+            checkedIcon={<Moon className="w-3.5 h-3.5 fill-current" />}
+            uncheckedIcon={<Sun className="w-3.5 h-3.5 fill-current" />}
+            className="peer-checked:bg-indigo-500 peer-checked:border-indigo-500"
+          />
+        </div>
+      </div>
+
+      {/* CARD 5: Destructive Variant */}
+      <div className="group relative w-full max-w-[220px] aspect-[4/3] bg-card text-card-foreground rounded-[40px] shadow-xl flex flex-col items-center border border-border/50">
+         <div className="absolute top-4 text-center space-y-1 px-4">
+          <h3 className="text-xl font-bold tracking-tight text-destructive">Destructive</h3>
+          <p className="text-muted-foreground text-sm font-medium">Danger Zone UI</p>
+        </div>
+
+        <div className="scale-[1.5] absolute bottom-6">
+          <Switch 
+            checked={danger} 
+            onCheckedChange={setDanger} 
+            variant="destructive"
+            showIcons={true}
+            checkedIcon={<Lock className="w-3 h-3" />}
+            uncheckedIcon={<Unlock className="w-3 h-3" />}
+          />
+        </div>
+      </div>
+
+    </div>
+  );
+}
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

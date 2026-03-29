@@ -1,0 +1,165 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+mail-checker-input.tsx
+"use client"
+
+import { useId, useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import Image from "next/image"
+import md5 from "md5"
+
+export default function MailCheckInput() {
+  const id = useId()
+  const [email, setEmail] = useState("")
+
+  // Generate gravatar URL if valid email
+  const getAvatar = (email: string) => {
+    if (!email.includes("@")) return null
+    const hash = md5(email.trim().toLowerCase())
+    return `https://www.gravatar.com/avatar/${hash}?d=identicon`
+  }
+
+  const avatarUrl = getAvatar(email)
+
+  return (
+    <div className="w-full max-w-md mx-auto space-y-2">
+      <Label
+        htmlFor={id}
+        className="text-sm font-medium text-foreground"
+      >
+        Enter your email
+      </Label>
+      <div className="relative group">
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt="Avatar"
+            width={24}
+            height={24}
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border shadow-sm"
+          />
+        ) : (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+            ?
+          </div>
+        )}
+        <Input
+          id={id}
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="pl-12 h-12 rounded-2xl border border-muted bg-background/80 shadow-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/40"
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Stay updated with our latest news & articles.
+      </p>
+    </div>
+  )
+}
+
+
+demo.tsx
+import MailCheckInput from "@/components/ui/mail-checker-input";
+
+export default function DemoOne() {
+  return <MailCheckInput />;
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+originui/input
+import { cn } from "@/lib/utils";
+import * as React from "react";
+
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",
+          type === "search" &&
+            "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none",
+          type === "file" &&
+            "p-0 pr-3 italic text-muted-foreground/70 file:me-3 file:h-full file:border-0 file:border-r file:border-solid file:border-input file:bg-transparent file:px-3 file:text-sm file:font-medium file:not-italic file:text-foreground",
+          className,
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Input.displayName = "Input";
+
+export { Input };
+
+```
+```tsx
+shadcn/label
+"use client"
+
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+)
+
+const Label = React.forwardRef<
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof labelVariants>
+>(({ className, ...props }, ref) => (
+  <LabelPrimitive.Root
+    ref={ref}
+    className={cn(labelVariants(), className)}
+    {...props}
+  />
+))
+Label.displayName = LabelPrimitive.Root.displayName
+
+export { Label }
+
+```
+
+Install NPM dependencies:
+```bash
+md5, next, @radix-ui/react-label, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

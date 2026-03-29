@@ -1,0 +1,113 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+rating-scale-group.tsx
+"use client";
+
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
+import * as React from "react";
+import { cn } from "@/lib/utils";
+
+const RatingScaleGroup = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <RadioGroupPrimitive.Root
+    ref={ref}
+    className={cn("flex w-full justify-between gap-1", className)}
+    {...props}
+  />
+));
+RatingScaleGroup.displayName = RadioGroupPrimitive.Root.displayName;
+
+const RatingScaleItem = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item> & {
+    label: string;
+  }
+>(({ className, label, ...props }, ref) => (
+  <RadioGroupPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background text-sm font-medium shadow-sm transition-all",
+      "hover:border-primary/70 hover:shadow-md",
+      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70",
+      "data-[state=checked]:border-primary data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground",
+      "disabled:cursor-not-allowed disabled:opacity-50",
+      className
+    )}
+    {...props}
+  >
+    {label}
+    <RadioGroupPrimitive.Indicator className="absolute -top-1 -right-1">
+      <span className="flex size-2.5 rounded-full bg-green-500 shadow-[0_0_6px_2px_rgba(34,197,94,0.6)]" />
+    </RadioGroupPrimitive.Indicator>
+  </RadioGroupPrimitive.Item>
+));
+RatingScaleItem.displayName = "RatingScaleItem";
+
+export { RatingScaleGroup, RatingScaleItem };
+
+
+demo.tsx
+"use client";
+
+import { RatingScaleGroup, RatingScaleItem } from "@/components/ui/rating-scale-group";
+
+function DemoPage() {
+  return (
+    <div className="max-w-md space-y-6">
+      <h2 className="text-lg font-semibold">How satisfied are you?</h2>
+      <p className="text-sm text-muted-foreground">
+        Choose a number between 1 and 10 that best reflects your experience.
+      </p>
+
+      <RatingScaleGroup defaultValue="7">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <RatingScaleItem key={i} value={(i + 1).toString()} label={(i + 1).toString()} />
+        ))}
+      </RatingScaleGroup>
+
+      <div className="mt-2 flex justify-between text-xs font-medium text-muted-foreground">
+        <span>Not satisfied 😞</span>
+        <span>Very satisfied 🤩</span>
+      </div>
+    </div>
+  );
+}
+
+export default DemoPage;
+
+```
+
+Install NPM dependencies:
+```bash
+@radix-ui/react-radio-group
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

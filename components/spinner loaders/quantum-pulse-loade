@@ -1,0 +1,110 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+quantum-pulse-loade.tsx
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+
+export const Component = () => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div className="generating-loader-wrapper">
+      <div className="generating-loader-text">
+        <span className="generating-loader-letter">G</span>
+        <span className="generating-loader-letter">e</span>
+        <span className="generating-loader-letter">n</span>
+        <span className="generating-loader-letter">e</span>
+        <span className="generating-loader-letter">r</span>
+        <span className="generating-loader-letter">a</span>
+        <span className="generating-loader-letter">t</span>
+        <span className="generating-loader-letter">i</span>
+        <span className="generating-loader-letter">n</span>
+        <span className="generating-loader-letter">g</span>
+      </div>
+      <div className="generating-loader-bar"></div>
+    </div>
+  );
+};
+
+
+demo.tsx
+import { Component } from "@/components/ui/quantum-pulse-loade";
+
+export default function DemoOne() {
+  return <Component />;
+}
+
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+
+@keyframes generating-loader-letter-anim {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) rotateX(-90deg);
+    text-shadow: 0 0 0px rgba(255, 255, 255, 0);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    opacity: 0;
+    transform: translateY(-20px) rotateX(90deg);
+    text-shadow: 0 0 0px rgba(255, 255, 255, 0);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes generating-loader-bar-anim {
+  0% {
+    left: -100%;
+  }
+  50% {
+    left: 100%;
+  }
+  100% {
+    left: -100%;
+  }
+}
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

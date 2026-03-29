@@ -1,0 +1,128 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+progressive-blur.tsx
+import React from "react";
+
+type ProgressiveBlurProps = {
+  className?: string;
+  backgroundColor?: string;
+  position?: "top" | "bottom";
+  height?: string;
+  blurAmount?: string;
+};
+
+const ProgressiveBlur = ({
+  className = "",
+  backgroundColor = "#f5f4f3",
+  position = "top",
+  height = "150px",
+  blurAmount = "4px",
+}: ProgressiveBlurProps) => {
+  const isTop = position === "top";
+
+  return (
+    <div
+      className={`pointer-events-none absolute left-0 w-full select-none ${className}`}
+      style={{
+        [isTop ? "top" : "bottom"]: 0,
+        height,
+        background: isTop
+          ? `linear-gradient(to top, transparent, ${backgroundColor})`
+          : `linear-gradient(to bottom, transparent, ${backgroundColor})`,
+        maskImage: isTop
+          ? `linear-gradient(to bottom, ${backgroundColor} 50%, transparent)`
+          : `linear-gradient(to top, ${backgroundColor} 50%, transparent)`,
+        WebkitBackdropFilter: `blur(${blurAmount})`,
+        backdropFilter: `blur(${blurAmount})`,
+        WebkitUserSelect: "none",
+        userSelect: "none",
+      }}
+    />
+  );
+};
+
+const Skiper41 = () => {
+  return (
+    <div className="relative flex h-full w-full flex-col items-center justify-center bg-[#f5f4f3] text-black/40">
+      <ProgressiveBlur position="top" backgroundColor="#f5f4f3" />
+      <ProgressiveBlur position="bottom" backgroundColor="#f5f4f3" />
+
+      <div className="flex h-[calc(100vh-1rem)] w-full flex-col items-center overflow-scroll">
+        <div className="mt-42 grid content-start justify-items-center gap-6 text-center text-black">
+          <span className="relative max-w-[12ch] text-xs uppercase leading-tight opacity-40 after:absolute after:left-1/2 after:top-full after:h-16 after:w-px after:bg-gradient-to-b after:from-white after:to-black after:content-['']">
+            Scroll down to see the effect
+          </span>
+        </div>
+
+        <div className="mt-24 w-full max-w-lg space-y-20 px-5 text-justify">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <div key={index}>
+              Lorem ipsum dolor sit amet consectetur adipisicing elit.
+              Obcaecati, reiciendis eum vitae nostrum, temporibus repudiandae
+              voluptatibus, natus iure ipsa velit odit quibusdam illum. Quaerat
+              cumque laudantium libero reprehenderit perferendis quo nulla
+              voluptate? Repellat tenetur labore exercitationem dicta libero
+              voluptate suscipit, iusto ea assumenda. Ipsa enim, quidem atque
+              modi error eaque, debitis perferendis, hic iste libero dignissimos
+              ea! Quod inventore beatae aspernatur nulla rem perferendis aperiam
+              at debitis delectus odit quia animi ex mollitia vero molestias
+              itaque deleniti, quos exercitationem consequatur assumenda dolor?
+              Quod reiciendis in similique reprehenderit commodi quo blanditiis
+              nobis hic ea optio illum placeat officia alias quasi autem earum
+              quos obcaecati, voluptatum corporis quisquam. Quisquam iste, quas
+              explicabo omnis harum aut quam adipisci, voluptatem saepe
+              accusantium doloribus repellendus amet culpa magnam ex et dolores
+              accusamus commodi facere aliquam voluptatum alias? Officia
+              expedita ut vel? Beatae deserunt sequi id eos libero suscipit
+              totam cum, sed architecto atque quisquam et incidunt quod fuga
+              ullam repellat assumenda quos ab, voluptatum sint nesciunt? Ad
+              sapiente est laborum quam sint eius sequi. Eum, veniam
+              dignissimos.
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export { ProgressiveBlur, Skiper41 };
+
+
+
+demo.tsx
+import { Skiper41 } from "@/components/ui/progressive-blur";
+
+export default function DemoOne() {
+  return <Skiper41 />;
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

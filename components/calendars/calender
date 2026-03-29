@@ -1,0 +1,852 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+calender.tsx
+"use client";
+
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const calendarVariants = cva(
+  "inline-block space-y-4 rounded-ele border border-border bg-background relative w-full max-w-sm mx-auto shadow-sm/2",
+  {
+    variants: {
+      size: {
+        sm: "p-2 sm:p-3 text-sm",
+        default: "p-3 sm:p-4",
+        lg: "p-4 sm:p-5 text-base",
+      },
+      alwaysOnTop: {
+        true: "z-9999",
+        false: "z-10",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+      alwaysOnTop: true,
+    },
+  }
+);
+
+const dayVariants = cva(
+  "inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-ele text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+  {
+    variants: {
+      variant: {
+        default:
+          "text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring",
+        selected:
+          "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring font-semibold",
+        today:
+          "bg-accent text-accent-foreground font-semibold hover:bg-accent/80 focus-visible:ring-ring",
+        outside:
+          "text-muted-foreground opacity-50 hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring",
+        disabled:
+          "text-muted-foreground opacity-30 cursor-not-allowed",
+        "range-start":
+          "bg-primary text-primary-foreground rounded-r-none hover:bg-primary/90 focus-visible:ring-ring",
+        "range-end":
+          "bg-primary text-primary-foreground rounded-l-none hover:bg-primary/90 focus-visible:ring-ring",
+        "range-middle":
+          "bg-primary/20 text-foreground rounded-none hover:bg-primary/30 focus-visible:ring-ring",
+      },
+      size: {
+        sm: "h-6 w-6 sm:h-7 sm:w-7 text-xs",
+        default: "h-8 w-8 sm:h-9 sm:w-9 text-sm",
+        lg: "h-9 w-9 sm:h-10 sm:w-10 text-base",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+
+interface CalendarProps extends VariantProps<typeof calendarVariants> {
+  selected?: Date;
+  onSelect?: (date: Date) => void;
+  disabled?: (date: Date) => boolean;
+  locale?: string;
+  className?: string;
+  showOutsideDays?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
+  mode?: "single" | "multiple" | "range";
+  selectedDates?: Date[];
+  selectedRange?: { from: Date; to?: Date };
+  onSelectMultiple?: (dates: Date[]) => void;
+  onSelectRange?: (range: { from: Date; to?: Date }) => void;
+  showMonthYearPickers?: boolean;
+  alwaysOnTop?: boolean;
+}
+
+const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function Calendar({
+  selected,
+  onSelect,
+  disabled,
+  locale = "en-US",
+  className,
+  size,
+  showOutsideDays = true,
+  minDate,
+  maxDate,
+  mode = "single",
+  selectedDates = [],
+  selectedRange,
+  onSelectMultiple,
+  onSelectRange,
+  showMonthYearPickers = false,
+  alwaysOnTop = true,
+  ...props
+}: CalendarProps) {
+  const [currentDate, setCurrentDate] = React.useState(selected || new Date());
+  const [isAnimating, setIsAnimating] = React.useState(false);
+  const [direction, setDirection] = React.useState<"left" | "right">("right");
+  const today = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  // Generate year range for year picker (current year ± 50 years)
+  const yearRange = Array.from({ length: 101 }, (_, i) => currentYear - 50 + i);
+
+  // Get first day of the month and calculate calendar grid
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+  const firstDayOfWeek = firstDayOfMonth.getDay();
+  const daysInMonth = lastDayOfMonth.getDate();
+
+  // Calculate previous month days to show
+  const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+  const prevMonthDays = Array.from(
+    { length: firstDayOfWeek },
+    (_, i) => prevMonthLastDay - firstDayOfWeek + i + 1
+  );
+
+  // Calculate next month days to show
+  const totalCells = 42; // 6 rows × 7 days
+  const currentMonthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const remainingCells =
+    totalCells - prevMonthDays.length - currentMonthDays.length;
+  const nextMonthDays = Array.from({ length: remainingCells }, (_, i) => i + 1);
+  const navigateMonth = (direction: "prev" | "next") => {
+    setIsAnimating(true);
+    setDirection(direction === "prev" ? "left" : "right");
+
+    setTimeout(() => {
+      const newDate = new Date(currentDate);
+      if (direction === "prev") {
+        newDate.setMonth(currentMonth - 1);
+      } else {
+        newDate.setMonth(currentMonth + 1);
+      }
+      setCurrentDate(newDate);
+      setIsAnimating(false);
+    }, 150);
+  };
+
+  const handleMonthChange = (month: string) => {
+    const monthIndex = parseInt(month, 10);
+    const newDate = new Date(currentDate);
+    newDate.setMonth(monthIndex);
+    setCurrentDate(newDate);
+  };
+
+  const handleYearChange = (year: string) => {
+    const yearValue = parseInt(year, 10);
+    const newDate = new Date(currentDate);
+    newDate.setFullYear(yearValue);
+    setCurrentDate(newDate);
+  };
+
+  const isDateDisabled = (date: Date) => {
+    if (disabled?.(date)) return true;
+    if (minDate && date < minDate) return true;
+    if (maxDate && date > maxDate) return true;
+    return false;
+  };
+  const isDateSelected = (date: Date) => {
+    if (mode === "single") {
+      return selected && isSameDay(date, selected);
+    }
+    if (mode === "multiple") {
+      return selectedDates.some((d) => isSameDay(d, date));
+    }
+    if (mode === "range" && selectedRange) {
+      if (!selectedRange.to) {
+        // Only from date is selected
+        return isSameDay(date, selectedRange.from);
+      }
+      const dateTime = date.getTime();
+      const fromTime = selectedRange.from.getTime();
+      const toTime = selectedRange.to.getTime();
+      return dateTime >= fromTime && dateTime <= toTime;
+    }
+    return false;
+  };
+
+  const isDateInRange = (date: Date) => {
+    if (mode === "range" && selectedRange) {
+      if (!selectedRange.to) return isSameDay(date, selectedRange.from);
+      const dateTime = date.getTime();
+      const fromTime = selectedRange.from.getTime();
+      const toTime = selectedRange.to.getTime();
+      return dateTime > fromTime && dateTime < toTime;
+    }
+    return false;
+  };
+
+  const isRangeStart = (date: Date) => {
+    if (mode === "range" && selectedRange) {
+      return isSameDay(date, selectedRange.from);
+    }
+    return false;
+  };
+
+  const isRangeEnd = (date: Date) => {
+    if (mode === "range" && selectedRange && selectedRange.to) {
+      return isSameDay(date, selectedRange.to);
+    }
+    return false;
+  };
+
+  const isToday = (date: Date) => isSameDay(date, today);
+
+  const handleDateClick = (day: number, monthOffset: number = 0) => {
+    const clickedDate = new Date(currentYear, currentMonth + monthOffset, day);
+
+    if (isDateDisabled(clickedDate)) return;
+
+    if (mode === "single") {
+      onSelect?.(clickedDate);
+    } else if (mode === "multiple") {
+      const newDates = selectedDates.some((d) => isSameDay(d, clickedDate))
+        ? selectedDates.filter((d) => !isSameDay(d, clickedDate))
+        : [...selectedDates, clickedDate];
+      onSelectMultiple?.(newDates);
+    } else if (mode === "range") {
+      if (!selectedRange || (selectedRange.from && selectedRange.to)) {
+        // Start new range selection - only set the 'from' date
+        onSelectRange?.({ from: clickedDate });
+      } else if (selectedRange.from && !selectedRange.to) {
+        // Complete the range selection
+        const from =
+          selectedRange.from <= clickedDate ? selectedRange.from : clickedDate;
+        const to =
+          selectedRange.from <= clickedDate ? clickedDate : selectedRange.from;
+        onSelectRange?.({ from, to });
+      }
+    }
+  };
+  const getDayVariant = (
+    day: number,
+    monthOffset: number = 0
+  ):
+    | "default"
+    | "selected"
+    | "today"
+    | "outside"
+    | "disabled"
+    | "range-start"
+    | "range-end"
+    | "range-middle" => {
+    const date = new Date(currentYear, currentMonth + monthOffset, day);
+
+    if (isDateDisabled(date)) return "disabled";
+    if (mode === "range" && selectedRange) {
+      if (isRangeStart(date)) return "range-start";
+      if (isRangeEnd(date)) return "range-end";
+      if (isDateInRange(date)) return "range-middle";
+    }
+    if (isDateSelected(date)) return "selected";
+    if (isToday(date)) return "today";
+    if (monthOffset !== 0) return "outside";
+    return "default";
+  };
+
+  const slideVariants = {
+    enter: (direction: string) => ({
+      x: direction === "right" ? 300 : -300,
+      opacity: 0,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: string) => ({
+      zIndex: 0,
+      x: direction === "right" ? -300 : 300,
+      opacity: 0,
+    }),
+  };
+  return (
+    <div
+      className={cn(calendarVariants({ size, alwaysOnTop }), className)}
+      {...props}
+    >
+      {" "}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => navigateMonth("prev")}
+          className="inline-flex items-center justify-center rounded-ele p-1 sm:p-1.5 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          disabled={isAnimating}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1 justify-center">
+          {showMonthYearPickers ? (
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
+              <Select
+                value={currentMonth.toString()}
+                onValueChange={handleMonthChange}
+              >
+                <SelectTrigger
+                  className="w-[100px] sm:w-[120px] h-7 sm:h-8 text-xs sm:text-sm"
+                  size="sm"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((month, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      <span className="hidden sm:inline">{month}</span>
+                      <span className="sm:hidden">{month.slice(0, 3)}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={currentYear.toString()}
+                onValueChange={handleYearChange}
+              >
+                <SelectTrigger
+                  className="w-[70px] sm:w-[80px] h-7 sm:h-8 text-xs sm:text-sm"
+                  size="sm"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearRange.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <motion.h2
+              key={`${currentMonth}-${currentYear}`}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-base sm:text-lg font-semibold text-foreground text-center px-2"
+            >
+              <span className="hidden sm:inline">
+                {MONTHS[currentMonth]} {currentYear}
+              </span>
+              <span className="sm:hidden">
+                {MONTHS[currentMonth].slice(0, 3)} {currentYear}
+              </span>
+            </motion.h2>
+          )}
+        </div>
+
+        <button
+          onClick={() => navigateMonth("next")}
+          className="inline-flex items-center justify-center rounded-ele p-1 sm:p-1.5 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          disabled={isAnimating}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+      {/* Days of week header */}
+      <div className="grid grid-cols-7 gap-1">
+        {DAYS_OF_WEEK.map((day) => (
+          <div
+            key={day}
+            className="flex items-center justify-center h-7 sm:h-8 text-xs text-muted-foreground"
+          >
+            <span className="hidden sm:inline">{day}</span>
+            <span className="sm:hidden">{day.slice(0, 1)}</span>
+          </div>
+        ))}
+      </div>
+      {/* Calendar grid */}
+      <div className="relative overflow-hidden">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={`${currentMonth}-${currentYear}`}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 500, damping: 30 },
+              opacity: { duration: 0.2 },
+            }}
+            className="grid grid-cols-7 gap-0.5 sm:gap-1"
+          >
+            {/* Previous month days */}
+            {showOutsideDays &&
+              prevMonthDays.map((day) => (
+                <button
+                  key={`prev-${day}`}
+                  onClick={() => handleDateClick(day, -1)}
+                  className={cn(
+                    dayVariants({ variant: getDayVariant(day, -1), size })
+                  )}
+                  disabled={isDateDisabled(
+                    new Date(currentYear, currentMonth - 1, day)
+                  )}
+                >
+                  {day}
+                </button>
+              ))}
+
+            {/* Current month days */}
+            {currentMonthDays.map((day) => (
+              <button
+                key={`current-${day}`}
+                onClick={() => handleDateClick(day)}
+                className={cn(
+                  dayVariants({ variant: getDayVariant(day), size })
+                )}
+                disabled={isDateDisabled(
+                  new Date(currentYear, currentMonth, day)
+                )}
+              >
+                {day}
+              </button>
+            ))}
+
+            {/* Next month days */}
+            {showOutsideDays &&
+              nextMonthDays.map((day) => (
+                <button
+                  key={`next-${day}`}
+                  onClick={() => handleDateClick(day, 1)}
+                  className={cn(
+                    dayVariants({ variant: getDayVariant(day, 1), size })
+                  )}
+                  disabled={isDateDisabled(
+                    new Date(currentYear, currentMonth + 1, day)
+                  )}
+                >
+                  {day}
+                </button>
+              ))}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+// Helper function to check if two dates are the same day
+function isSameDay(date1: Date, date2: Date): boolean {
+  return (
+    date1.getDate() === date2.getDate() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getFullYear() === date2.getFullYear()
+  );
+}
+
+export { Calendar, calendarVariants, dayVariants, type CalendarProps };
+
+demo.tsx
+import { Calendar } from "@/components/ui/calender";
+import React from 'react';
+
+export default function DemoOne() { 
+  const [date, setDate] = React.useState<Date>()
+
+  return(
+    <div>
+      <Calendar selected={date} onSelect={setDate} />
+    </div>
+  );
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+preetsuthar17/select
+"use client";
+
+import * as React from "react";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { type LucideIcon, ChevronDown, Check } from "lucide-react";
+import { motion } from "motion/react";
+
+const selectTriggerVariants = cva(
+  "flex h-9 w-full items-center justify-between gap-3 rounded-ele border border-border bg-background px-3 py-2 text-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 border border-border bg-input",
+  {
+    variants: {
+      variant: {
+        default:
+          "hover:bg-accent hover:text-accent-foreground shadow-sm/2",
+        outline: "border-2 hover:border-ring shadow-sm/2",
+        ghost:
+          "border-transparent hover:bg-accent hover:text-accent-foreground",
+      },
+      size: {
+        sm: "h-8 p-2 text-xs gap-2",
+        default: "h-9 p-3 gap-3",
+        lg: "h-10 p-4 text-base gap-4",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+
+const selectContentVariants = cva(
+  "relative z-50 max-h-[300px] min-w-[8rem] overflow-hidden rounded-ele border border-border bg-background text-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+  {
+    variants: {
+      position: {
+        popper:
+          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+        "item-aligned": "",
+      },
+    },
+    defaultVariants: {
+      position: "popper",
+    },
+  }
+);
+
+const Select = SelectPrimitive.Root;
+
+const SelectGroup = SelectPrimitive.Group;
+
+const SelectValue = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Value>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value> & {
+    placeholder?: string;
+  }
+>(({ className, placeholder, ...props }, ref) => (
+  <SelectPrimitive.Value
+    ref={ref}
+    className={cn("text-sm select-none", className)}
+    placeholder={
+      placeholder && (
+        <span className="text-muted-foreground select-none">
+          {placeholder}
+        </span>
+      )
+    }
+    {...props}
+  />
+));
+SelectValue.displayName = SelectPrimitive.Value.displayName;
+
+interface SelectTriggerProps
+  extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>,
+    VariantProps<typeof selectTriggerVariants> {
+  icon?: LucideIcon;
+  placeholder?: string;
+}
+
+const SelectTrigger = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  SelectTriggerProps
+>(
+  (
+    { className, children, variant, size, icon: Icon, placeholder, ...props },
+    ref
+  ) => (
+    <SelectPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        "group",
+        selectTriggerVariants({ variant, size }),
+        className
+      )}
+      {...props}
+    >
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        {Icon && (
+          <Icon
+            size={16}
+            className="shrink-0 text-muted-foreground"
+          />
+        )}
+        <span className="truncate">{children}</span>
+      </div>{" "}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDown
+          size={16}
+          className="opacity-50 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
+        />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  )
+);
+SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
+
+interface SelectContentProps
+  extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> {
+  position?: "popper" | "item-aligned";
+}
+
+const SelectContent = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Content>,
+  SelectContentProps
+>(({ className, children, position = "popper", ...props }, ref) => (
+  <SelectPrimitive.Portal>
+    <SelectPrimitive.Content
+      ref={ref}
+      className={cn(selectContentVariants({ position }), className)}
+      position={position}
+      {...props}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+      >
+        <SelectPrimitive.Viewport
+          className={cn(
+            "p-2 max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent",
+            position === "popper" &&
+              "h-fit w-full min-w-[var(--radix-select-trigger-width)]"
+          )}
+        >
+          {children}
+        </SelectPrimitive.Viewport>
+      </motion.div>
+    </SelectPrimitive.Content>
+  </SelectPrimitive.Portal>
+));
+SelectContent.displayName = SelectPrimitive.Content.displayName;
+
+const SelectLabel = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.Label
+    ref={ref}
+    className={cn(
+      "px-3 py-2 text-xs font-semibold text-muted-foreground",
+      className
+    )}
+    {...props}
+  />
+));
+SelectLabel.displayName = SelectPrimitive.Label.displayName;
+
+interface SelectItemProps
+  extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> {
+  icon?: LucideIcon;
+}
+
+const SelectItem = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Item>,
+  SelectItemProps
+>(({ className, children, icon: Icon, ...props }, ref) => (
+  <SelectPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex w-full cursor-default select-none items-center rounded-lg py-2 pl-3 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[disabled]:text-muted-foreground",
+      className
+    )}
+    {...props}
+  >
+    <motion.div
+      className="flex w-full items-center gap-2"
+      whileHover={{ x: 2 }}
+      transition={{ duration: 0.1 }}
+    >
+      {Icon && <Icon size={16} className="shrink-0" />}
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    </motion.div>
+    <span className="absolute right-3 flex h-3.5 w-3.5 items-center justify-center">
+      <SelectPrimitive.ItemIndicator>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.1 }}
+        >
+          <Check size={16} />
+        </motion.div>
+      </SelectPrimitive.ItemIndicator>
+    </span>
+  </SelectPrimitive.Item>
+));
+SelectItem.displayName = SelectPrimitive.Item.displayName;
+
+const SelectSeparator = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.Separator
+    ref={ref}
+    className={cn("-mx-1 my-1 h-px bg-muted", className)}
+    {...props}
+  />
+));
+SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
+
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  selectTriggerVariants,
+};
+```
+
+Install NPM dependencies:
+```bash
+motion, lucide-react, class-variance-authority, @radix-ui/react-select
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --hu-font-geist: var(----hu-font-geist);
+  --hu-font-jetbrains: var(----hu-font-jetbrains);
+  --radius: var(----radius);
+  --card-radius: var(----card-radius);
+  --color-hu-background: var(----hu-background);
+  --color-hu-foreground: var(----hu-foreground);
+  --color-hu-card: var(----hu-card);
+  --color-hu-card-foreground: var(----hu-card-foreground);
+  --color-hu-primary: var(----hu-primary);
+  --color-hu-primary-foreground: var(----hu-primary-foreground);
+  --color-hu-secondary: var(----hu-secondary);
+  --color-hu-secondary-foreground: var(----hu-secondary-foreground);
+  --color-hu-muted: var(----hu-muted);
+  --color-hu-muted-foreground: var(----hu-muted-foreground);
+  --color-hu-accent: var(----hu-accent);
+  --color-hu-accent-foreground: var(----hu-accent-foreground);
+  --color-hu-destructive: var(----hu-destructive);
+  --color-hu-destructive-foreground: var(----hu-destructive-foreground);
+  --color-hu-border: var(----hu-border);
+  --color-hu-input: var(----hu-input);
+  --color-hu-ring: var(----hu-ring);
+  --color-color-fd-background: var(----color-fd-background);
+  --color-color-fd-card: var(----color-fd-card);
+}
+
+:root {
+  --hu-font-geist: var(--font-geist);
+  --hu-font-jetbrains: var(--font-jetbrains-mono);
+  --radius: 0.8rem;
+  --card-radius: 1rem;
+  --hu-background: 0, 0%, 100%;
+  --hu-foreground: 0, 0%, 14%;
+  --hu-card: 0, 0%, 99%;
+  --hu-card-foreground: 0, 0%, 14%;
+  --hu-primary: 235, 100%, 60%;
+  --hu-primary-foreground: 0, 0%, 98%;
+  --hu-secondary: 0, 0%, 97%;
+  --hu-secondary-foreground: 0, 0%, 20%;
+  --hu-muted: 0, 0%, 97%;
+  --hu-muted-foreground: 0, 0%, 56%;
+  --hu-accent: 0, 0%, 96%;
+  --hu-accent-foreground: 0, 0%, 20%;
+  --hu-destructive: 9, 96%, 47%;
+  --hu-destructive-foreground: 0, 0%, 98%;
+  --hu-border: 0, 0%, 92%;
+  --hu-input: 0, 0%, 100%;
+  --hu-ring: 0, 0%, 71%;
+  --color-fd-background: hsl(var(--hu-background));
+  --color-fd-card: hsl(var(--hu-background));
+}
+
+.dark {
+  --hu-background: 0, 0%, 7%;
+  --hu-foreground: 0, 0%, 100%;
+  --hu-card: 0, 0%, 9%;
+  --hu-card-foreground: 0, 0%, 100%;
+  --hu-primary: 235, 100%, 60%;
+  --hu-primary-foreground: 0, 0%, 98%;
+  --hu-secondary: 0, 0%, 15%;
+  --hu-secondary-foreground: 0, 0%, 100%;
+  --hu-muted: 0, 0%, 15%;
+  --hu-muted-foreground: 0, 0%, 71%;
+  --hu-accent: 0, 0%, 15%;
+  --hu-accent-foreground: 0, 0%, 100%;
+  --hu-destructive: 0, 84%, 50%;
+  --hu-destructive-foreground: 0, 0%, 98%;
+  --hu-border: 0, 0%, 100%, 10%;
+  --hu-input: 0, 0%, 100%, 5%;
+  --hu-ring: 0, 0%, 56%;
+  --color-fd-background: hsl(var(--hu-background));
+  --color-fd-card: hsl(var(--hu-background));
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

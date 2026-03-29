@@ -1,0 +1,357 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+onboarding-checklist.tsx
+// components/ui/onboarding-checklist.tsx
+"use client";
+
+import * as React from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, PlayCircle } from "lucide-react";
+import { cn } from "@/lib/utils"; // Assuming you have a `cn` utility from shadcn
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+
+// Define the type for a single checklist item
+interface ChecklistItem {
+  id: number | string;
+  text: string;
+  helperText?: string;
+  helperLink?: {
+    href: string;
+    text: string;
+  };
+}
+
+// Define the props for the main component
+export interface OnboardingChecklistProps {
+  title: string;
+  description: string;
+  items: ChecklistItem[];
+  videoThumbnailUrl: string;
+  videoUrl: string;
+  className?: string;
+}
+
+/**
+ * A responsive and animated onboarding checklist component.
+ * @param title - The main heading for the checklist.
+ * @param description - A short description displayed below the title.
+ * @param items - An array of checklist items to display.
+ * @param videoThumbnailUrl - The URL for the video thumbnail image.
+ * @param videoUrl - The URL for the video to be played in a modal.
+ * @param className - Optional additional class names for the container.
+ */
+export const OnboardingChecklist = ({
+  title,
+  description,
+  items,
+  videoThumbnailUrl,
+  videoUrl,
+  className,
+}: OnboardingChecklistProps) => {
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+        when: "beforeChildren",
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className={cn(
+        "w-full max-w-4xl mx-auto bg-card text-card-foreground border rounded-2xl shadow-sm p-8 overflow-hidden",
+        className
+      )}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        {/* Left Side: Title and Checklist */}
+        <div className="flex flex-col">
+          <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+          <p className="mt-2 text-muted-foreground">{description}</p>
+          <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+            {items.map((item) => (
+              <motion.li key={item.id} variants={itemVariants} className="flex flex-col">
+                <div className="flex items-start">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span className="ml-3 text-sm font-medium">{item.text}</span>
+                </div>
+                {item.helperText && item.helperLink && (
+                  <div className="ml-8 mt-1 text-xs text-muted-foreground">
+                    {item.helperText}{" "}
+                    <a
+                      href={item.helperLink.href}
+                      className="text-primary underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+                    >
+                      {item.helperLink.text}
+                    </a>
+                  </div>
+                )}
+              </motion.li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Right Side: Video Thumbnail */}
+        <motion.div
+          variants={itemVariants} // Re-using item variant for a nice slide-in effect
+          className="relative group rounded-lg overflow-hidden cursor-pointer w-full aspect-video"
+        >
+          <Dialog>
+            <DialogTrigger asChild>
+              <div>
+                <img
+                  src={videoThumbnailUrl}
+                  alt="Video guide thumbnail"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                  <PlayCircle className="h-16 w-16 text-white/80 transform transition-all duration-300 group-hover:scale-110 group-hover:text-white" />
+                </div>
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl p-0 border-0">
+              <div className="aspect-video">
+                <iframe
+                  src={videoUrl}
+                  title="Onboarding Video Guide"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full rounded-lg"
+                ></iframe>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+demo.tsx
+// demo.tsx
+import { OnboardingChecklist } from "@/components/ui/onboarding-checklist"; // Adjust the import path
+
+const OnboardingChecklistDemo = () => {
+  // Sample data for the component
+  const checklistData = {
+    title: "Get Started - It only takes 10 minutes",
+    description:
+      "Please keep these documents and details ready for a smooth sign-up",
+    items: [
+      { id: 1, text: "PAN card" },
+      { id: 2, text: "GST number, if applicable" },
+      {
+        id: 3,
+        text: "FSSAI license",
+        helperText: "Don't have a FSSAI license?",
+        helperLink: { href: "#", text: "Apply here" },
+      },
+      {
+        id: 4,
+        text: "Menu & profile food image",
+        helperText: "What is profile food image?",
+        helperLink: { href: "#", text: "Refer here" },
+      },
+      { id: 5, text: "Bank account details" },
+    ],
+    videoThumbnailUrl: "https://i.ytimg.com/vi/3yBgLxgwS1U/hqdefault.jpg?sqp=-oaymwEnCOADEI4CSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLA9pydkJZGVZZ9Nrkz0I5ZO8F0Rsg", // Replace with an actual thumbnail URL
+    videoUrl: "https://www.youtube.com/embed/3yBgLxgwS1U?si=_MZFE2nm9fevcj76&t=30", // Replace with the embed URL of your video
+  };
+
+  return (
+    <div className="w-full bg-background flex items-center justify-center p-4">
+      <OnboardingChecklist
+        title={checklistData.title}
+        description={checklistData.description}
+        items={checklistData.items}
+        videoThumbnailUrl={checklistData.videoThumbnailUrl}
+        videoUrl={checklistData.videoUrl}
+      />
+    </div>
+  );
+};
+
+export default OnboardingChecklistDemo;
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/dialog
+'use client';
+
+import * as React from 'react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+
+const Dialog = DialogPrimitive.Root;
+
+const DialogTrigger = DialogPrimitive.Trigger;
+
+const DialogPortal = DialogPrimitive.Portal;
+
+const DialogClose = DialogPrimitive.Close;
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      'fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      className
+    )}
+    {...props}
+  />
+));
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+DialogContent.displayName = DialogPrimitive.Content.displayName;
+
+const DialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col space-y-1.5 text-center sm:text-left',
+      className
+    )}
+    {...props}
+  />
+);
+DialogHeader.displayName = 'DialogHeader';
+
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
+      className
+    )}
+    {...props}
+  />
+);
+DialogFooter.displayName = 'DialogFooter';
+
+const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn(
+      'text-lg font-semibold leading-none tracking-tight',
+      className
+    )}
+    {...props}
+  />
+));
+DialogTitle.displayName = DialogPrimitive.Title.displayName;
+
+const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn('text-sm text-muted-foreground', className)}
+    {...props}
+  />
+));
+DialogDescription.displayName = DialogPrimitive.Description.displayName;
+
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+};
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion, @radix-ui/react-dialog
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

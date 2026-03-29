@@ -1,0 +1,317 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+card-curtain-reveal.tsx
+"use client"
+
+import * as React from "react"
+import { HTMLMotionProps, Variants, motion } from "motion/react"
+
+import { cn } from "@/lib/utils"
+
+const curtainVriants: Variants = {
+  visible: {
+    clipPath: "polygon(0 0,100% 0,100% 100%,0 100%)",
+    transition: {
+      duration: 0.4,
+      ease: ["easeOut", [0.25, 1.5, 0.5, 1]],
+    },
+  },
+
+  hidden: {
+    clipPath: "polygon(50% 0,50% 0,50% 100%,50% 100%)",
+    transition: {
+      duration: 0.3,
+      ease: ["easeOut", [0.25, 1.5, 0.5, 1]],
+    },
+  },
+}
+
+interface CardCurtainRevealContextValue {
+  isMouseIn: boolean
+}
+const CardCurtainRevealContext = React.createContext<
+  CardCurtainRevealContextValue | undefined
+>(undefined)
+function useCardCurtainRevealContext() {
+  const context = React.useContext(CardCurtainRevealContext)
+  if (!context) {
+    throw new Error(
+      "useCardCurtainRevealContext must be used within a CardCurtainReveal Component"
+    )
+  }
+  return context
+}
+
+const CardCurtainReveal = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ children, className, ...props }, ref) => {
+  const [isMouseIn, setIsMouseIn] = React.useState(false)
+  const handleMouseEnter = React.useCallback(() => setIsMouseIn(true), [])
+  const handleMouseLeave = React.useCallback(() => setIsMouseIn(false), [])
+
+  return (
+    <CardCurtainRevealContext.Provider value={{ isMouseIn }}>
+      <div
+        ref={ref}
+        className={cn(
+          "relative flex flex-col gap-2 overflow-hidden",
+          className
+        )}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        {...props}
+      >
+        {children}
+      </div>
+    </CardCurtainRevealContext.Provider>
+  )
+})
+CardCurtainReveal.displayName = "CardCurtainReveal"
+
+const CardCurtainRevealFooter = React.forwardRef<
+  HTMLDivElement,
+  HTMLMotionProps<"div">
+>(({ className, ...props }, ref) => {
+  const { isMouseIn } = useCardCurtainRevealContext()
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      variants={curtainVriants}
+      animate={isMouseIn ? "visible" : "hidden"}
+      {...props}
+    />
+  )
+})
+CardCurtainRevealFooter.displayName = "CardCurtainReveal"
+
+const CardCurtainRevealBody = React.forwardRef<
+  HTMLDivElement,
+  React.HtmlHTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  return <div ref={ref} className={cn("flex-1 p-6", className)} {...props} />
+})
+CardCurtainRevealBody.displayName = "CardCurtainRevealBody"
+
+const CardCurtainRevealTitle = React.forwardRef<
+  HTMLHeadingElement,
+  HTMLMotionProps<"h2">
+>(({ className, ...props }, ref) => {
+  const { isMouseIn } = useCardCurtainRevealContext()
+
+  return (
+    <motion.h2
+      ref={ref}
+      className={className}
+      animate={isMouseIn ? { y: 0 } : { y: 170 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      {...props}
+    />
+  )
+})
+CardCurtainRevealTitle.displayName = "CardCurtainRevealTitle"
+
+const CardCurtain = React.forwardRef<HTMLDivElement, HTMLMotionProps<"div">>(
+  ({ className, ...props }, ref) => {
+    const { isMouseIn } = useCardCurtainRevealContext()
+
+    return (
+      <motion.div
+        ref={ref}
+        className={cn(
+          "pointer-events-none absolute inset-0 size-full mix-blend-difference",
+          className
+        )}
+        variants={curtainVriants}
+        animate={isMouseIn ? "visible" : "hidden"}
+        {...props}
+      />
+    )
+  }
+)
+CardCurtain.displayName = "CardCurtain"
+
+const CardCurtainRevealDescription = React.forwardRef<
+  HTMLDivElement,
+  HTMLMotionProps<"div">
+>(({ className, ...props }, ref) => {
+  const { isMouseIn } = useCardCurtainRevealContext()
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      variants={curtainVriants}
+      animate={isMouseIn ? "visible" : "hidden"}
+      {...props}
+    />
+  )
+})
+CardCurtainRevealDescription.displayName = "CardCurtainRevealDescription"
+
+export {
+  CardCurtainReveal,
+  CardCurtainRevealBody,
+  CardCurtainRevealFooter,
+  CardCurtainRevealDescription,
+  CardCurtainRevealTitle,
+  CardCurtain,
+}
+
+
+demo.tsx
+import { 
+  CardCurtainReveal,
+  CardCurtainRevealBody,
+  CardCurtainRevealDescription,
+  CardCurtainRevealFooter,
+  CardCurtainRevealTitle,
+  CardCurtain } from "@/components/ui/card-curtain-reveal"
+
+import { ArrowUpRight } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+
+export const CardCurtainRevealDemo = () => {
+  return (
+    <div className="min-h-screen place-content-center place-items-center">
+      <CardCurtainReveal className="h-[560px] w-96 border border-zinc-100 bg-zinc-950 text-zinc-50 shadow">
+        <CardCurtainRevealBody className="">
+          <CardCurtainRevealTitle className="text-3xl font-medium tracking-tight">
+            Behind <br />
+            the Curtain
+          </CardCurtainRevealTitle>
+          <CardCurtainRevealDescription className="my-4 ">
+            <p>
+              Lorem ipsum dolor sit amet consectetur adipisicing elit.
+              Accusantium voluptate, eum quia temporibus fugiat rerum nobis modi
+              dolor, delectus laboriosam, quae adipisci reprehenderit officiis
+              quidem iure ducimus incidunt officia. Magni, eligendi repellendus.
+              Fugiat, natus aut?
+            </p>
+          </CardCurtainRevealDescription>
+          <Button
+            variant={"secondary"}
+            size={"icon"}
+            className="aspect-square rounded-full"
+          >
+            <ArrowUpRight />
+          </Button>
+
+          <CardCurtain className=" bg-zinc-50" />
+        </CardCurtainRevealBody>
+
+        <CardCurtainRevealFooter className="mt-auto">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            width="100%"
+            height="100%"
+            alt="Tokyo street"
+            className=""
+            src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2388&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+          />
+        </CardCurtainRevealFooter>
+      </CardCurtainReveal>
+    </div>
+  )
+}
+
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+motion, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

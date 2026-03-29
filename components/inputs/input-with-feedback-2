@@ -1,0 +1,134 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+input-with-feedback.tsx
+import * as React from "react"
+import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
+
+export interface InputWithFeedbackProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  errorMessage?: string
+  isError?: boolean
+  helperText?: string
+}
+
+const InputWithFeedback = React.forwardRef<HTMLInputElement, InputWithFeedbackProps>(
+  ({ className, errorMessage, helperText, isError, ...props }, ref) => {
+    return (
+      <div className="relative w-full">
+        <Input
+          className={cn(
+            "w-full",
+            className,
+            isError && "border-destructive focus-visible:ring-destructive"
+          )}
+          ref={ref}
+          {...props}
+        />
+        
+        {isError && errorMessage && (
+          <p className="absolute -bottom-6 text-xs text-destructive">
+            {errorMessage}
+          </p>
+        )}
+
+        {!isError && helperText && (
+          <p className="absolute -bottom-6 text-xs text-muted-foreground">
+            {helperText}
+          </p>
+        )}
+      </div>
+    )
+  }
+)
+InputWithFeedback.displayName = "InputWithFeedback"
+
+export { InputWithFeedback }
+
+demo.tsx
+import { InputWithFeedback } from "@/components/ui/input-with-feedback"
+
+function InputWithFeedbackDemo() {
+  return (
+    <div className="flex w-full max-w-sm flex-col gap-8">
+      <InputWithFeedback 
+        placeholder="Regular input" 
+        helperText="This is a helper text"
+      />
+      
+      <InputWithFeedback
+        placeholder="Input with error"
+        isError={true}
+        errorMessage="This field is required"
+      />
+      
+      <InputWithFeedback
+        placeholder="Disabled input"
+        disabled
+        helperText="This input is disabled"
+      />
+    </div>
+  )
+}
+
+export { InputWithFeedbackDemo }
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/input
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Input.displayName = "Input"
+
+export { Input }
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,312 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+calendar-planner.tsx
+"use client"
+
+import * as React from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { addMonths, format, startOfYear } from "date-fns"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+
+interface CalendarPlannerProps {
+  value?: Date
+  onChange?: (date: Date) => void
+  className?: string
+  yearRange?: [number, number]
+  info?: Record<string, string> // dateKey -> info string
+}
+
+export function CalendarPlanner({
+  value,
+  onChange,
+  className,
+  yearRange = [2000, 2040],
+  info = {},
+}: CalendarPlannerProps) {
+  const [mode, setMode] = React.useState<"month" | "year">("month")
+  const [cursor, setCursor] = React.useState<Date>(value ?? new Date())
+
+  const selectDate = (d: Date) => {
+    onChange?.(d)
+  }
+
+  const prev = () => {
+    if (mode === "month") setCursor(addMonths(cursor, -1))
+    else {
+      const c = new Date(cursor)
+      c.setFullYear(c.getFullYear() - 12)
+      setCursor(c)
+    }
+  }
+
+  const next = () => {
+    if (mode === "month") setCursor(addMonths(cursor, 1))
+    else {
+      const c = new Date(cursor)
+      c.setFullYear(c.getFullYear() + 12)
+      setCursor(c)
+    }
+  }
+
+  const renderMonthGrid = (base: Date) => {
+    const firstOfMonth = new Date(base.getFullYear(), base.getMonth(), 1)
+    const lastOfMonth = new Date(base.getFullYear(), base.getMonth() + 1, 0)
+    const days: Date[] = []
+    for (let d = 1; d <= lastOfMonth.getDate(); d++) {
+      days.push(new Date(base.getFullYear(), base.getMonth(), d))
+    }
+    const padStart = firstOfMonth.getDay()
+
+    return (
+      <div className="w-full">
+        <div className="mb-2 text-center font-medium">
+          {format(base, "MMMM yyyy")}
+        </div>
+        <div className="grid grid-cols-7 text-xs text-muted-foreground">
+          {["Su","Mo","Tu","We","Th","Fr","Sa"].map((wd) => (
+            <div key={wd} className="h-7 flex items-center justify-center">
+              {wd}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7">
+          {Array.from({ length: padStart }).map((_, i) => (
+            <div key={`pad-${i}`} className="h-14" />
+          ))}
+          {days.map((dt) => {
+            const key = format(dt, "yyyy-MM-dd")
+            const note = info[key]
+            const isSelected =
+              value && dt.toDateString() === value.toDateString()
+
+            return (
+              <button
+                key={dt.toISOString()}
+                onClick={() => selectDate(dt)}
+                className={cn(
+                  "h-14 w-14 m-0.5 flex flex-col items-center justify-center rounded-md border text-sm transition-colors",
+                  "bg-background text-foreground hover:bg-muted",
+                  isSelected && "border-foreground bg-foreground text-background"
+                )}
+              >
+                <span>{dt.getDate()}</span>
+                {note && (
+                  <span className="text-[10px] text-muted-foreground truncate">
+                    {note}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  const renderYearGrid = () => {
+    const cy = cursor.getFullYear()
+    const startBlock = Math.floor((cy - yearRange[0]) / 12) * 12 + yearRange[0]
+    const years = Array.from({ length: 12 }, (_, i) => startBlock + i).filter(
+      (y) => y >= yearRange[0] && y <= yearRange[1]
+    )
+
+    return (
+      <div className="p-2">
+        <div className="grid grid-cols-3 gap-2">
+          {years.map((y) => (
+            <button
+              key={y}
+              onClick={() => {
+                const n = new Date(cursor)
+                n.setFullYear(y)
+                setCursor(n)
+                setMode("month")
+              }}
+              className={cn(
+                "h-12 flex items-center justify-center rounded-md border text-sm transition",
+                y === cy
+                  ? "bg-foreground text-background"
+                  : "hover:bg-muted"
+              )}
+            >
+              {y}
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        "rounded-3xl border bg-background p-6 w-[620px]",
+        className
+      )}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <Button variant="ghost" size="icon" onClick={prev}>
+          <ChevronLeft className="w-4 h-4" />
+        </Button>
+        <button
+          className="text-base font-semibold hover:underline"
+          onClick={() => setMode(mode === "month" ? "year" : "month")}
+        >
+          {mode === "month"
+            ? format(cursor, "MMMM yyyy")
+            : cursor.getFullYear()}
+        </button>
+        <Button variant="ghost" size="icon" onClick={next}>
+          <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {mode === "month" ? (
+        <div className="flex gap-6">
+          {renderMonthGrid(cursor)}
+          {renderMonthGrid(addMonths(cursor, 1))}
+        </div>
+      ) : (
+        renderYearGrid()
+      )}
+
+      <div className="mt-4 text-xs text-center text-muted-foreground">
+        Minimal design • Inspired by{" "}
+        <a href="https://www.ruixen.com" target="_blank" className="underline">
+          ruixen.com
+        </a>
+      </div>
+    </div>
+  )
+}
+
+
+demo.tsx
+"use client"
+
+import * as React from "react"
+import { CalendarPlanner } from "@/components/ui/calendar-planner"
+import { format } from "date-fns"
+
+export default function CalendarPlannerDemo() {
+  const [selected, setSelected] = React.useState<Date | undefined>()
+
+  // Mock info per date (e.g. events, availability, etc.)
+  const mockInfo: Record<string, string> = {}
+  for (let i = 0; i < 30; i++) {
+    const d = new Date()
+    d.setDate(d.getDate() + i)
+    const dateKey = format(d, "yyyy-MM-dd")
+    mockInfo[dateKey] = i % 2 === 0 ? " Event" : "—"
+  }
+
+  return (
+    <div className="p-4 space-y-6">
+      <CalendarPlanner
+        value={selected}
+        onChange={setSelected}
+        info={mockInfo}
+        yearRange={[1995, 2035]}
+      />
+      {selected && (
+        <p className="text-sm text-muted-foreground">
+          Selected: {selected.toDateString()}
+        </p>
+      )}
+    </div>
+  )
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+originui/button
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+
+```
+
+Install NPM dependencies:
+```bash
+date-fns, lucide-react, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

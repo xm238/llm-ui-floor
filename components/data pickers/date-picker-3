@@ -1,0 +1,295 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+date-picker.tsx
+// components/ui/weekly-date-picker.tsx
+"use client";
+
+import * as React from "react";
+import { useState, useMemo } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { cn } from "@/lib/utils"; // Your utility for merging class names
+import { Button } from "@/components/ui/button"; // Assuming you have a Button component
+
+// Helper function to get the start of the week (Sunday)
+const getStartOfWeek = (date: Date): Date => {
+  const newDate = new Date(date);
+  const day = newDate.getDay();
+  const diff = newDate.getDate() - day;
+  return new Date(newDate.setDate(diff));
+};
+
+// Helper function to check if two dates are the same day
+const isSameDay = (date1: Date, date2: Date): boolean => {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+};
+
+interface WeeklyDatePickerProps extends React.HTMLAttributes<HTMLDivElement> {
+  date: Date;
+  setDate: (date: Date) => void;
+}
+
+export const WeeklyDatePicker = React.forwardRef<
+  HTMLDivElement,
+  WeeklyDatePickerProps
+>(({ className, date, setDate, ...props }, ref) => {
+  // State to manage the currently displayed week
+  const [displayDate, setDisplayDate] = useState(getStartOfWeek(date));
+  // State to manage animation direction
+  const [direction, setDirection] = useState<"next" | "prev">("next");
+
+  const weekDays = useMemo(() => {
+    const start = getStartOfWeek(displayDate);
+    return Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(start);
+      day.setDate(start.getDate() + i);
+      return day;
+    });
+  }, [displayDate]);
+
+  const handlePrevWeek = () => {
+    setDirection("prev");
+    setDisplayDate((prev) => {
+      const newDate = new Date(prev);
+      newDate.setDate(prev.getDate() - 7);
+      return newDate;
+    });
+  };
+
+  const handleNextWeek = () => {
+    setDirection("next");
+    setDisplayDate((prev) => {
+      const newDate = new Date(prev);
+      newDate.setDate(prev.getDate() + 7);
+      return newDate;
+    });
+  };
+
+  const animationVariants = {
+    initial: (direction: "next" | "prev") => ({
+      opacity: 0,
+      x: direction === "next" ? 20 : -20,
+    }),
+    animate: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.3, ease: "easeInOut" },
+    },
+    exit: (direction: "next" | "prev") => ({
+      opacity: 0,
+      x: direction === "next" ? -20 : 20,
+      transition: { duration: 0.3, ease: "easeInOut" },
+    }),
+  };
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "w-full max-w-sm rounded-xl border bg-card p-4 text-card-foreground shadow-sm",
+        className
+      )}
+      {...props}
+    >
+      {/* Header with month/year and navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="font-semibold text-lg">
+          {displayDate.toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handlePrevWeek}
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleNextWeek}
+            aria-label="Next week"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Animated container for week days */}
+      <div className="relative overflow-hidden h-[76px]">
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.div
+            key={displayDate.toISOString()}
+            className="grid grid-cols-7 gap-2 absolute w-full"
+            custom={direction}
+            variants={animationVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            {/* Day initials */}
+            {weekDays.map((day) => (
+              <div
+                key={`initial-${day.toISOString()}`}
+                className="text-center text-sm text-muted-foreground"
+              >
+                {day.toLocaleString("default", { weekday: "narrow" })}
+              </div>
+            ))}
+
+            {/* Date buttons */}
+            {weekDays.map((day) => {
+              const isSelected = isSameDay(day, date);
+              return (
+                <button
+                  key={`day-${day.toISOString()}`}
+                  onClick={() => setDate(day)}
+                  className={cn(
+                    "flex items-center justify-center h-10 w-10 rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    "hover:bg-accent hover:text-accent-foreground",
+                    {
+                      "bg-primary text-primary-foreground hover:bg-primary/90":
+                        isSelected,
+                    }
+                  )}
+                  aria-pressed={isSelected}
+                >
+                  {String(day.getDate()).padStart(2, "0")}
+                </button>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+});
+
+WeeklyDatePicker.displayName = "WeeklyDatePicker";
+
+demo.tsx
+// demo.tsx
+"use client";
+
+import * as React from "react";
+import { WeeklyDatePicker } from "@/components/ui/date-picker";
+
+export default function WeeklyDatePickerDemo() {
+  const [date, setDate] = React.useState<Date>(new Date());
+
+  return (
+    <div className="flex flex-col items-center justify-center space-y-4 p-4 min-h-[400px]">
+      <WeeklyDatePicker date={date} setDate={setDate} />
+      <p className="text-sm text-muted-foreground">
+        Selected Date:{" "}
+        <span className="font-semibold text-foreground">
+          {date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </span>
+      </p>
+    </div>
+  );
+}
+```
+
+Copy-paste these files for dependencies:
+```tsx
+originui/button
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

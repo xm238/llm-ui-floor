@@ -1,0 +1,274 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+cloud-watch-form.tsx
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export default function CloudWatchForm() {
+  const [isTyping, setIsTyping] = useState(false);
+  const [cursor, setCursor] = useState({ x: 0, y: 0 });
+  const [eyePos, setEyePos] = useState({ x: 0, y: 0 });
+  const [blink, setBlink] = useState(false);
+
+  useEffect(() => {
+    const handleMouse = (e: MouseEvent) => setCursor({ x: e.clientX, y: e.clientY });
+    window.addEventListener("mousemove", handleMouse);
+    return () => window.removeEventListener("mousemove", handleMouse);
+  }, []);
+
+  useEffect(() => {
+    const offsetX = ((cursor.x / window.innerWidth) - 0.5) * 40; // bigger range
+    const offsetY = ((cursor.y / window.innerHeight) - 0.5) * 20;
+    setEyePos({ x: offsetX, y: offsetY });
+  }, [cursor]);
+
+  // Blinking every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBlink(true);
+      setTimeout(() => setBlink(false), 200);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen p-4">
+      <div className="bg-white/30 backdrop-blur-md rounded-xl shadow-xl p-8 flex flex-col items-center gap-6 w-md border">
+        
+        {/* Cartoon Face */}
+          <div className="relative w-70 h-40">
+            <img
+              src="https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/cloud.jpg"
+              alt="cartoon"
+              className="w-full h-full"
+            />
+
+            {["left", "right"].map((side, idx) => (
+              <div
+                key={side}
+                className="absolute flex justify-center items-end overflow-hidden"
+                style={{
+                  top: 60,
+                  left: idx === 0 ? 80 : 150,
+                  width: 28,
+                  height: isTyping
+                    ? 4 // fully closed when typing password
+                    : blink
+                    ? 6 // temporary blink
+                    : 40, // open eye
+                  borderRadius: isTyping || blink ? "2px" : "50% / 60%",
+                  backgroundColor: isTyping ? "black" : "white", // black line when typing
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {!isTyping && (
+                  <div
+                    className="bg-black"
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: "50%",
+                      marginBottom: 4, // pupil at bottom
+                      transform: `translate(${eyePos.x}px, 0px)`,
+                      transition: "all 0.1s ease",
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+        {/* Form */}
+        <div className="w-full flex flex-col gap-4">
+          <div className="flex flex-col">
+            <Label>Name</Label>
+            <Input placeholder="Your Name" />
+          </div>
+          <div className="flex flex-col">
+            <Label>Email</Label>
+            <Input type="email" placeholder="Your Email" />
+          </div>
+          <div className="flex flex-col">
+            <Label>Username</Label>
+            <Input placeholder="Username" />
+          </div>
+          <div className="flex flex-col">
+            <Label>Password</Label>
+            <Input
+              type="password"
+              placeholder="Password"
+              onFocus={() => setIsTyping(true)}
+              onBlur={() => setIsTyping(false)}
+            />
+          </div>
+          <Button className="mt-2 w-full">Submit</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+demo.tsx
+"use client";
+
+import CloudWatchForm from "@/components/ui/cloud-watch-form";
+
+export default function CloudWatchFormDemo() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", marginTop: 100 }}>
+      <CloudWatchForm />
+    </div>
+  );
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+originui/input
+import { cn } from "@/lib/utils";
+import * as React from "react";
+
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",
+          type === "search" &&
+            "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none",
+          type === "file" &&
+            "p-0 pr-3 italic text-muted-foreground/70 file:me-3 file:h-full file:border-0 file:border-r file:border-solid file:border-input file:bg-transparent file:px-3 file:text-sm file:font-medium file:not-italic file:text-foreground",
+          className,
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Input.displayName = "Input";
+
+export { Input };
+
+```
+```tsx
+originui/button
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+
+```
+```tsx
+originui/label
+"use client";
+
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(
+  ({ className, ...props }, ref) => (
+    <label
+      ref={ref}
+      className={cn(
+        "text-sm font-medium leading-4 text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
+Label.displayName = "Label";
+
+export { Label };
+
+```
+
+Install NPM dependencies:
+```bash
+@radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

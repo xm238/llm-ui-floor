@@ -1,0 +1,527 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+simple-ui.tsx
+import React from 'react';
+import { AIInputWithSearch } from "@/components/ui/ai-input-with-search";
+import { BlurFade } from "@/components/ui/blur-fade"
+import Image from 'next/image';
+import { cn } from "@/lib/utils";
+import { DotPattern } from "@/components/ui/dot-pattern";
+
+
+
+// Demo images with 2:3 aspect ratio
+const cardData = [
+  { title: 'Brand Visual',   imageSrc: 'https://picsum.photos/768/1344?random=1' },
+  { title: 'Sketch Style',          imageSrc: 'https://picsum.photos/768/1344?random=2' },
+  { title: 'Fake Realism',          imageSrc: 'https://picsum.photos/768/1344?random=3' },
+  { title: 'Fashion Poster',        imageSrc: 'https://picsum.photos/768/1344?random=4' },
+  { title: 'Food Promotion Poster', imageSrc: 'https://picsum.photos/768/1344?random=5' },
+];
+
+export default function HomePage() {
+  // Determine greeting based on current hour
+  const hour = new Date().getHours();
+  let timeOfDay;
+  if (hour < 12) timeOfDay = 'Morning';
+  else if (hour < 18) timeOfDay = 'Afternoon';
+  else timeOfDay = 'Evening';
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-background p-8">
+    <DotPattern
+        className={cn(
+          "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]",
+        )}
+      />
+      {/* Header */}
+      <header className="text-center mb-12">
+      <BlurFade delay={0.25} inView>
+        <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+          {`Good ${timeOfDay}, Leon`}
+        </h2>
+      </BlurFade>
+      <div className="opacity-0">hidden</div>
+      <BlurFade delay={0.25 * 2} inView>
+        <span className="animate-fade-in font-[Outfit] text-[16px] font-normal text-[#737880] sm:text-[20px]">
+          Ready to turn your ideas into art?
+        </span>
+      </BlurFade>
+      </header>
+
+      {/* Input Box */}
+      <div className="max-w-2xl mx-auto mb-16">
+        <AIInputWithSearch 
+          onSubmit={(value, withSearch) => {
+            console.log('Message:', value);
+            console.log('Search enabled:', withSearch);
+          }}
+          onFileSelect={(file) => {
+            console.log('Selected file:', file);
+          }}
+        />
+      </div>
+
+      {/* Created With Section */}
+      <section className="max-w-6xl mx-auto">
+        <h2 className="text-2xl font-semibold mb-6">Created With Art</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          {cardData.map((card) => (
+            <div key={card.title} className="relative group rounded-xl overflow-hidden cursor-pointer">
+            <div className="w-full h-[300px] object-cover rounded-2xl overflow-hidden">
+              <img
+                src={card.imageSrc}
+                alt={card.title}
+                className="w-full h-[300px] object-cover rounded-2xl group-hover:scale-110 duration-300 transition-all"
+              />
+              </div>
+              <div className="absolute left-0 right-0 top-0 m-4 flex h-[30px] w-[29px] items-center justify-start gap-1 overflow-hidden rounded-full bg-[rgba(51,51,51,0.8)] transition-all duration-300 group-hover:w-[72px]">
+              <Image width={28} height={28} src="https://www.lovart.ai/assets/play-s.svg" />
+              <span className="text-[rgba(255,255,255,0.8)] sm:text-[14px] sm:font-[700]">View</span>
+            </div>
+              <p className="text-center mt-2 font-medium  pb-4">{card.title}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+
+demo.tsx
+import HomePage from "@/components/ui/simple-ui";
+
+const DemoOne = () => {
+  return (
+    <HomePage />
+  );
+};
+
+export { DemoOne };
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+kokonutd/ai-input-with-search
+"use client";
+
+import { Globe, Paperclip, Send } from "lucide-react";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useAutoResizeTextarea } from "@/components/hooks/use-auto-resize-textarea";
+
+interface AIInputWithSearchProps {
+  id?: string;
+  placeholder?: string;
+  minHeight?: number;
+  maxHeight?: number;
+  onSubmit?: (value: string, withSearch: boolean) => void;
+  onFileSelect?: (file: File) => void;
+  className?: string;
+}
+
+export function AIInputWithSearch({
+  id = "ai-input-with-search",
+  placeholder = "Search the web...",
+  minHeight = 48,
+  maxHeight = 164,
+  onSubmit,
+  onFileSelect,
+  className
+}: AIInputWithSearchProps) {
+  const [value, setValue] = useState("");
+  const { textareaRef, adjustHeight } = useAutoResizeTextarea({
+    minHeight,
+    maxHeight,
+  });
+  const [showSearch, setShowSearch] = useState(true);
+
+  const handleSubmit = () => {
+    if (value.trim()) {
+      onSubmit?.(value, showSearch);
+      setValue("");
+      adjustHeight(true);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onFileSelect?.(file);
+    }
+  };
+
+  return (
+    <div className={cn("w-full py-4", className)}>
+      <div className="relative max-w-xl w-full mx-auto">
+        <div className="relative flex flex-col">
+          <div
+            className="overflow-y-auto"
+            style={{ maxHeight: `${maxHeight}px` }}
+          >
+            <Textarea
+              id={id}
+              value={value}
+              placeholder={placeholder}
+              className="w-full rounded-xl rounded-b-none px-4 py-3 bg-black/5 dark:bg-white/5 border-none dark:text-white placeholder:text-black/70 dark:placeholder:text-white/70 resize-none focus-visible:ring-0 leading-[1.2]"
+              ref={textareaRef}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              onChange={(e) => {
+                setValue(e.target.value);
+                adjustHeight();
+              }}
+            />
+          </div>
+
+          <div className="h-12 bg-black/5 dark:bg-white/5 rounded-b-xl">
+            <div className="absolute left-3 bottom-3 flex items-center gap-2">
+              <label className="cursor-pointer rounded-lg p-2 bg-black/5 dark:bg-white/5">
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  onChange={handleFileChange}
+                />
+                <Paperclip className="w-4 h-4 text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white transition-colors" />
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowSearch(!showSearch)}
+                className={cn(
+                  "rounded-full transition-all flex items-center gap-2 px-1.5 py-1 border h-8",
+                  showSearch
+                    ? "bg-sky-500/15 border-sky-400 text-sky-500"
+                    : "bg-black/5 dark:bg-white/5 border-transparent text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
+                )}
+              >
+                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <motion.div
+                    animate={{
+                      rotate: showSearch ? 180 : 0,
+                      scale: showSearch ? 1.1 : 1,
+                    }}
+                    whileHover={{
+                      rotate: showSearch ? 180 : 15,
+                      scale: 1.1,
+                      transition: {
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 10,
+                      },
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 25,
+                    }}
+                  >
+                    <Globe
+                      className={cn(
+                        "w-4 h-4",
+                        showSearch
+                          ? "text-sky-500"
+                          : "text-inherit"
+                      )}
+                    />
+                  </motion.div>
+                </div>
+                <AnimatePresence>
+                  {showSearch && (
+                    <motion.span
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{
+                        width: "auto",
+                        opacity: 1,
+                      }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-sm overflow-hidden whitespace-nowrap text-sky-500 flex-shrink-0"
+                    >
+                      Search
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            </div>
+            <div className="absolute right-3 bottom-3">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className={cn(
+                  "rounded-lg p-2 transition-colors",
+                  value
+                    ? "bg-sky-500/15 text-sky-500"
+                    : "bg-black/5 dark:bg-white/5 text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
+                )}
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+```tsx
+kokonutd/use-auto-resize-textarea
+import { useEffect, useRef, useCallback } from "react";
+
+interface UseAutoResizeTextareaProps {
+    minHeight: number;
+    maxHeight?: number;
+}
+
+export function useAutoResizeTextarea({
+    minHeight,
+    maxHeight,
+}: UseAutoResizeTextareaProps) {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const adjustHeight = useCallback(
+        (reset?: boolean) => {
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+
+            if (reset) {
+                textarea.style.height = `${minHeight}px`;
+                return;
+            }
+
+            // Temporarily shrink to get the right scrollHeight
+            textarea.style.height = `${minHeight}px`;
+
+            // Calculate new height
+            const newHeight = Math.max(
+                minHeight,
+                Math.min(
+                    textarea.scrollHeight,
+                    maxHeight ?? Number.POSITIVE_INFINITY
+                )
+            );
+
+            textarea.style.height = `${newHeight}px`;
+        },
+        [minHeight, maxHeight]
+    );
+
+    useEffect(() => {
+        // Set initial height
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = `${minHeight}px`;
+        }
+    }, [minHeight]);
+
+    // Adjust height on window resize
+    useEffect(() => {
+        const handleResize = () => adjustHeight();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, [adjustHeight]);
+
+    return { textareaRef, adjustHeight };
+}
+
+```
+```tsx
+shadcn/textarea
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Textarea.displayName = "Textarea"
+
+export { Textarea }
+
+```
+```tsx
+dillionverma/blur-fade
+"use client"
+
+import { useRef } from "react"
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  UseInViewOptions,
+  Variants,
+} from "framer-motion"
+
+type MarginType = UseInViewOptions["margin"]
+
+interface BlurFadeProps {
+  children: React.ReactNode
+  className?: string
+  variant?: {
+    hidden: { y: number }
+    visible: { y: number }
+  }
+  duration?: number
+  delay?: number
+  yOffset?: number
+  inView?: boolean
+  inViewMargin?: MarginType
+  blur?: string
+}
+
+export function BlurFade({
+  children,
+  className,
+  variant,
+  duration = 0.4,
+  delay = 0,
+  yOffset = 6,
+  inView = false,
+  inViewMargin = "-50px",
+  blur = "6px",
+}: BlurFadeProps) {
+  const ref = useRef(null)
+  const inViewResult = useInView(ref, { once: true, margin: inViewMargin })
+  const isInView = !inView || inViewResult
+  const defaultVariants: Variants = {
+    hidden: { y: yOffset, opacity: 0, filter: `blur(${blur})` },
+    visible: { y: -yOffset, opacity: 1, filter: `blur(0px)` },
+  }
+  const combinedVariants = variant || defaultVariants
+  return (
+    <AnimatePresence>
+      <motion.div
+        ref={ref}
+        initial="hidden"
+        animate={isInView ? "visible" : "hidden"}
+        exit="hidden"
+        variants={combinedVariants}
+        transition={{
+          delay: 0.04 + delay,
+          duration,
+          ease: "easeOut",
+        }}
+        className={className}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+```
+```tsx
+designali-in/dot-pattern
+import { useId } from "react";
+
+import { cn } from "@/lib/utils";
+
+interface DotPatternProps {
+  width?: any;
+  height?: any;
+  x?: any;
+  y?: any;
+  cx?: any;
+  cy?: any;
+  cr?: any;
+  className?: string;
+  [key: string]: any;
+}
+export function DotPattern({
+  width = 24,
+  height = 24,
+  x = 0,
+  y = 0,
+  cx = 1,
+  cy = 0.5,
+  cr = 0.5,
+  className,
+  ...props
+}: DotPatternProps) {
+  const id = useId();
+
+  return (
+    <svg
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none absolute inset-0 h-full w-full fill-slate-500/50 md:fill-slate-500/70",
+        className,
+      )}
+      {...props}
+    >
+      <defs>
+        <pattern
+          id={id}
+          width={width}
+          height={height}
+          patternUnits="userSpaceOnUse"
+          patternContentUnits="userSpaceOnUse"
+          x={x}
+          y={y}
+        >
+          <circle id="pattern-circle" cx={cx} cy={cy} r={cr} />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" strokeWidth={0} fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
+ 
+
+```
+
+Install NPM dependencies:
+```bash
+next, lucide-react, framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

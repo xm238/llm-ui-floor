@@ -1,0 +1,258 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+sparks-carousel.tsx
+// components/ui/sparks-carousel.tsx
+import * as React from "react";
+import { motion, useAnimation } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils"; // Assuming you have a utility for class names
+
+// Define the type for a single item in the carousel
+export interface SparkItem {
+  id: string | number;
+  imageSrc: string;
+  title: string;
+  count: number;
+  countLabel: string;
+}
+
+// Define the props for the main component
+export interface SparksCarouselProps {
+  title: string;
+  subtitle: string;
+  items: SparkItem[];
+}
+
+export const SparksCarousel = React.forwardRef<
+  HTMLDivElement,
+  SparksCarouselProps
+>(({ title, subtitle, items }, ref) => {
+  const controls = useAnimation();
+  const carouselRef = React.useRef<HTMLDivElement>(null);
+  const [isAtStart, setIsAtStart] = React.useState(true);
+  const [isAtEnd, setIsAtEnd] = React.useState(false);
+
+  // Function to scroll the carousel
+  const scroll = (direction: "left" | "right") => {
+    if (carouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+      const scrollAmount = clientWidth * 0.8; // Scroll by 80% of the visible width
+      const newScrollLeft =
+        direction === "left"
+          ? scrollLeft - scrollAmount
+          : scrollLeft + scrollAmount;
+
+      carouselRef.current.scrollTo({ left: newScrollLeft, behavior: "smooth" });
+    }
+  };
+  
+  // Effect to check scroll position and update button states
+  React.useEffect(() => {
+    const checkScrollPosition = () => {
+      if (carouselRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+        setIsAtStart(scrollLeft < 10);
+        setIsAtEnd(scrollLeft + clientWidth >= scrollWidth - 10);
+      }
+    };
+
+    const currentRef = carouselRef.current;
+    if (currentRef) {
+        // Initial check
+        checkScrollPosition();
+        currentRef.addEventListener("scroll", checkScrollPosition);
+    }
+    
+    // Check again on window resize
+    window.addEventListener("resize", checkScrollPosition);
+
+    return () => {
+      if (currentRef) {
+        currentRef.removeEventListener("scroll", checkScrollPosition);
+      }
+      window.removeEventListener("resize", checkScrollPosition);
+    };
+  }, [items]);
+
+  return (
+    <section ref={ref} className="w-full py-8" aria-labelledby="sparks-title">
+      <div className="container mx-auto px-4 md:px-6">
+        {/* Header Section */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <a href="#" className="group inline-flex items-center">
+              <h2 id="sparks-title" className="text-2xl md:text-3xl font-bold tracking-tight text-card-foreground">
+                {title}
+              </h2>
+              <ChevronRight className="ml-2 h-6 w-6 transition-transform group-hover:translate-x-1" />
+            </a>
+            <p className="mt-1 text-muted-foreground">{subtitle}</p>
+          </div>
+        </div>
+
+        {/* Carousel Section */}
+        <div className="relative">
+          <div
+            ref={carouselRef}
+            className="flex w-full space-x-4 overflow-x-auto pb-4 scrollbar-hide"
+          >
+            {items.map((item, index) => (
+              <motion.div
+                key={item.id}
+                className="group w-[280px] flex-shrink-0"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <div className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
+                  <img
+                    alt={item.title}
+                    className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
+                    height="160"
+                    src={item.imageSrc}
+                    width="280"
+                  />
+                  <div className="p-4">
+                    <h3 className="text-md font-semibold leading-tight text-card-foreground">
+                      {item.title}
+                    </h3>
+                    <div className="mt-4">
+                      <p className="text-xl font-bold">{item.count}</p>
+                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        {item.countLabel}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Navigation Buttons */}
+          {!isAtStart && (
+            <button
+              onClick={() => scroll("left")}
+              className={cn(
+                "absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/60 backdrop-blur-sm border text-foreground shadow-md transition-opacity hover:bg-background/80 disabled:opacity-0"
+              )}
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          )}
+          {!isAtEnd && (
+            <button
+              onClick={() => scroll("right")}
+              className={cn(
+                "absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/60 backdrop-blur-sm border text-foreground shadow-md transition-opacity hover:bg-background/80 disabled:opacity-0"
+              )}
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+});
+
+SparksCarousel.displayName = "SparksCarousel";
+
+demo.tsx
+// demo.tsx
+import { SparksCarousel, SparkItem } from "@/components/ui/sparks-carousel";
+
+// Sample data for the carousel
+const sparksData: SparkItem[] = [
+  {
+    id: 1,
+    imageSrc: "https://images.unsplash.com/photo-1621504450181-5d356f61d307?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Q3J5cHRvfGVufDB8fDB8fHww?q=80&w=280&h=160&fit=crop",
+    title: "Gen 2: Crypto is here to stay - and it's brought some friends...",
+    count: 19,
+    countLabel: "NO. OF SYMBOLS",
+  },
+  {
+    id: 2,
+    imageSrc: "https://plus.unsplash.com/premium_photo-1661284836545-3a6ec65fcffc?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fHdvcmt8ZW58MHx8MHx8fDA%3D",
+    title: "Proof of Work: Embracing the crunch",
+    count: 27,
+    countLabel: "NO. OF SYMBOLS",
+  },
+  {
+    id: 3,
+    imageSrc: "https://images.unsplash.com/photo-1696960181433-68ca79ac8149?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGRlY2lzaW9ufGVufDB8fDB8fHww",
+    title: "Smart contracts: Make the smart decision",
+    count: 36,
+    countLabel: "NO. OF SYMBOLS",
+  },
+  {
+    id: 4,
+    imageSrc: "https://images.unsplash.com/photo-1695390837115-408e49a2041e?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8c3Rha2V8ZW58MHx8MHx8fDA%3D",
+    title: "Staking Coins: Pick up a stake",
+    count: 18,
+    countLabel: "NO. OF SYMBOLS",
+  },
+  {
+    id: 5,
+    imageSrc: "https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=280&h=160&fit=crop",
+    title: "Web3 Infrastructure: The new frontier",
+    count: 42,
+    countLabel: "NO. OF SYMBOLS",
+  },
+    {
+    id: 6,
+    imageSrc: "https://images.unsplash.com/photo-1534951009808-766178b47a4f?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGZpbmFuY2V8ZW58MHx8MHx8fDA%3D",
+    title: "Decentralized Finance (DeFi): Beyond the banks",
+    count: 55,
+    countLabel: "NO. OF SYMBOLS",
+  },
+];
+
+const SparksCarouselDemo = () => {
+  return (
+    <div className="w-full bg-background">
+      <SparksCarousel
+        title="Sparks"
+        subtitle="Curated watchlists where ETHUSD is featured."
+        items={sparksData}
+      />
+    </div>
+  );
+};
+
+export default SparksCarouselDemo;
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

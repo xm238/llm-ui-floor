@@ -1,0 +1,450 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+animated-glow-card.tsx
+import React from 'react';
+
+const CardCanvas = ({ children, className = "" }) => {
+  return (
+    <div className={`card-canvas ${className}`}>
+      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+        <filter width="3000%" x="-1000%" height="3000%" y="-1000%" id="unopaq">
+          <feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 3 0"></feColorMatrix>
+        </filter>
+      </svg>
+      <div className="card-backdrop"></div>
+      {children}
+    </div>
+  );
+};
+
+const Card = ({ children, className = "" }) => {
+  return (
+    <div className={`glow-card ${className}`}>
+      <div className="border-element border-left"></div>
+      <div className="border-element border-right"></div>
+      <div className="border-element border-top"></div>
+      <div className="border-element border-bottom"></div>
+      <div className="card-content">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export { CardCanvas, Card };
+
+demo.tsx
+import { Card, CardCanvas } from "@/components/ui/animated-glow-card";
+import { XCard } from "@/components/ui/x-gradient-card"
+
+const XCardDummyData = {
+    authorName: "EaseMise",
+    authorHandle: "easemize",
+    authorImage: "https://pbs.twimg.com/profile_images/1854916060807675904/KtBJsyWr_400x400.jpg",
+    content: [
+        "The Outer container with border and dots its the actual Card",
+        "Wrap it around anything to have a cool card like this",
+    ],
+    isVerified: true,
+    timestamp: "Today",
+    reply: {
+        authorName: "GoodGuy",
+        authorHandle: "gdguy",
+        authorImage:
+            "https://pbs.twimg.com/profile_images/1593304942210478080/TUYae5z7_400x400.jpg",
+        content: "Its Easy to Use great to customize",
+        isVerified: true,
+        timestamp: "10 mintes ago",
+    },
+};
+
+function XCardDemoDefault() {
+    return <XCard {...XCardDummyData} />
+}
+
+const DemoOne = () => {
+  return (
+    <div className="flex w-full h-screen justify-center items-center bg-black">
+      <CardCanvas>
+        <Card className="w-auto p-6">
+          <div className="dark">
+            <XCard {...XCardDummyData} />
+          </div>
+        </Card>
+      </CardCanvas>
+    </div>
+  );
+};
+
+export { DemoOne };
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+tommyjepsen/animated-hero
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { MoveRight, PhoneCall } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+function Hero() {
+  const [titleNumber, setTitleNumber] = useState(0);
+  const titles = useMemo(
+    () => ["amazing", "new", "wonderful", "beautiful", "smart"],
+    []
+  );
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (titleNumber === titles.length - 1) {
+        setTitleNumber(0);
+      } else {
+        setTitleNumber(titleNumber + 1);
+      }
+    }, 2000);
+    return () => clearTimeout(timeoutId);
+  }, [titleNumber, titles]);
+
+  return (
+    <div className="w-full">
+      <div className="container mx-auto">
+        <div className="flex gap-8 py-20 lg:py-40 items-center justify-center flex-col">
+          <div>
+            <Button variant="secondary" size="sm" className="gap-4">
+              Read our launch article <MoveRight className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="flex gap-4 flex-col">
+            <h1 className="text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
+              <span className="text-spektr-cyan-50">This is something</span>
+              <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
+                &nbsp;
+                {titles.map((title, index) => (
+                  <motion.span
+                    key={index}
+                    className="absolute font-semibold"
+                    initial={{ opacity: 0, y: "-100" }}
+                    transition={{ type: "spring", stiffness: 50 }}
+                    animate={
+                      titleNumber === index
+                        ? {
+                            y: 0,
+                            opacity: 1,
+                          }
+                        : {
+                            y: titleNumber > index ? -150 : 150,
+                            opacity: 0,
+                          }
+                    }
+                  >
+                    {title}
+                  </motion.span>
+                ))}
+              </span>
+            </h1>
+
+            <p className="text-lg md:text-xl leading-relaxed tracking-tight text-muted-foreground max-w-2xl text-center">
+              Managing a small business today is already tough. Avoid further
+              complications by ditching outdated, tedious trade methods. Our
+              goal is to streamline SMB trade, making it easier and faster than
+              ever.
+            </p>
+          </div>
+          <div className="flex flex-row gap-3">
+            <Button size="lg" className="gap-4" variant="outline">
+              Jump on a call <PhoneCall className="w-4 h-4" />
+            </Button>
+            <Button size="lg" className="gap-4">
+              Sign up here <MoveRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export { Hero };
+
+```
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+```tsx
+kokonutd/x-gradient-card
+import { VerifiedIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+
+interface ReplyProps {
+    authorName: string;
+    authorHandle: string;
+    authorImage: string;
+    content: string;
+    isVerified?: boolean;
+    timestamp: string;
+}
+
+interface XCardProps {
+    link: string;
+    authorName: string;
+    authorHandle: string;
+    authorImage: string;
+    content: string[];
+    isVerified?: boolean;
+    timestamp: string;
+    reply?: ReplyProps;
+}
+
+function XCard({
+    link = "https://x.com/dorian_baffier/status/1880291036410572934",
+    authorName = "Dorian",
+    authorHandle = "dorian_baffier",
+    authorImage = "https://pbs.twimg.com/profile_images/1854916060807675904/KtBJsyWr_400x400.jpg",
+    content = [
+        "All components from KokonutUI can now be open in @v0 🎉",
+        "1. Click on 'Open in V0'",
+        "2. Customize with prompts",
+        "3. Deploy to your app",
+    ],
+    isVerified = true,
+    timestamp = "Jan 18, 2025",
+    reply = {
+        authorName: "shadcn",
+        authorHandle: "shadcn",
+        authorImage:
+            "https://pbs.twimg.com/profile_images/1593304942210478080/TUYae5z7_400x400.jpg",
+        content: "Awesome.",
+        isVerified: true,
+        timestamp: "Jan 18",
+    },
+}: XCardProps) {
+    return (
+        <Link
+            href={link}
+            target="_blank"
+        >
+            <div
+                className={cn(
+                    "w-full min-w-[400px] md:min-w-[500px] max-w-xl p-1.5 rounded-2xl relative isolate overflow-hidden",
+                    "bg-white/5 dark:bg-black/90",
+                    "bg-gradient-to-br from-black/5 to-black/[0.02] dark:from-white/5 dark:to-white/[0.02]",
+                    "backdrop-blur-xl backdrop-saturate-[180%]",
+                    "border border-black/10 dark:border-white/10",
+                    "shadow-[0_8px_16px_rgb(0_0_0_/_0.15)] dark:shadow-[0_8px_16px_rgb(0_0_0_/_0.25)]",
+                    "will-change-transform translate-z-0"
+                )}
+            >
+                <div
+                    className={cn(
+                        "w-full p-5 rounded-xl relative",
+                        "bg-gradient-to-br from-black/[0.05] to-transparent dark:from-white/[0.08] dark:to-transparent",
+                        "backdrop-blur-md backdrop-saturate-150",
+                        "border border-black/[0.05] dark:border-white/[0.08]",
+                        "text-black/90 dark:text-white",
+                        "shadow-sm",
+                        "will-change-transform translate-z-0",
+                        "before:absolute before:inset-0 before:bg-gradient-to-br before:from-black/[0.02] before:to-black/[0.01] dark:before:from-white/[0.03] dark:before:to-white/[0.01] before:opacity-0 before:transition-opacity before:pointer-events-none",
+                        "hover:before:opacity-100"
+                    )}
+                >
+                    <div className="flex gap-3">
+                        <div className="flex-shrink-0">
+                            <div className="h-10 w-10 rounded-full overflow-hidden">
+                                <img
+                                    src={authorImage}
+                                    alt={authorName}
+                                    className="h-full w-full object-cover"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-semibold text-black dark:text-white/90 hover:underline cursor-pointer">
+                                            {authorName}
+                                        </span>
+                                        {isVerified && (
+                                            <VerifiedIcon className="h-4 w-4 text-blue-400" />
+                                        )}
+                                    </div>
+                                    <span className="text-black dark:text-white/60 text-sm">
+                                        @{authorHandle}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="h-8 w-8 text-black dark:text-white/80 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-lg p-1 flex items-center justify-center"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="1200"
+                                        height="1227"
+                                        fill="none"
+                                        viewBox="0 0 1200 1227"
+                                        className="w-4 h-4"
+                                    >
+                                        <title>X</title>
+                                        <path
+                                            fill="currentColor"
+                                            d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-2">
+                        {content.map((item, index) => (
+                            <p
+                                key={index}
+                                className="text-black dark:text-white/90 text-base"
+                            >
+                                {item}
+                            </p>
+                        ))}
+                        <span className="text-black dark:text-white/50 text-sm mt-2 block">
+                            {timestamp}
+                        </span>
+                    </div>
+
+                    {reply && (
+                        <div className="mt-4 pt-4 border-t border-black/[0.08] dark:border-white/[0.08]">
+                            <div className="flex gap-3">
+                                <div className="flex-shrink-0">
+                                    <div className="h-10 w-10 rounded-full overflow-hidden">
+                                        <img
+                                            src={reply.authorImage}
+                                            alt={reply.authorName}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-semibold text-black dark:text-white/90 hover:underline cursor-pointer">
+                                            {reply.authorName}
+                                        </span>
+                                        {reply.isVerified && (
+                                            <VerifiedIcon className="h-4 w-4 text-blue-400" />
+                                        )}
+                                        <span className="text-black dark:text-white/60 text-sm">
+                                            @{reply.authorHandle}
+                                        </span>
+                                        <span className="text-black dark:text-white/60 text-sm">
+                                            ·
+                                        </span>
+                                        <span className="text-black dark:text-white/60 text-sm">
+                                            {reply.timestamp}
+                                        </span>
+                                    </div>
+                                    <p className="text-black dark:text-white/80 text-sm mt-1">
+                                        {reply.content}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </Link>
+    );
+}
+
+
+export { XCard }
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,733 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+inbox-calendar.tsx
+"use client"
+
+import * as React from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar } from "@/components/ui/calendar"
+import { Trash2, CalendarIcon, Plus } from "lucide-react"
+import { format, isSameDay } from "date-fns"
+import { v4 as uuidv4 } from "uuid"
+
+export type InboxEvent = {
+  id: string
+  title: string
+  description?: string
+  date: Date
+  label?: string
+}
+
+interface InboxCalendarProps {
+  events: InboxEvent[]
+  onAddEvent: (e: InboxEvent) => void
+  onRemoveEvent?: (id: string) => void
+}
+
+export function InboxCalendar({ events, onAddEvent, onRemoveEvent }: InboxCalendarProps) {
+  const [open, setOpen] = React.useState(false)
+  const [title, setTitle] = React.useState("")
+  const [description, setDescription] = React.useState("")
+  const [date, setDate] = React.useState<Date | undefined>(new Date())
+  const [label, setLabel] = React.useState("")
+
+  // Group events by day
+  const grouped = React.useMemo(() => {
+    const groups: { date: Date; events: InboxEvent[] }[] = []
+    events.forEach((ev) => {
+      const day = groups.find((g) => isSameDay(g.date, ev.date))
+      if (day) {
+        day.events.push(ev)
+      } else {
+        groups.push({ date: ev.date, events: [ev] })
+      }
+    })
+    return groups.sort((a, b) => a.date.getTime() - b.date.getTime())
+  }, [events])
+
+  const handleAdd = () => {
+    if (!title.trim() || !date) return
+    onAddEvent({
+      id: uuidv4(),
+      title: title.trim(),
+      description,
+      date,
+      label,
+    })
+    setTitle("")
+    setDescription("")
+    setLabel("")
+    setDate(new Date())
+    setOpen(false)
+  }
+
+  return (
+    <Card className="w-md">
+      <CardHeader className="flex items-center justify-between">
+        <CardTitle className="text-lg">Inbox Calendar</CardTitle>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button size="sm" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" /> Add Event
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80">
+            <div className="flex flex-col gap-2">
+              <Input
+                placeholder="Event title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <Textarea
+                placeholder="Description (optional)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+              <Input
+                placeholder="Label (optional)"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+              />
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 opacity-50" />
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  className="rounded-md border"
+                />
+              </div>
+              <Button onClick={handleAdd} className="mt-2">
+                Save Event
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </CardHeader>
+
+      <CardContent className="p-0">
+        <ScrollArea className="h-[500px]">
+          {grouped.map((group, gi) => (
+            <div key={gi} className="p-4">
+              <div className="text-sm font-semibold mb-2">
+                {format(group.date, "EEEE, MMMM d, yyyy")}
+              </div>
+              <div className="space-y-2">
+                {group.events.map((ev) => (
+                  <Popover key={ev.id}>
+                    <PopoverTrigger asChild>
+                      <div className="cursor-pointer rounded-md border p-2 hover:bg-accent transition flex items-start justify-between">
+                        <div>
+                          <div className="text-sm font-medium">{ev.title}</div>
+                          {ev.description && (
+                            <div className="text-xs text-muted-foreground line-clamp-1">
+                              {ev.description}
+                            </div>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            {format(ev.date, "hh:mm a")}
+                          </div>
+                        </div>
+                        {ev.label && <Badge>{ev.label}</Badge>}
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <div className="flex flex-col gap-2">
+                        <div className="font-semibold">{ev.title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(ev.date, "PPpp")}
+                        </div>
+                        {ev.description && (
+                          <div className="text-sm">{ev.description}</div>
+                        )}
+                        {onRemoveEvent && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="mt-2 flex items-center gap-2"
+                            onClick={() => onRemoveEvent(ev.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ))}
+              </div>
+              {gi < grouped.length - 1 && <Separator className="my-4" />}
+            </div>
+          ))}
+          {grouped.length === 0 && (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              No events scheduled.
+            </div>
+          )}
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  )
+}
+
+
+demo.tsx
+"use client"
+
+import * as React from "react"
+import { InboxCalendar, InboxEvent } from "@/components/ui/inbox-calendar"
+import { v4 as uuidv4 } from "uuid"
+
+export default function InboxCalendarDemo() {
+  const [events, setEvents] = React.useState<InboxEvent[]>([
+    {
+      id: uuidv4(),
+      title: "Team Standup",
+      description: "Daily sync with the dev team.",
+      date: new Date(2025, 8, 25, 10, 0),
+      label: "Work",
+    },
+    {
+      id: uuidv4(),
+      title: "Lunch with Sarah",
+      description: "Catch up at the cafe near office.",
+      date: new Date(2025, 8, 25, 13, 0),
+      label: "Personal",
+    },
+  ])
+
+  const handleAdd = (event: InboxEvent) => {
+    setEvents((prev) => [...prev, event])
+  }
+
+  const handleRemove = (id: string) => {
+    setEvents((prev) => prev.filter((e) => e.id !== id))
+  }
+
+  return (
+    <div className="p-6 flex justify-center">
+      <InboxCalendar
+        events={events}
+        onAddEvent={handleAdd}
+        onRemoveEvent={handleRemove}
+      />
+    </div>
+  )
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/card
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className,
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className,
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+```
+```tsx
+shadcn/scroll-area
+"use client"
+
+import * as React from "react"
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
+
+import { cn } from "@/lib/utils"
+
+const ScrollArea = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
+>(({ className, children, ...props }, ref) => (
+  <ScrollAreaPrimitive.Root
+    ref={ref}
+    className={cn("relative overflow-hidden", className)}
+    {...props}
+  >
+    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+      {children}
+    </ScrollAreaPrimitive.Viewport>
+    <ScrollBar />
+    <ScrollAreaPrimitive.Corner />
+  </ScrollAreaPrimitive.Root>
+))
+ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
+
+const ScrollBar = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
+>(({ className, orientation = "vertical", ...props }, ref) => (
+  <ScrollAreaPrimitive.ScrollAreaScrollbar
+    ref={ref}
+    orientation={orientation}
+    className={cn(
+      "flex touch-none select-none transition-colors",
+      orientation === "vertical" &&
+        "h-full w-2.5 border-l border-l-transparent p-[1px]",
+      orientation === "horizontal" &&
+        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+      className,
+    )}
+    {...props}
+  >
+    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+  </ScrollAreaPrimitive.ScrollAreaScrollbar>
+))
+ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
+
+export { ScrollArea, ScrollBar }
+
+```
+```tsx
+shadcn/separator
+"use client"
+
+import * as React from "react"
+import * as SeparatorPrimitive from "@radix-ui/react-separator"
+
+import { cn } from "@/lib/utils"
+
+const Separator = React.forwardRef<
+  React.ElementRef<typeof SeparatorPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
+>(
+  (
+    { className, orientation = "horizontal", decorative = true, ...props },
+    ref
+  ) => (
+    <SeparatorPrimitive.Root
+      ref={ref}
+      decorative={decorative}
+      orientation={orientation}
+      className={cn(
+        "shrink-0 bg-border",
+        orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
+        className
+      )}
+      {...props}
+    />
+  )
+)
+Separator.displayName = SeparatorPrimitive.Root.displayName
+
+export { Separator }
+
+```
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+```tsx
+originui/popover
+"use client";
+
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const Popover = PopoverPrimitive.Root;
+
+const PopoverTrigger = PopoverPrimitive.Trigger;
+
+const PopoverAnchor = PopoverPrimitive.Anchor;
+
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & {
+    showArrow?: boolean;
+  }
+>(({ className, align = "center", sideOffset = 4, showArrow = false, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 max-h-[var(--radix-popover-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-lg shadow-black/5 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className,
+      )}
+      {...props}
+    >
+      {props.children}
+      {showArrow && (
+        <PopoverPrimitive.Arrow className="-my-px fill-popover drop-shadow-[0_1px_0_hsl(var(--border))]" />
+      )}
+    </PopoverPrimitive.Content>
+  </PopoverPrimitive.Portal>
+));
+PopoverContent.displayName = PopoverPrimitive.Content.displayName;
+
+export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger };
+
+```
+```tsx
+originui/input
+import { cn } from "@/lib/utils";
+import * as React from "react";
+
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",
+          type === "search" &&
+            "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none",
+          type === "file" &&
+            "p-0 pr-3 italic text-muted-foreground/70 file:me-3 file:h-full file:border-0 file:border-r file:border-solid file:border-input file:bg-transparent file:px-3 file:text-sm file:font-medium file:not-italic file:text-foreground",
+          className,
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Input.displayName = "Input";
+
+export { Input };
+
+```
+```tsx
+originui/textarea
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<"textarea">>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "flex min-h-[80px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",
+          className,
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Textarea.displayName = "Textarea";
+
+export { Textarea };
+
+```
+```tsx
+originui/calendar
+"use client";
+
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import * as React from "react";
+import { DayPicker } from "react-day-picker";
+
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+
+export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  components: userComponents,
+  ...props
+}: CalendarProps) {
+  const defaultClassNames = {
+    months: "relative flex flex-col sm:flex-row gap-4",
+    month: "w-full",
+    month_caption: "relative mx-10 mb-1 flex h-9 items-center justify-center z-20",
+    caption_label: "text-sm font-medium",
+    nav: "absolute top-0 flex w-full justify-between z-10",
+    button_previous: cn(
+      buttonVariants({ variant: "ghost" }),
+      "size-9 text-muted-foreground/80 hover:text-foreground p-0",
+    ),
+    button_next: cn(
+      buttonVariants({ variant: "ghost" }),
+      "size-9 text-muted-foreground/80 hover:text-foreground p-0",
+    ),
+    weekday: "size-9 p-0 text-xs font-medium text-muted-foreground/80",
+    day_button:
+      "relative flex size-9 items-center justify-center whitespace-nowrap rounded-lg p-0 text-foreground outline-offset-2 group-[[data-selected]:not(.range-middle)]:[transition-property:color,background-color,border-radius,box-shadow] group-[[data-selected]:not(.range-middle)]:duration-150 focus:outline-none group-data-[disabled]:pointer-events-none focus-visible:z-10 hover:bg-accent group-data-[selected]:bg-primary hover:text-foreground group-data-[selected]:text-primary-foreground group-data-[disabled]:text-foreground/30 group-data-[disabled]:line-through group-data-[outside]:text-foreground/30 group-data-[outside]:group-data-[selected]:text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 group-[.range-start:not(.range-end)]:rounded-e-none group-[.range-end:not(.range-start)]:rounded-s-none group-[.range-middle]:rounded-none group-data-[selected]:group-[.range-middle]:bg-accent group-data-[selected]:group-[.range-middle]:text-foreground",
+    day: "group size-9 px-0 text-sm",
+    range_start: "range-start",
+    range_end: "range-end",
+    range_middle: "range-middle",
+    today:
+      "*:after:pointer-events-none *:after:absolute *:after:bottom-1 *:after:start-1/2 *:after:z-10 *:after:size-[3px] *:after:-translate-x-1/2 *:after:rounded-full *:after:bg-primary [&[data-selected]:not(.range-middle)>*]:after:bg-background [&[data-disabled]>*]:after:bg-foreground/30 *:after:transition-colors",
+    outside: "text-muted-foreground data-selected:bg-accent/50 data-selected:text-muted-foreground",
+    hidden: "invisible",
+    week_number: "size-9 p-0 text-xs font-medium text-muted-foreground/80",
+  };
+
+  const mergedClassNames: typeof defaultClassNames = Object.keys(defaultClassNames).reduce(
+    (acc, key) => ({
+      ...acc,
+      [key]: classNames?.[key as keyof typeof classNames]
+        ? cn(
+            defaultClassNames[key as keyof typeof defaultClassNames],
+            classNames[key as keyof typeof classNames],
+          )
+        : defaultClassNames[key as keyof typeof defaultClassNames],
+    }),
+    {} as typeof defaultClassNames,
+  );
+
+  const defaultComponents = {
+    Chevron: (props: any) => {
+      if (props.orientation === "left") {
+        return <ChevronLeft size={16} strokeWidth={2} {...props} aria-hidden="true" />;
+      }
+      return <ChevronRight size={16} strokeWidth={2} {...props} aria-hidden="true" />;
+    },
+  };
+
+  const mergedComponents = {
+    ...defaultComponents,
+    ...userComponents,
+  };
+
+  return (
+    <DayPicker
+      showOutsideDays={showOutsideDays}
+      className={cn("w-fit", className)}
+      classNames={mergedClassNames}
+      components={mergedComponents}
+      {...props}
+    />
+  );
+}
+Calendar.displayName = "Calendar";
+
+export { Calendar };
+```
+```tsx
+originui/button
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+
+```
+
+Install NPM dependencies:
+```bash
+uuid, date-fns, lucide-react, @radix-ui/react-scroll-area, @radix-ui/react-separator, @radix-ui/react-slot, class-variance-authority, @radix-ui/react-popover, react-day-picker
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,298 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+card-18.tsx
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
+
+import { cn } from '@/lib/utils'; // Assuming you have a `cn` utility from shadcn
+import { Button } from '@/components/ui/button'; // Assuming you have a Button component
+
+// CVA for card variants
+const cardVariants = cva(
+  'group relative flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300 ease-in-out hover:shadow-md',
+  {
+    variants: {
+      variant: {
+        default: 'p-6',
+        featured: 'flex-col md:flex-row',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
+
+// Interface for component props
+export interface BlogPostCardProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {
+  tag: string;
+  date: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  href: string;
+  readMoreText?: string;
+}
+
+const BlogPostCard = React.forwardRef<HTMLDivElement, BlogPostCardProps>(
+  ({ className, variant, tag, date, title, description, imageUrl, href, readMoreText = 'Read the full article', ...props }, ref) => {
+    
+    // Animation variants for framer-motion
+    const cardHover = {
+      hover: {
+        y: -5,
+        transition: {
+          duration: 0.2,
+          ease: 'easeInOut',
+        },
+      },
+    };
+    
+    const content = (
+      <>
+        {variant === 'featured' && imageUrl && (
+          <div className="relative w-full overflow-hidden md:w-1/2 lg:w-3/5">
+            <img
+              src={imageUrl}
+              alt={title}
+              className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+            />
+          </div>
+        )}
+
+        <div className="flex flex-1 flex-col justify-between p-6 md:p-8">
+          <div>
+            <div className="mb-4 flex items-center gap-4 text-xs font-semibold uppercase text-muted-foreground">
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-primary">{tag}</span>
+              <span>{date}</span>
+            </div>
+
+            <h3 className="mb-3 text-xl font-bold leading-tight text-foreground lg:text-2xl">
+              <span className="bg-gradient-to-r from-primary to-primary bg-[length:0%_2px] bg-left-bottom bg-no-repeat transition-[background-size] duration-500 group-hover:bg-[length:100%_2px]">
+                {title}
+              </span>
+            </h3>
+            
+            <p className="text-muted-foreground">{description}</p>
+          </div>
+
+          {variant === 'featured' && (
+            <div className="mt-8">
+                <Button variant="default" className="group/button">
+                    {readMoreText}
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover/button:translate-x-1" />
+                </Button>
+            </div>
+          )}
+        </div>
+      </>
+    );
+
+    return (
+      <motion.div
+        ref={ref}
+        className={cn(cardVariants({ variant, className }))}
+        variants={cardHover}
+        whileHover="hover"
+        {...props}
+      >
+        <a href={href} className="absolute inset-0 z-10" aria-label={`Read more about ${title}`}>
+          <span className="sr-only">Read More</span>
+        </a>
+        <div className="relative z-0 flex h-full w-full flex-col md:flex-row">{content}</div>
+      </motion.div>
+    );
+  }
+);
+
+BlogPostCard.displayName = 'BlogPostCard';
+
+export { BlogPostCard };
+
+demo.tsx
+import { BlogPostCard } from '@/components/ui/card-18';
+import { motion } from 'framer-motion';
+
+// Mock data for blog posts
+const posts = [
+  {
+    tag: 'Trends',
+    date: 'ON MAY 4, 2025',
+    title: 'The Art of Digital Transformation: Turning Vision into Value',
+    description: 'Explore real-world examples of businesses that reimagined their digital presence and achieved success.',
+    href: '#',
+  },
+  {
+    tag: 'Trends',
+    date: 'ON MAY 4, 2025',
+    title: 'Collaboration that Converts: Why the Right Agency Partnership Matters',
+    description: 'Learn why aligning with the right creative partner can make or break your online success story.',
+    href: '#',
+  },
+  {
+    tag: 'Trends',
+    date: 'ON JUN 17, 2025',
+    title: 'User-Centered, Strategy-Driven: Designing for Impact in 2025',
+    description: 'Unpack the latest trends in UX, SEO, and responsive design that are helping forward-thinking brands win.',
+    href: '#',
+  },
+];
+
+const featuredPost = {
+    tag: 'Trends',
+    date: 'ON JUL 13, 2025',
+    title: 'From Concept to Clicks: How Strategy Fuels Great Web Design',
+    description: 'Discover how a well-defined digital strategy transforms creative ideas into high-performing websites that engage users and drive traffic.',
+    href: '#',
+    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop',
+};
+
+// Animation variants for the container to stagger children
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.15,
+    },
+  },
+};
+
+// Animation variants for child items
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: 'easeOut',
+    },
+  },
+};
+
+
+export default function BlogPostCardDemo() {
+  return (
+    <div className="w-full max-w-6xl mx-auto p-4 md:p-8">
+      {/* Featured Post */}
+      <motion.div variants={itemVariants} initial="hidden" animate="visible" className="mb-8 md:mb-12">
+        <BlogPostCard
+          variant="featured"
+          {...featuredPost}
+        />
+      </motion.div>
+
+      {/* Grid of Default Posts */}
+      <motion.div 
+        className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {posts.map((post, index) => (
+          <motion.div key={index} variants={itemVariants}>
+            <BlogPostCard {...post} />
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion, class-variance-authority, @radix-ui/react-slot
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

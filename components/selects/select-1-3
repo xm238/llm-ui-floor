@@ -1,0 +1,326 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+select-1.tsx
+import React from "react";
+import { Error } from "@/components/ui/error";
+import clsx from "clsx";
+
+const sizes = [
+  {
+    xsmall: "h-6 text-xs pl-1.5 pr-[22px]",
+    small: "h-8 text-sm pl-3 pr-9",
+    medium: "h-10 text-sm pl-3 pr-9",
+    large: "h-12 text-base pl-3 pr-9 rounded-lg"
+  },
+  {
+    xsmall: "h-6 text-xs px-[22px]",
+    small: "h-8 text-sm px-9",
+    medium: "h-10 text-sm px-9",
+    large: "h-12 text-base px-9 rounded-lg"
+  }
+];
+
+const variants = {
+  default: "",
+  ghost: ""
+};
+
+export interface Option {
+  value: string;
+  label: string;
+}
+
+interface SelectProps {
+  variant?: keyof typeof variants;
+  options?: Option[];
+  label?: string;
+  value?: string;
+  placeholder?: string;
+  size?: keyof typeof sizes[0];
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+  disabled?: boolean;
+  error?: string;
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
+}
+
+const ArrowBottom = () => (
+  <svg
+    height="16"
+    strokeLinejoin="round"
+    viewBox="0 0 16 16"
+    width="16"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M14.0607 5.49999L13.5303 6.03032L8.7071 10.8535C8.31658 11.2441 7.68341 11.2441 7.29289 10.8535L2.46966 6.03032L1.93933 5.49999L2.99999 4.43933L3.53032 4.96966L7.99999 9.43933L12.4697 4.96966L13 4.43933L14.0607 5.49999Z"
+    />
+  </svg>
+);
+
+export const Select = ({
+  variant = "default",
+  options,
+  label,
+  value,
+  placeholder,
+  size = "medium",
+  suffix,
+  prefix,
+  disabled = false,
+  error,
+  onChange
+}: SelectProps) => {
+  return (
+    <div>
+      {label && (
+        <label
+          htmlFor="select"
+          className="cursor-text block font-sans text-[13px] text-gray-900 capitalize mb-2"
+        >
+          {label}
+        </label>
+      )}
+      <div className={clsx(
+        "relative flex items-center",
+        disabled ? "fill-[#8f8f8f]" : "fill-[#666666] dark:fill-[#a1a1a1] hover:fill-[#171717] hover:dark:fill-[#ededed]"
+      )}>
+        <style>
+          {`
+          .xsmallIconContainer svg {
+              width: 16px;
+              height: 12px;
+          }
+          .smallIconContainer, .mediumIconContainer, .largeIconContainer svg {
+              width: 16px;
+              height: 16px;
+          }
+        `}
+        </style>
+        <select
+          id="select"
+          disabled={disabled}
+          value={value}
+          onChange={onChange}
+          className={clsx(
+            "font-sans appearance-none w-full border rounded-[5px] duration-200 outline-none",
+            sizes[prefix ? 1 : 0][size],
+            disabled ? "cursor-not-allowed bg-gray-100 text-gray-700" : variant === "default" ? "text-gray-1000 bg-background-100 cursor-pointer" : "bg-transparent text-accents-5",
+            error ? "border-error ring-red-900-alpha-160 ring-opacity-100 ring-[3px]" : `ring-gray-alpha-500 ring-opacity-100 focus:ring-[3px] ${variant === "default" ? "border-gray-alpha-400" : "border-transparent ring-none"}`
+          )}
+        >
+          {placeholder && <option value="" disabled selected>{placeholder}</option>}
+          {options && options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {prefix && (
+          <span className={clsx(
+            `inline-flex absolute pointer-events-none duration-150 ${size}IconContainer`,
+            size === "xsmall" ? "left-[5px]" : "left-3"
+          )}>
+            {prefix}
+          </span>
+        )}
+        <span
+          className={clsx(
+            `inline-flex absolute pointer-events-none duration-150 ${size}IconContainer`,
+            size === "xsmall" ? "right-[5px]" : "right-3"
+          )}>
+          {suffix ? suffix : <ArrowBottom />}
+        </span>
+      </div>
+      {error && (
+        <div className="mt-2">
+          <Error size={size === "large" ? "large" : "small"}>{error}</Error>
+        </div>
+      )}
+    </div>
+  );
+};
+
+demo.tsx
+import { Select } from "@/components/ui/select-1";
+
+export default function DefaultDemo() {
+  return (
+        <div className="flex gap-8 items-center justify-center">
+          <Select placeholder="XSmall" size="xsmall" />
+          <Select placeholder="Small" size="small" />
+          <Select placeholder="Default" />
+          <Select placeholder="Large" size="large" />
+        </div>
+  );
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shugar/error
+import React from "react";
+
+const ErrorIcon = () => (
+  <svg
+    height="16"
+    strokeLinejoin="round"
+    viewBox="0 0 16 16"
+    width="16"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M5.30761 1.5L1.5 5.30761L1.5 10.6924L5.30761 14.5H10.6924L14.5 10.6924V5.30761L10.6924 1.5H5.30761ZM5.10051 0C4.83529 0 4.58094 0.105357 4.3934 0.292893L0.292893 4.3934C0.105357 4.58094 0 4.83529 0 5.10051V10.8995C0 11.1647 0.105357 11.4191 0.292894 11.6066L4.3934 15.7071C4.58094 15.8946 4.83529 16 5.10051 16H10.8995C11.1647 16 11.4191 15.8946 11.6066 15.7071L15.7071 11.6066C15.8946 11.4191 16 11.1647 16 10.8995V5.10051C16 4.83529 15.8946 4.58093 15.7071 4.3934L11.6066 0.292893C11.4191 0.105357 11.1647 0 10.8995 0H5.10051ZM8.75 3.75V4.5V8L8.75 8.75H7.25V8V4.5V3.75H8.75ZM8 12C8.55229 12 9 11.5523 9 11C9 10.4477 8.55229 10 8 10C7.44772 10 7 10.4477 7 11C7 11.5523 7.44772 12 8 12Z"
+    />
+  </svg>
+);
+
+const ErrorLinkIcon = () => (
+  <svg
+    height="16"
+    strokeLinejoin="round"
+    viewBox="0 0 16 16"
+    width="16"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M11.5 9.75V11.25C11.5 11.3881 11.3881 11.5 11.25 11.5H4.75C4.61193 11.5 4.5 11.3881 4.5 11.25L4.5 4.75C4.5 4.61193 4.61193 4.5 4.75 4.5H6.25H7V3H6.25H4.75C3.7835 3 3 3.7835 3 4.75V11.25C3 12.2165 3.7835 13 4.75 13H11.25C12.2165 13 13 12.2165 13 11.25V9.75V9H11.5V9.75ZM8.5 3H9.25H12.2495C12.6637 3 12.9995 3.33579 12.9995 3.75V6.75V7.5H11.4995V6.75V5.56066L8.53033 8.52978L8 9.06011L6.93934 7.99945L7.46967 7.46912L10.4388 4.5H9.25H8.5V3Z"
+    />
+  </svg>
+);
+
+interface Error {
+  message: string;
+  action: string;
+  link: string;
+}
+
+interface ErrorProps {
+  error?: Error;
+  label?: string;
+  size?: "small" | "medium" | "large";
+  children?: React.ReactNode;
+}
+
+export const Error = ({ error, label, size = "medium", children }: ErrorProps) => {
+  return (
+    <div
+      className={
+        `flex items-center gap-2 text-red-900 fill-red-900 font-sans
+      ${{
+          small: "text-[13px] leading-5",
+          medium: "text-sm",
+          large: "text-base"
+        }[size]}`
+      }
+      // @ts-ignore
+      style={{ "--geist-link-color": "var(--ds-red-900)" }}
+    >
+      <ErrorIcon />
+      {error ? (
+        <>
+          {error.message}
+          <a
+            className="font-medium flex items-center gap-0.5 -ml-1 hover:no-underline hover:opacity-60 duration-150 relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-[1px] after:bg-red-900"
+            href={error.link}
+            target="_blank"
+          >
+            {error.action}
+            <ErrorLinkIcon />
+          </a>
+        </>
+      ) : (
+        <>
+          {label && <span className="font-medium">{label}:</span>}
+          {children}
+        </>
+      )}
+    </div>
+  );
+};
+```
+
+Install NPM dependencies:
+```bash
+clsx
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --color-context-card-border: var(--context-card-border);
+  --color-red-900: var(--ds-red-900);
+  --color-red-900-alpha-160: var(--ds-red-900-alpha-160);
+  --color-gray-100: var(--ds-gray-100);
+  --color-gray-700: var(--ds-gray-700);
+  --color-gray-900: var(--ds-gray-900);
+  --color-gray-1000: var(--ds-gray-1000);
+  --color-background-100: var(--ds-background-100);
+  --color-error: var(--geist-error);
+  --color-ds-background-100: var(----ds-background-100);
+  --color-ds-gray-1000: var(----ds-gray-1000);
+  --color-color-red-900: var(----color-red-900);
+}
+
+:root {
+  --context-card-border: hsla(0, 0%, 92%, 1);
+  --ds-red-900: oklch(54.99% 0.232 25.29);
+  --ds-red-900-alpha-160: hsla(358,66%,48%,.16);
+  --ds-gray-100: hsla(0, 0%, 95%, 1);
+  --ds-gray-700: hsla(0, 0%, 56%, 1);
+  --ds-gray-900: hsla(0, 0%, 40%, 1);
+  --ds-gray-1000: hsla(0, 0%, 9%, 1);
+  --ds-background-100: hsla(0, 0%, 100%, 1);
+  --geist-error: #ee0000;
+  --color-red-900: oklch(54.99% 0.232 25.29);
+}
+
+.dark {
+  --context-card-border: hsla(0, 0%, 18%, 1);
+  --ds-red-900: oklch(69.96% 0.2136 22.03);
+  --ds-red-900-alpha-160: hsla(358,100%,69%,.16);
+  --ds-gray-100: hsla(0, 0%, 10%, 1);
+  --ds-gray-700: hsla(0, 0%, 56%, 1);
+  --ds-gray-900: hsla(0, 0%, 63%, 1);
+  --ds-gray-1000: hsla(0, 0%, 93%, 1);
+  --ds-background-100: hsla(0, 0%, 4%, 1);
+  --geist-error: #ff0000;
+  --color-red-900: oklch(69.96% 0.2136 22.03);
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

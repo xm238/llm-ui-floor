@@ -1,0 +1,315 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+action-hub-input.tsx
+"use client"
+
+import { useId, useState, useRef, useEffect } from "react"
+import { Loader2Icon, CheckCircle2Icon, XCircleIcon, CopyIcon, Trash2Icon } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+
+interface ActionHubInputAction {
+  icon: JSX.Element
+  onClick: (value: string) => Promise<void> | void
+  tooltip?: string
+  showOnEmpty?: boolean
+}
+
+interface ActionHubInputProps {
+  label?: string
+  placeholder?: string
+  type?: string
+  defaultValue?: string
+  validate?: (value: string) => string | null
+  actions?: ActionHubInputAction[]
+  historyEnabled?: boolean
+}
+
+export default function ActionHubInput({
+  label = "Action Input",
+  placeholder = "Type command, email, or snippet...",
+  type = "text",
+  defaultValue = "",
+  validate,
+  actions = [],
+  historyEnabled = true,
+}: ActionHubInputProps) {
+  const id = useId()
+  const [value, setValue] = useState(defaultValue)
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+  const [error, setError] = useState<string | null>(null)
+  const [history, setHistory] = useState<string[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Load history
+  useEffect(() => {
+    if (historyEnabled) {
+      const saved = localStorage.getItem(`actionhub-${id}`)
+      if (saved) setHistory(JSON.parse(saved))
+    }
+  }, [id, historyEnabled])
+
+  // Save history on submit
+  const saveToHistory = (val: string) => {
+    if (!historyEnabled || !val) return
+    const newHistory = [val, ...history.filter((h) => h !== val)].slice(0, 10)
+    setHistory(newHistory)
+    localStorage.setItem(`actionhub-${id}`, JSON.stringify(newHistory))
+  }
+
+  const handleActionClick = async (action: ActionHubInputAction) => {
+    try {
+      setStatus("loading")
+      await action.onClick(value)
+      setStatus("success")
+      saveToHistory(value)
+      setTimeout(() => setStatus("idle"), 1500)
+    } catch {
+      setStatus("error")
+      setTimeout(() => setStatus("idle"), 1500)
+    }
+  }
+
+  // Validation
+  useEffect(() => {
+    if (validate) setError(validate(value))
+    else setError(null)
+  }, [value, validate])
+
+  const renderStatusIcon = () => {
+    switch (status) {
+      case "loading":
+        return <Loader2Icon className="animate-spin text-blue-500" size={16} />
+      case "success":
+        return <CheckCircle2Icon className="text-green-500" size={16} />
+      case "error":
+        return <XCircleIcon className="text-red-500" size={16} />
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div className="relative w-full max-w-lg flex flex-col gap-1">
+      {label && <Label htmlFor={id}>{label}</Label>}
+      <div className="relative flex items-center">
+        <Input
+          id={id}
+          ref={inputRef}
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="pr-24"
+          onFocus={() => setShowHistory(true)}
+          onBlur={() => setTimeout(() => setShowHistory(false), 200)}
+        />
+
+        {/* Status icon */}
+        <div className="absolute right-10 top-1/2 -translate-y-1/2">{renderStatusIcon()}</div>
+
+        {/* Actions */}
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-1">
+          {actions.map(
+            (action, idx) =>
+              (value || action.showOnEmpty) && (
+                <Button
+                  key={idx}
+                  size="icon"
+                  onClick={() => handleActionClick(action)}
+                  title={action.tooltip}
+                  className="h-8 w-8 rounded-md p-1"
+                >
+                  {action.icon}
+                </Button>
+              )
+          )}
+        </div>
+      </div>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      {/* History dropdown */}
+      {showHistory && history.length > 0 && (
+        <div className="absolute top-full mt-1 w-full rounded-md border bg-background shadow-lg z-10 max-h-36 overflow-auto">
+          {history.map((item, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className="w-full text-left px-2 py-1 hover:bg-accent hover:text-accent-foreground flex items-center gap-2 text-sm"
+              onClick={() => setValue(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+demo.tsx
+import ActionHubInput from "@/components/ui/action-hub-input";
+
+export default function DemoOne() {
+  return <ActionHubInput />;
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+originui/input
+import { cn } from "@/lib/utils";
+import * as React from "react";
+
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",
+          type === "search" &&
+            "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none",
+          type === "file" &&
+            "p-0 pr-3 italic text-muted-foreground/70 file:me-3 file:h-full file:border-0 file:border-r file:border-solid file:border-input file:bg-transparent file:px-3 file:text-sm file:font-medium file:not-italic file:text-foreground",
+          className,
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Input.displayName = "Input";
+
+export { Input };
+
+```
+```tsx
+shadcn/label
+"use client"
+
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+)
+
+const Label = React.forwardRef<
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof labelVariants>
+>(({ className, ...props }, ref) => (
+  <LabelPrimitive.Root
+    ref={ref}
+    className={cn(labelVariants(), className)}
+    {...props}
+  />
+))
+Label.displayName = LabelPrimitive.Root.displayName
+
+export { Label }
+
+```
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, @radix-ui/react-label, class-variance-authority, @radix-ui/react-slot
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

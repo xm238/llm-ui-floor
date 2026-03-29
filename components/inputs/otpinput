@@ -1,0 +1,171 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+otpinput.tsx
+"use client"
+
+import { useId, useState, useRef, useEffect } from "react"
+import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
+import { MinusIcon } from "lucide-react"
+
+interface OTPInputProps {
+  label?: string
+  length?: number
+  separator?: boolean
+  onComplete?: (otp: string) => void
+}
+
+export default function OTPInput({
+  label = "Enter OTP",
+  length = 6,
+  separator = true,
+  onComplete,
+}: OTPInputProps) {
+  const id = useId()
+  const [values, setValues] = useState(Array(length).fill(""))
+  const inputsRef = useRef<HTMLInputElement[]>([])
+
+  const handleChange = (idx: number, char: string) => {
+    if (!/^[0-9]?$/.test(char)) return // allow only digits
+    const newValues = [...values]
+    newValues[idx] = char
+    setValues(newValues)
+
+    if (char && idx < length - 1) {
+      inputsRef.current[idx + 1]?.focus()
+    }
+
+    if (newValues.every((v) => v !== "")) {
+      onComplete?.(newValues.join(""))
+    }
+  }
+
+  const handleKeyDown = (idx: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !values[idx] && idx > 0) {
+      inputsRef.current[idx - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const paste = e.clipboardData.getData("Text").slice(0, length).split("")
+    const newValues = [...values]
+    paste.forEach((char, i) => (newValues[i] = char))
+    setValues(newValues)
+    if (paste.length > 0 && paste.length < length) {
+      inputsRef.current[paste.length]?.focus()
+    }
+    if (paste.length === length) onComplete?.(newValues.join(""))
+    e.preventDefault()
+  }
+
+  return (
+    <div className="space-y-2 w-full max-w-md">
+      <Label htmlFor={id}>{label}</Label>
+
+      <div
+        className="flex items-center gap-2"
+        onPaste={handlePaste}
+      >
+        {values.map((val, idx) => (
+          <div key={idx} className="flex items-center">
+            <input
+              ref={(el) => (inputsRef.current[idx] = el!)}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={val}
+              onChange={(e) => handleChange(idx, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(idx, e)}
+              className={cn(
+                "w-12 h-12 text-center text-lg rounded-xl border bg-background font-semibold shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary",
+                val ? "border-primary" : "border-input"
+              )}
+            />
+            {separator && idx === Math.floor(length / 2) - 1 && (
+              <MinusIcon
+                size={16}
+                aria-hidden="true"
+                className="mx-1 text-muted-foreground/60"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+
+demo.tsx
+import OTPInput from "@/components/ui/otpinput";
+
+export default function DemoOne() {
+  return <OTPInput />;
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/label
+"use client"
+
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+)
+
+const Label = React.forwardRef<
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof labelVariants>
+>(({ className, ...props }, ref) => (
+  <LabelPrimitive.Root
+    ref={ref}
+    className={cn(labelVariants(), className)}
+    {...props}
+  />
+))
+Label.displayName = LabelPrimitive.Root.displayName
+
+export { Label }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, @radix-ui/react-label, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

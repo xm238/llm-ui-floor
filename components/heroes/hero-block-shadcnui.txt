@@ -1,0 +1,151 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+hero-block-shadcnui.tsx
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
+
+export function HeroBlock() {
+  return (
+    <section className="relative flex items-center justify-center overflow-hidden bg-background min-h-screen w-full">
+      {/* Animated background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+
+      <div className="relative z-10 mx-auto max-w-5xl text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="mb-6 inline-block"
+          >
+            <div className="mx-auto h-24 w-24 rounded-full border-4 border-background bg-gradient-to-br from-primary to-muted shadow-lg" />
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="mb-6 text-5xl font-bold text-foreground md:text-7xl"
+          >
+            Full Stack Developer
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="mx-auto mb-8 max-w-3xl text-xl text-muted-foreground md:text-2xl"
+          >
+            Crafting beautiful, performant web applications with modern
+            technologies. Passionate about clean code and exceptional user
+            experiences.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="mb-12 flex flex-wrap justify-center gap-4"
+          >
+            <Button size="lg" className="gap-2">
+              <Mail className="h-4 w-4" />
+              Get in Touch
+            </Button>
+            <Button size="lg" variant="outline" className="gap-2">
+              View Projects
+              <ArrowDown className="h-4 w-4" />
+            </Button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+            className="flex justify-center gap-4"
+          >
+            {[
+              { icon: Github, href: "#" },
+              { icon: Linkedin, href: "#" },
+              { icon: Mail, href: "#" },
+            ].map((social, index) => (
+              <motion.a
+                key={index}
+                href={social.href}
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+              >
+                <social.icon className="h-5 w-5" />
+              </motion.a>
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Scroll indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, y: [0, 10, 0] }}
+        transition={{
+          opacity: { delay: 1, duration: 0.6 },
+          y: { delay: 1.5, duration: 1.5, repeat: Infinity },
+        }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 transform"
+      >
+        <ArrowDown className="h-6 w-6 text-muted-foreground" />
+      </motion.div>
+    </section>
+  );
+}
+
+
+demo.tsx
+import { HeroBlock } from "@/components/ui/hero-block-shadcnui"
+
+export default function Demo() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-8">
+      <HeroBlock />
+    </div>
+  )
+}
+
+```
+
+Install NPM dependencies:
+```bash
+framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

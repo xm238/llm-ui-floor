@@ -1,0 +1,164 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+file-tree-1.tsx
+"use client";
+
+import React, { useState } from "react";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronRight, ChevronDown, Folder, File } from "lucide-react";
+
+// -------- Types --------
+export type FileNode = {
+  id: string;
+  name: string;
+  type: "file" | "folder";
+  children?: FileNode[];
+};
+
+export type FileTreeProps = {
+  data: FileNode[];
+  defaultExpanded?: Record<string, boolean>;
+  onSelect?: (node: FileNode) => void;
+};
+
+// -------- Component --------
+export default function FileTree({ data, defaultExpanded = {}, onSelect }: FileTreeProps) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(defaultExpanded);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const toggle = (id: string) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const renderNodes = (nodes: FileNode[], level = 0) => {
+    return nodes.map((n) => (
+      <div key={n.id} className="relative">
+        <div
+          role="treeitem"
+          tabIndex={0}
+          aria-expanded={n.type === "folder" ? !!expanded[n.id] : undefined}
+          className={cn(
+            "flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer transition-colors select-none outline-none",
+            selected === n.id
+              ? "bg-accent text-accent-foreground border-l-2 border-primary"
+              : "hover:bg-muted"
+          )}
+          style={{ paddingLeft: level * 14 + 8 }}
+          onClick={() => {
+            if (n.type === "folder") toggle(n.id);
+            setSelected(n.id);
+            onSelect?.(n);
+          }}
+          onKeyDown={(e) => {
+            if (n.type === "folder" && (e.key === "Enter" || e.key === " ")) {
+              e.preventDefault();
+              toggle(n.id);
+            }
+          }}
+        >
+          {n.type === "folder" ? (
+            <>
+              {expanded[n.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <Folder size={16} />
+            </>
+          ) : (
+            <File size={14} />
+          )}
+          <span className="text-sm truncate">{n.name}</span>
+        </div>
+
+        {/* Children with smooth animation */}
+        <AnimatePresence initial={false}>
+          {n.children && n.children.length > 0 && expanded[n.id] && (
+            <motion.div
+              key="children"
+              role="group"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="pl-3 border-l border-muted"
+            >
+              {renderNodes(n.children, level + 1)}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    ));
+  };
+
+  return (
+    <div role="tree" className="space-y-1 text-sm">
+      {renderNodes(data)}
+    </div>
+  );
+}
+
+
+demo.tsx
+import FileTree from "@/components/ui/file-tree-1";
+
+const demoData: FileNode[] = [
+  {
+    id: "1",
+    name: "src",
+    type: "folder",
+    children: [
+      { id: "1-1", name: "components", type: "folder", children: [{ id: "1-1-1", name: "Button.tsx", type: "file" }] },
+      { id: "1-2", name: "App.tsx", type: "file" },
+      { id: "1-3", name: "styles.css", type: "file" },
+    ],
+  },
+  {
+    id: "2",
+    name: "public",
+    type: "folder",
+    children: [{ id: "2-1", name: "favicon.ico", type: "file" }],
+  },
+  { id: "3", name: "package.json", type: "file" },
+];
+
+export default function FileTreeDemo() {
+  return (
+    <div className="min-w-xs border rounded-lg p-3">
+      <h2 className="font-semibold mb-2 text-sm">File Tree Demo</h2>
+      <FileTree data={demoData} onSelect={(node) => console.log("Selected:", node)} />
+    </div>
+  );
+}
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

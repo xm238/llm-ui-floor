@@ -1,0 +1,226 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+baggage-add-on.tsx
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils'; // Your shadcn/ui utility for class merging
+import { MoreHorizontal } from 'lucide-react';
+
+// Type for a single option
+export interface Option {
+  id: string;
+  icon: React.ReactNode;
+  label: string;
+  price: number;
+}
+
+// Props for the component
+export interface MinimalistOptionSelectorProps {
+  options: Option[];
+  title?: string;
+  defaultValue?: string;
+  onValueChange?: (id: string) => void;
+  className?: string;
+  priceCurrency?: string;
+}
+
+export const MinimalistOptionSelector = React.forwardRef<HTMLDivElement, MinimalistOptionSelectorProps>(
+  (
+    {
+      options,
+      title = 'Additional Baggage',
+      defaultValue,
+      onValueChange,
+      className,
+      priceCurrency = '$',
+      ...props
+    },
+    ref
+  ) => {
+    const [selectedValue, setSelectedValue] = React.useState(defaultValue);
+
+    const handleSelectionChange = (id: string) => {
+      setSelectedValue(id);
+      if (onValueChange) {
+        onValueChange(id);
+      }
+    };
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'w-full h-full max-w-sm rounded-2xl border bg-card text-card-foreground shadow-sm p-6',
+          className
+        )}
+        role="radiogroup"
+        aria-labelledby="option-selector-title"
+        {...props}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 id="option-selector-title" className="text-lg font-semibold text-foreground">
+            {title}
+          </h3>
+          <button className="text-muted-foreground transition-colors hover:text-foreground">
+            <MoreHorizontal size={20} />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {options.map((option) => {
+            const isSelected = selectedValue === option.id;
+            return (
+              <label
+                key={option.id}
+                className="relative flex items-center p-3.5 rounded-lg cursor-pointer transition-colors hover:bg-muted/50"
+                htmlFor={option.id}
+              >
+                {/* Subtle background animation */}
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      layoutId="minimalist-selected-highlight"
+                      className="absolute inset-0 bg-muted rounded-lg"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                    />
+                  )}
+                </AnimatePresence>
+
+                <input
+                  type="radio"
+                  id={option.id}
+                  name="minimalist-option"
+                  value={option.id}
+                  checked={isSelected}
+                  onChange={() => handleSelectionChange(option.id)}
+                  className="sr-only"
+                />
+                
+                <div className="relative z-10 flex items-center gap-4 w-full">
+                    <div className="text-foreground">{option.icon}</div>
+                    <span className="text-sm font-medium text-foreground">{option.label}</span>
+                    <span className={cn(
+                        "ml-auto text-sm font-medium", 
+                        isSelected ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                        {priceCurrency}{option.price}
+                    </span>
+                </div>
+
+                {/* Minimalist Radio Button Visual */}
+                <div className="relative z-10 ml-4 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-muted-foreground transition-colors">
+                  <AnimatePresence>
+                    {isSelected && (
+                       <motion.div
+                         className="absolute inset-0 rounded-full bg-foreground border-foreground flex items-center justify-center"
+                         initial={{ scale: 0.5, opacity: 0 }}
+                         animate={{ scale: 1, opacity: 1 }}
+                         exit={{ scale: 0.5, opacity: 0 }}
+                         transition={{ duration: 0.2, ease: 'easeInOut' }}
+                       >
+                         {/* Inner white dot */}
+                         <div className="h-1.5 w-1.5 rounded-full bg-background"/>
+                       </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+);
+
+MinimalistOptionSelector.displayName = 'MinimalistOptionSelector';
+
+demo.tsx
+import React from 'react';
+import { MinimalistOptionSelector, Option } from '@/components/ui/baggage-add-on';
+import { Briefcase, Luggage, ShoppingBag } from 'lucide-react';
+
+// Data for the component options
+const baggageOptions: Option[] = [
+  {
+    id: '5kg',
+    icon: <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />,
+    label: '5 kg',
+    price: 20,
+  },
+  {
+    id: '10kg',
+    icon: <Briefcase className="h-5 w-5" strokeWidth={1.5} />,
+    label: '10 kg',
+    price: 25,
+  },
+  {
+    id: '15kg',
+    icon: <Luggage className="h-5 w-5" strokeWidth={1.5} />,
+    label: '15 kg',
+    price: 30,
+  },
+];
+
+export default function MinimalistOptionSelectorDemo() {
+  const [selectedValue, setSelectedValue] = React.useState<string>('10kg');
+  const selectedOption = baggageOptions.find(opt => opt.id === selectedValue);
+
+  return (
+    // The container div no longer has background color classes
+    <div className="flex flex-col items-center justify-center min-h-[500px] w-full gap-6 p-4">
+      <MinimalistOptionSelector
+        options={baggageOptions}
+        defaultValue="10kg"
+        onValue-change={(id) => setSelectedValue(id)}
+      />
+      
+      {/* Selection summary */}
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground">
+          Your selection:
+        </p>
+        <p className="text-base font-semibold text-foreground">
+          {selectedOption?.label} - ${selectedOption?.price}
+        </p>
+      </div>
+    </div>
+  );
+}
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

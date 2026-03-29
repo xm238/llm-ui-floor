@@ -1,0 +1,220 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+empty-state-beautiful-accessible-no-data-states.tsx
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils"; // Assumes shadcn's utility for class merging
+import { FileText, PlusCircle } from 'lucide-react';
+import { Search, FolderOpen, AlertTriangle } from 'lucide-react';
+
+// Define the icon type. Using React.ElementType for flexibility.
+type IconType = React.ElementType | React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+
+// --- 📦 API (Props) Definition ---
+export interface EmptyStateProps {
+  /** The primary title of the empty state (e.g., "No Documents Found"). */
+  title: string;
+  /** The detailed descriptive message. */
+  message: string;
+  /** Optional label for the primary action button. */
+  actionLabel?: string;
+  /** Optional icon for the primary action button. Defaults to PlusCircle. */
+  actionIcon?: IconType;
+  /** Callback function when the primary action button is clicked. */
+  onActionClick?: () => void;
+  /** The main icon to display prominently in the empty state. Defaults to FileText. */
+  mainIcon?: IconType;
+  /** Optional class name for the container div. */
+  className?: string;
+}
+
+/**
+ * A professional, accessible, and responsive component for indicating the absence of data.
+ * It guides the user with a clear message and an optional call-to-action.
+ */
+const EmptyState: React.FC<EmptyStateProps> = ({
+  title,
+  message,
+  actionLabel,
+  actionIcon: ActionIcon = PlusCircle, // Default to PlusCircle
+  onActionClick,
+  mainIcon: MainIcon = FileText, // Default to FileText
+  className,
+}) => {
+  const showAction = actionLabel && onActionClick;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center text-center p-8 sm:p-12 md:p-16 border-2 border-dashed border-border rounded-lg bg-card transition-colors duration-200",
+        className
+      )}
+      role="status" // ARIA role to indicate status information
+      aria-live="polite"
+    >
+      {/* Main Icon */}
+      <div className="mb-4 p-3 rounded-full bg-muted text-muted-foreground border border-border">
+        <MainIcon className="h-10 w-10 text-muted-foreground" aria-hidden="true" />
+      </div>
+
+      {/* Title */}
+      <h3 className="text-xl font-semibold text-foreground mb-2">{title}</h3>
+
+      {/* Message */}
+      <p className="max-w-md text-sm text-muted-foreground mb-6">{message}</p>
+
+      {/* Action Button (Optional) */}
+      {showAction && (
+        <Button
+          onClick={onActionClick}
+          className="transition-shadow duration-200 hover:shadow-md"
+          aria-label={actionLabel}
+        >
+          <ActionIcon className="h-4 w-4 mr-2" aria-hidden="true" />
+          {actionLabel}
+        </Button>
+      )}
+    </div>
+  );
+};
+
+// export default EmptyState;
+
+
+const ExampleUsage = () => {
+  return (
+    <div className="p-8 bg-background flex flex-col gap-8">
+      {/* Example 1: Standard Empty State (No Content) */}
+      <EmptyState
+        title="No Reports Generated Yet"
+        message="It looks like you haven't run any analysis reports. Click the button below to start your first financial summary."
+        actionLabel="Generate First Report"
+        onActionClick={() => console.log("Action: Generate Report")}
+        mainIcon={FolderOpen}
+        className="max-w-3xl mx-auto"
+      />
+
+      {/* Example 2: Search Empty State */}
+      <EmptyState
+        title="No Results Found"
+        message="We couldn't find any items matching your search criteria. Try simplifying your query or checking your spelling."
+        mainIcon={Search}
+        className="max-w-xl mx-auto"
+      />
+
+      {/* Example 3: Error/Configuration Empty State (No Action) */}
+      <EmptyState
+        title="Configuration Required"
+        message="The system is not yet configured with a data source. Please contact your administrator to set up the connection."
+        mainIcon={AlertTriangle}
+        className="max-w-2xl mx-auto"
+      />
+    </div>
+  );
+};
+
+export default ExampleUsage;
+
+demo.tsx
+import ExampleUsage from "@/components/ui/empty-state-beautiful-accessible-no-data-states";
+
+export default function DemoOne() {
+  return <ExampleUsage />;
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

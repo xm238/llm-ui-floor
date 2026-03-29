@@ -1,0 +1,427 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+welcome-modal.tsx
+"use client"
+
+import * as React from "react"
+import { X, ArrowRight, ExternalLink, HelpCircle } from "lucide-react"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+
+export interface WelcomeModalProps extends React.ComponentPropsWithoutRef<typeof Dialog> {
+  title: React.ReactNode
+  description: string
+  mainActionText: string
+  onMainActionClick: () => void
+  showDontShowAgain?: boolean
+  helpLink?: string
+}
+
+const WelcomeModal = ({
+  title,
+  description,
+  mainActionText,
+  onMainActionClick,
+  showDontShowAgain = true,
+  helpLink = "#",
+  children,
+  ...props
+}: WelcomeModalProps) => {
+  return (
+    <Dialog {...props}>
+      <DialogContent className="w-full sm:max-w-xl rounded-2xl bg-background p-0 shadow-2xl border-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+        {/* Main content area with responsive padding */}
+        <div className="p-6 sm:p-8 pb-0">
+            <DialogHeader>
+              {/* Responsive title font size */}
+              <DialogTitle className="flex items-center text-xl sm:text-2xl font-bold text-foreground">
+                {title}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground pt-1 text-base">
+                {description}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-6 space-y-6 text-foreground">
+                {children}
+            </div>
+        </div>
+
+        {/* Footer area with responsive padding */}
+        <div className="px-6 sm:px-8 pb-6 sm:pb-8 space-y-6">
+            <div className="bg-muted/50 rounded-lg p-4 flex items-start space-x-3">
+                <HelpCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div>
+                    <p className="font-semibold">Need help accessing your account?</p>
+                    <p className="text-sm text-muted-foreground">If you're experiencing any login issues, I'm here to help. Reach out to me directly on X for immediate assistance.</p>
+                    <Button asChild variant="link" className="p-0 h-auto mt-2 text-sm font-semibold">
+                        <a href={helpLink}>
+                           Get login assistance <ArrowRight className="ml-1 h-4 w-4" />
+                        </a>
+                    </Button>
+                </div>
+            </div>
+
+            {/* Responsive action bar */}
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center w-full gap-4 sm:gap-2">
+                {showDontShowAgain && (
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="dont-show-again" className="rounded-[4px]"/>
+                        <label
+                            htmlFor="dont-show-again"
+                            className="text-sm font-medium leading-none text-muted-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Don't show again
+                        </label>
+                    </div>
+                )}
+               <div className="sm:flex-grow"></div>
+                <Button size="lg" onClick={onMainActionClick} className="font-semibold w-full sm:w-auto">
+                    {mainActionText}
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+WelcomeModal.displayName = "WelcomeModal"
+
+export { WelcomeModal }
+
+
+demo.tsx
+"use client"
+
+import * as React from "react"
+import { WelcomeModal } from "@/components/ui/welcome-modal" // Adjust the import path
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+
+export default function WelcomeModalDemo() {
+  const [isOpen, setIsOpen] = React.useState(false)
+
+  const handleMainAction = () => {
+    console.log("Main action clicked!")
+    setIsOpen(false)
+  }
+
+  const handleHelpAction = () => {
+    console.log("Help action clicked!")
+    // You can add any action here, like opening a support chat
+  }
+
+  return (
+    <div className="flex items-center justify-center h-screen bg-background p-4">
+      <Button onClick={() => setIsOpen(true)}>Show Welcome Modal</Button>
+      <WelcomeModal
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        title={
+          <>
+            <span role="img" aria-label="wave" className="mr-3 text-3xl">🤘</span>
+            Welcome Newcult.co Users
+          </>
+        }
+        description="All newcult.co templates are now included with cult pro"
+        mainActionText="View templates"
+        onMainActionClick={handleMainAction}
+        onHelpClick={handleHelpAction}
+      >
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-semibold text-lg">For new users</h3>
+            <p className="text-muted-foreground">
+              You can find all 9 full stack templates <span className="underline font-medium text-primary cursor-pointer">here</span>. Ship full stack products using faster with our expanded collection.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg flex items-center">
+              For existing users
+              <Badge variant="secondary" className="ml-2 border border-border font-semibold">$299 Value</Badge>
+            </h3>
+            <p className="text-muted-foreground">
+              All OG newcult.co members have been given the $299 Lifetime License for free. No action required.
+            </p>
+          </div>
+        </div>
+      </WelcomeModal>
+    </div>
+  )
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+originui/button
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+
+```
+```tsx
+originui/checkbox
+"use client";
+
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const Checkbox = React.forwardRef<
+  React.ElementRef<typeof CheckboxPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <CheckboxPrimitive.Root
+    ref={ref}
+    className={cn(
+      "peer size-4 shrink-0 rounded border border-input shadow-sm shadow-black/5 outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=indeterminate]:border-primary data-[state=checked]:bg-primary data-[state=indeterminate]:bg-primary data-[state=checked]:text-primary-foreground data-[state=indeterminate]:text-primary-foreground",
+      className
+    )}
+    {...props}
+  >
+    <CheckboxPrimitive.Indicator className="flex items-center justify-center text-current">
+      {props.checked === "indeterminate" ? (
+        <svg
+          width="9"
+          height="9"
+          viewBox="0 0 9 9"
+          fill="currentcolor"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M0.75 4.5C0.75 4.08579 1.08579 3.75 1.5 3.75H7.5C7.91421 3.75 8.25 4.08579 8.25 4.5C8.25 4.91421 7.91421 5.25 7.5 5.25H1.5C1.08579 5.25 0.75 4.91421 0.75 4.5Z"
+          />
+        </svg>
+      ) : (
+        <svg
+          width="9"
+          height="9"
+          viewBox="0 0 9 9"
+          fill="currentcolor"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M8.53547 0.62293C8.88226 0.849446 8.97976 1.3142 8.75325 1.66099L4.5083 8.1599C4.38833 8.34356 4.19397 8.4655 3.9764 8.49358C3.75883 8.52167 3.53987 8.45309 3.3772 8.30591L0.616113 5.80777C0.308959 5.52987 0.285246 5.05559 0.563148 4.74844C0.84105 4.44128 1.31533 4.41757 1.62249 4.69547L3.73256 6.60459L7.49741 0.840706C7.72393 0.493916 8.18868 0.396414 8.53547 0.62293Z"
+          />
+        </svg>
+      )}
+    </CheckboxPrimitive.Indicator>
+  </CheckboxPrimitive.Root>
+));
+Checkbox.displayName = CheckboxPrimitive.Root.displayName;
+
+export { Checkbox };
+
+```
+```tsx
+originui/dialog
+"use client";
+
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+import { Cross2Icon } from "@radix-ui/react-icons";
+
+const Dialog = DialogPrimitive.Root;
+
+const DialogTrigger = DialogPrimitive.Trigger;
+
+const DialogPortal = DialogPrimitive.Portal;
+
+const DialogClose = DialogPrimitive.Close;
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-[101] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className,
+    )}
+    {...props}
+  />
+));
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed left-1/2 top-1/2 z-[101] grid max-h-[calc(100%-4rem)] w-full -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto border bg-background p-6 shadow-lg shadow-black/5 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:max-w-[400px] sm:rounded-xl",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="group absolute right-3 top-3 flex size-7 items-center justify-center rounded-lg outline-offset-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none">
+        <Cross2Icon
+          width={16}
+          height={16}
+          strokeWidth={2}
+          className="opacity-60 transition-opacity group-hover:opacity-100"
+        />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+DialogContent.displayName = DialogPrimitive.Content.displayName;
+
+const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
+);
+DialogHeader.displayName = "DialogHeader";
+
+const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3", className)}
+    {...props}
+  />
+);
+DialogFooter.displayName = "DialogFooter";
+
+const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn("text-lg font-semibold tracking-tight", className)}
+    {...props}
+  />
+));
+DialogTitle.displayName = DialogPrimitive.Title.displayName;
+
+const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+));
+DialogDescription.displayName = DialogPrimitive.Description.displayName;
+
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+};
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, class-variance-authority, @radix-ui/react-slot, @radix-ui/react-checkbox, @radix-ui/react-icons, @radix-ui/react-dialog
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

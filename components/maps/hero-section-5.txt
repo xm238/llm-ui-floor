@@ -1,0 +1,287 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+hero-section-5.tsx
+// components/ui/animated-roadmap.tsx
+"use client";
+
+import * as React from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { cn } from "@/lib/utils"; // Assuming you have a `cn` utility from shadcn
+
+// Define the type for a single milestone
+interface Milestone {
+  id: number;
+  name: string;
+  status: "complete" | "in-progress" | "pending";
+  position: {
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
+  };
+}
+
+// Define the props for the AnimatedRoadmap component
+interface AnimatedRoadmapProps extends React.HTMLAttributes<HTMLDivElement> {
+  milestones: Milestone[];
+  mapImageSrc: string; // Add a prop for the map background image
+}
+
+// Sub-component for a single milestone marker
+const MilestoneMarker = ({ milestone }: { milestone: Milestone }) => {
+  const statusClasses = {
+    complete: "bg-green-500 border-green-700",
+    "in-progress": "bg-blue-500 border-blue-700 animate-pulse",
+    pending: "bg-muted border-border",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.5 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, delay: milestone.id * 0.3, ease: "easeOut" }}
+      viewport={{ once: true, amount: 0.8 }}
+      className="absolute flex items-center gap-4"
+      style={milestone.position}
+    >
+      <div className="relative flex h-8 w-8 items-center justify-center">
+        <div
+          className={cn(
+            "absolute h-3 w-3 rounded-full border-2",
+            statusClasses[milestone.status]
+          )}
+        />
+        <div className="absolute h-full w-full rounded-full bg-primary/10" />
+      </div>
+      <div className="rounded-full border bg-card px-4 py-2 text-sm font-medium text-card-foreground shadow-sm">
+        {milestone.name}
+      </div>
+    </motion.div>
+  );
+};
+
+// Main AnimatedRoadmap component
+const AnimatedRoadmap = React.forwardRef<HTMLDivElement, AnimatedRoadmapProps>(
+  ({ className, milestones, mapImageSrc, ...props }, ref) => {
+    const targetRef = React.useRef<HTMLDivElement>(null);
+    const { scrollYProgress } = useScroll({
+      target: targetRef,
+      offset: ["start end", "end start"],
+    });
+
+    // Animate the path drawing based on scroll progress
+    const pathLength = useTransform(scrollYProgress, [0.15, 0.7], [0, 1]);
+
+    return (
+      <div
+        ref={targetRef}
+        className={cn("relative w-full max-w-4xl mx-auto py-24", className)}
+        {...props}
+      >
+        {/* Background map image */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          viewport={{ once: true, amount: 0.2 }}
+          className="absolute inset-0 top-10"
+        >
+          <img
+            src={mapImageSrc}
+            alt="Product roadmap map"
+            className="h-full w-full object-contain"
+          />
+        </motion.div>
+
+        {/* SVG path for animation */}
+        <div className="relative h-[400px]">
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 800 400"
+            preserveAspectRatio="none"
+            className="absolute top-0 left-0"
+          >
+            <motion.path
+              d="M 50 350 Q 200 50 400 200 T 750 100"
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="3"
+              strokeDasharray="10 5"
+              strokeLinecap="round"
+              style={{ pathLength }}
+            />
+          </svg>
+
+          {/* Render each milestone */}
+          {milestones.map((milestone) => (
+            <MilestoneMarker key={milestone.id} milestone={milestone} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+);
+
+AnimatedRoadmap.displayName = "AnimatedRoadmap";
+
+export { AnimatedRoadmap };
+
+demo.tsx
+// demo.tsx
+import { AnimatedRoadmap } from "@/components/ui/hero-section-5"; // Adjust the import path
+import { Button } from "@/components/ui/button"; // Assuming shadcn Button component
+
+const milestonesData = [
+  {
+    id: 1,
+    name: "Kick-off",
+    status: "complete",
+    position: { top: "70%", left: "5%" },
+  },
+  {
+    id: 2,
+    name: "Design",
+    status: "complete",
+    position: { top: "15%", left: "20%" },
+  },
+  {
+    id: 3,
+    name: "Development",
+    status: "in-progress",
+    position: { top: "45%", left: "55%" },
+  },
+  {
+    id: 4,
+    name: "Launch",
+    status: "pending",
+    position: { top: "10%", right: "10%" },
+  },
+];
+
+const HeroSectionDemo = () => {
+  return (
+    <div className="w-full bg-background text-foreground">
+      {/* Container for the Hero Content */}
+      <div className="container mx-auto flex flex-col items-center px-4 py-16 text-center md:py-24">
+        <h1 className="text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl">
+          Stay ahead with a <span className="bg-primary/20 p-2 rounded-md">clear</span> product plan
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
+          Visualize your roadmap, assign tasks, and hit every milestone—faster and smarter.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <Button size="lg">Get started - it&apos;s free!</Button>
+          <Button size="lg" variant="outline">
+            See how it works
+          </Button>
+        </div>
+      </div>
+
+      {/* Animated Roadmap Component Demo */}
+      <AnimatedRoadmap
+        milestones={milestonesData}
+        mapImageSrc="https://www.thiings.co/_next/image?url=https%3A%2F%2Flftz25oez4aqbxpq.public.blob.vercel-storage.com%2Fimage-SsfjxCJh43Hr1dqzkbFWUGH3ICZQbH.png&w=320&q=75"
+        aria-label="An animated roadmap showing project milestones from kick-off to launch."
+      />
+    </div>
+  );
+};
+
+export default HeroSectionDemo;
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+framer-motion, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

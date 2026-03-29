@@ -1,0 +1,91 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+textarea.tsx
+"use client";
+
+import { cn } from "@/lib/utils";
+import type * as React from "react";
+
+export type TextareaProps = React.ComponentPropsWithoutRef<"textarea"> & {
+  size?: "sm" | "default" | "lg" | number;
+  unstyled?: boolean;
+};
+
+export function Textarea({
+  className,
+  size = "default",
+  unstyled = false,
+  ref,
+  ...props
+}: TextareaProps): React.ReactElement {
+  return (
+    <span
+      className={
+        cn(
+          !unstyled &&
+            "relative inline-flex w-full rounded-lg border border-input bg-background not-dark:bg-clip-padding text-base text-foreground shadow-xs/5 ring-ring/24 transition-shadow before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] has-focus-visible:has-aria-invalid:border-destructive/64 has-focus-visible:has-aria-invalid:ring-destructive/16 has-aria-invalid:border-destructive/36 has-focus-visible:border-ring has-disabled:opacity-64 has-[:disabled,:focus-visible,[aria-invalid]]:shadow-none has-focus-visible:ring-[3px] not-has-disabled:has-not-focus-visible:not-has-aria-invalid:before:shadow-[0_1px_--theme(--color-black/4%)] sm:text-sm dark:bg-input/32 dark:has-aria-invalid:ring-destructive/24 dark:not-has-disabled:has-not-focus-visible:not-has-aria-invalid:before:shadow-[0_-1px_--theme(--color-white/6%)]",
+          className,
+        ) || undefined
+      }
+      data-size={size}
+      data-slot="textarea-control"
+    >
+      <textarea
+        className={cn(
+          "field-sizing-content min-h-17.5 w-full rounded-[inherit] px-[calc(--spacing(3)-1px)] py-[calc(--spacing(1.5)-1px)] outline-none max-sm:min-h-20.5",
+          size === "sm" &&
+            "min-h-16.5 px-[calc(--spacing(2.5)-1px)] py-[calc(--spacing(1)-1px)] max-sm:min-h-19.5",
+          size === "lg" &&
+            "min-h-18.5 py-[calc(--spacing(2)-1px)] max-sm:min-h-21.5",
+        )}
+        data-slot="textarea"
+        ref={ref as React.Ref<HTMLTextAreaElement>}
+        {...props}
+      />
+    </span>
+  );
+}
+
+
+demo.tsx
+import { Textarea } from "@/components/ui/component";
+
+export default function TextareaDefault() {
+  return (
+    <div className="flex items-center justify-center w-full min-h-screen bg-background p-8">
+      <div className="w-full max-w-sm">
+        <Textarea placeholder="Type your message here" />
+      </div>
+    </div>
+  );
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

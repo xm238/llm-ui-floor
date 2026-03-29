@@ -1,0 +1,147 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+checkbox-1.tsx
+"use client"
+
+import * as React from "react"
+import { Check, Minus } from "lucide-react"
+import {
+  Checkbox as AriaCheckbox,
+  CheckboxGroup as AriaCheckboxGroup,
+  CheckboxGroupProps as AriaCheckboxGroupProps,
+  ValidationResult as AriaValidationResult,
+  composeRenderProps,
+  Text,
+  type CheckboxProps as AriaCheckboxProps,
+} from "react-aria-components"
+
+import { cn } from "@/lib/utils"
+
+import { FieldError, Label, labelVariants } from "@/components/ui/text-field-basic"
+
+const CheckboxGroup = AriaCheckboxGroup
+
+const Checkbox = ({ className, children, ...props }: AriaCheckboxProps) => (
+  <AriaCheckbox
+    className={composeRenderProps(className, (className) =>
+      cn(
+        "group/checkbox flex items-center gap-x-2",
+        /* Disabled */
+        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-70",
+        labelVariants,
+        className
+      )
+    )}
+    {...props}
+  >
+    {composeRenderProps(children, (children, renderProps) => (
+      <>
+        <div
+          className={cn(
+            "flex size-4 shrink-0 items-center justify-center rounded-sm border border-primary text-current ring-offset-background",
+            /* Focus Visible */
+            "group-data-[focus-visible]/checkbox:outline-none group-data-[focus-visible]/checkbox:ring-2 group-data-[focus-visible]/checkbox:ring-ring group-data-[focus-visible]/checkbox:ring-offset-2",
+            /* Selected */
+            "group-data-[indeterminate]/checkbox:bg-primary group-data-[selected]/checkbox:bg-primary group-data-[indeterminate]/checkbox:text-primary-foreground  group-data-[selected]/checkbox:text-primary-foreground",
+            /* Disabled */
+            "group-data-[disabled]/checkbox:cursor-not-allowed group-data-[disabled]/checkbox:opacity-50",
+            /* Invalid */
+            "group-data-[invalid]/checkbox:border-destructive group-data-[invalid]/checkbox:group-data-[selected]/checkbox:bg-destructive group-data-[invalid]/checkbox:group-data-[selected]/checkbox:text-destructive-foreground",
+            /* Resets */
+            "focus:outline-none focus-visible:outline-none"
+          )}
+        >
+          {renderProps.isIndeterminate ? (
+            <Minus className="size-4" />
+          ) : renderProps.isSelected ? (
+            <Check className="size-4" />
+          ) : null}
+        </div>
+        {children}
+      </>
+    ))}
+  </AriaCheckbox>
+)
+
+interface JollyCheckboxGroupProps extends AriaCheckboxGroupProps {
+  label?: string
+  description?: string
+  errorMessage?: string | ((validation: AriaValidationResult) => string)
+}
+
+function JollyCheckboxGroup({
+  label,
+  description,
+  errorMessage,
+  className,
+  children,
+  ...props
+}: JollyCheckboxGroupProps) {
+  return (
+    <CheckboxGroup
+      className={composeRenderProps(className, (className) =>
+        cn("group flex flex-col gap-2", className)
+      )}
+      {...props}
+    >
+      {composeRenderProps(children, (children) => (
+        <>
+          <Label>{label}</Label>
+          {children}
+          {description && (
+            <Text className="text-sm text-muted-foreground" slot="description">
+              {description}
+            </Text>
+          )}
+          <FieldError>{errorMessage}</FieldError>
+        </>
+      ))}
+    </CheckboxGroup>
+  )
+}
+
+export { Checkbox, CheckboxGroup, JollyCheckboxGroup }
+export type { JollyCheckboxGroupProps }
+
+
+demo.tsx
+import { Checkbox } from "@/components/ui/checkbox-1"
+
+export default function CheckboxDemo() {
+  return <Checkbox>Unsubscribe</Checkbox>
+}
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, react-aria-components
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

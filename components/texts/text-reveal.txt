@@ -1,0 +1,341 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+text-reveal.tsx
+"use client";
+
+import { cn } from "@/lib/utils";
+import React, { useRef, useEffect } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(useGSAP);
+
+const TextRevealEffect = ({
+  text,
+  splitBy = "word",
+  className,
+  duration = 0.5,
+  stagger = 0.1,
+  effect = "revealX",
+  blur = 10,
+  wordSpacing = 1,
+  characterSpacing = 1,
+}: {
+  text: string;
+  splitBy?: "word" | "character";
+  className?: string;
+  duration?: number;
+  stagger?: number;
+  effect?:
+    | "revealX"
+    | "revealY"
+    | "revealXY"
+    | "revealXReverse"
+    | "revealYReverse"
+    | "revealXYReverse"
+    | "scale";
+  blur?: number;
+  wordSpacing?: number;
+  characterSpacing?: number;
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const splittedText =
+    splitBy === "word" ? splitTextByWord(text) : splitTextByCharacter(text);
+
+  const effects = {
+    revealX: {
+      from: { x: 20, opacity: 0, filter: `blur(${blur}px)` },
+      to: { x: 0, opacity: 1, filter: `blur(0px)` },
+    },
+    revealY: {
+      from: { y: 20, opacity: 0, filter: `blur(${blur}px)` },
+      to: { y: 0, opacity: 1, filter: `blur(0px)` },
+    },
+    revealXY: {
+      from: { x: 20, y: 20, opacity: 0, filter: `blur(${blur}px)` },
+      to: { x: 0, y: 0, opacity: 1, filter: `blur(0px)` },
+    },
+    revealXReverse: {
+      from: { x: -20, opacity: 0, filter: `blur(${blur}px)` },
+      to: { x: 0, opacity: 1, filter: `blur(0px)` },
+    },
+    revealYReverse: {
+      from: { y: -20, opacity: 0, filter: `blur(${blur}px)` },
+      to: { y: 0, opacity: 1, filter: `blur(0px)` },
+    },
+    revealXYReverse: {
+      from: { x: -20, y: -20, opacity: 0, filter: `blur(${blur}px)` },
+      to: { x: 0, y: 0, opacity: 1, filter: `blur(0px)` },
+    },
+    scale: {
+      from: { scale: 0.5, opacity: 0, filter: `blur(${blur}px)` },
+      to: { scale: 1, opacity: 1, filter: `blur(0px)` },
+    },
+  };
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const elements = containerRef.current.children;
+
+      gsap.set(elements, effects[effect].from);
+
+      gsap.to(elements, {
+        ...effects[effect].to,
+        duration: duration,
+        stagger: stagger,
+        ease: "power2.out",
+      });
+    }
+  }, [text, splitBy, effect, duration, stagger, blur]);
+
+  function splitTextByWord(text: string) {
+    return text.split(" ").map((word, index) => ({
+      word,
+      key: index,
+    }));
+  }
+
+  function splitTextByCharacter(text: string) {
+    return text.split("").map((char, index) => ({
+      char,
+      key: index,
+    }));
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn(`flex`, className)}
+      style={{
+        gap:
+          splitBy === "character"
+            ? `${characterSpacing * 10}px`
+            : `${wordSpacing * 10}px`,
+      }}
+    >
+      {splittedText.map((item, index) => (
+        <div key={item.key}>
+          <div
+            style={{
+              letterSpacing:
+                splitBy === "word" ? `${characterSpacing * 10}px` : undefined,
+            }}
+          >
+            {splitBy === "word"
+              ? (item as { word: string }).word
+              : (item as { char: string }).char}
+          </div>
+          {splitBy === "character" &&
+            index < splittedText.length - 1 &&
+            (item as { char: string }).char === " " && (
+              <div style={{ width: `${wordSpacing * 10}px` }} />
+            )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default TextRevealEffect;
+
+
+demo.tsx
+"use client";
+
+import React, { useState } from "react";
+import TextRevealEffect from "@/components/ui/text-reveal";
+
+const TextRevealEffectDemo = () => {
+  const [text, setText] = useState("Text Reveal Effect");
+  const [splitBy, setSplitBy] = useState<"word" | "character">("word");
+  const [effect, setEffect] = useState<
+    | "revealX"
+    | "revealY"
+    | "revealXY"
+    | "revealXReverse"
+    | "revealYReverse"
+    | "revealXYReverse"
+    | "scale"
+  >("revealX");
+  const [duration, setDuration] = useState(0.5);
+  const [stagger, setStagger] = useState(0.1);
+  const [blur, setBlur] = useState(10);
+  const [wordSpacing, setWordSpacing] = useState(1);
+  const [characterSpacing, setCharacterSpacing] = useState(1);
+
+  return (
+    <div className="w-full max-w-6xl flex flex-col items-center justify-center gap-8 p-10">
+      <TextRevealEffect
+        text={text}
+        splitBy={splitBy}
+        className="text-4xl lg:text-5xl py-10"
+        effect={effect}
+        duration={duration}
+        stagger={stagger}
+        blur={blur}
+        wordSpacing={wordSpacing}
+        characterSpacing={characterSpacing}
+      />
+      {/* Controls Panel */}
+      <div className="space-y-2 w-full">
+        {/* Text Input */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Text</label>
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            placeholder="Enter your text..."
+          />
+        </div>
+
+        {/* Split By */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Split By</label>
+          <select
+            value={splitBy}
+            onChange={(e) => setSplitBy(e.target.value as "word" | "character")}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          >
+            <option value="word">Word</option>
+            <option value="character">Character</option>
+          </select>
+        </div>
+
+        {/* Effect */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Effect</label>
+          <select
+            value={effect}
+            onChange={(e) =>
+              setEffect(
+                e.target.value as "revealX" | "revealY" | "revealXY" | "scale"
+              )
+            }
+            className="w-full p-2 border border-gray-300 rounded-md"
+          >
+            <option value="revealX">Reveal X</option>
+            <option value="revealY">Reveal Y</option>
+            <option value="revealXY">Reveal XY</option>
+            <option value="revealXReverse">Reveal X Reverse</option>
+            <option value="revealYReverse">Reveal Y Reverse</option>
+            <option value="revealXYReverse">Reveal XY Reverse</option>
+            <option value="scale">Scale</option>
+          </select>
+        </div>
+
+        {/* Duration */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Duration: {duration}s</label>
+          <input
+            type="range"
+            min="0.1"
+            max="2"
+            step="0.1"
+            value={duration}
+            onChange={(e) => setDuration(parseFloat(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        {/* Stagger */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Stagger: {stagger}s</label>
+          <input
+            type="range"
+            min="0"
+            max="0.5"
+            step="0.01"
+            value={stagger}
+            onChange={(e) => setStagger(parseFloat(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        {/* Blur */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Blur: {blur}px</label>
+          <input
+            type="range"
+            min="0"
+            max="20"
+            step="1"
+            value={blur}
+            onChange={(e) => setBlur(parseInt(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        {/* Word Spacing */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Word Spacing: {wordSpacing}
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="5"
+            step="0.1"
+            value={wordSpacing}
+            onChange={(e) => setWordSpacing(parseFloat(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        {/* Character Spacing */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Character Spacing: {characterSpacing}
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="5"
+            step="0.1"
+            value={characterSpacing}
+            onChange={(e) => setCharacterSpacing(parseFloat(e.target.value))}
+            className="w-full"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TextRevealEffectDemo;
+
+```
+
+Install NPM dependencies:
+```bash
+gsap, @gsap/react
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

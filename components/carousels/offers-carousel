@@ -1,0 +1,355 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+offers-carousel.tsx
+import * as React from "react";
+import { motion, useAnimation } from "framer-motion";
+import { ChevronLeft, ChevronRight, Star, Gift } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+// TypeScript interface for each item in the carousel
+export interface CarouselItem {
+  id: number | string;
+  imageUrl: string;
+  title: string;
+  subtitle: string;
+  rating: number;
+  price: number;
+  originalPrice?: number;
+  discountPercentage?: number;
+}
+
+// Props for the main OffersCarousel component
+export interface OffersCarouselProps {
+  offerIcon?: React.ReactNode;
+  offerTitle: string;
+  offerSubtitle: string;
+  ctaText: string;
+  onCtaClick: () => void;
+  items: CarouselItem[];
+  className?: string;
+}
+
+// Sub-component for individual item cards in the carousel
+const ItemCard = ({ item }: { item: CarouselItem }) => (
+  <motion.div
+    className="group w-64 flex-shrink-0"
+    whileHover={{ y: -5 }}
+    transition={{ type: "spring", stiffness: 300 }}
+  >
+    <div className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
+      <div className="relative">
+        <img
+          src={item.imageUrl}
+          alt={item.title}
+          width={256}
+          height={160}
+          className="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        {item.discountPercentage && (
+          <div className="absolute bottom-2 right-2 rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
+            {item.discountPercentage}% OFF
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <h3 className="text-base font-semibold leading-tight">{item.title}</h3>
+          <div className="ml-2 flex flex-shrink-0 items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+            <Star className="h-3 w-3" />
+            <span>{item.rating.toFixed(1)}</span>
+          </div>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">{item.subtitle}</p>
+        <div className="mt-3 flex items-end gap-2">
+          <p className="text-lg font-bold">₹{item.price.toLocaleString('en-IN')}</p>
+          {item.originalPrice && (
+            <p className="text-sm text-muted-foreground line-through">
+              ₹{item.originalPrice.toLocaleString('en-IN')}
+            </p>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">/ night</p>
+      </div>
+    </div>
+  </motion.div>
+);
+
+// Main OffersCarousel component
+export const OffersCarousel = React.forwardRef<HTMLDivElement, OffersCarouselProps>(
+  ({ offerIcon, offerTitle, offerSubtitle, ctaText, onCtaClick, items, className }, ref) => {
+    const carouselRef = React.useRef<HTMLDivElement>(null);
+    const controls = useAnimation();
+    const [isAtStart, setIsAtStart] = React.useState(true);
+    const [isAtEnd, setIsAtEnd] = React.useState(false);
+
+    // Function to scroll the carousel
+    const scroll = (direction: "left" | "right") => {
+      if (carouselRef.current) {
+        const scrollAmount = carouselRef.current.clientWidth * 0.8;
+        const newScrollLeft =
+          carouselRef.current.scrollLeft + (direction === "right" ? scrollAmount : -scrollAmount);
+        controls.start({
+          x: -newScrollLeft,
+          transition: { type: "spring", stiffness: 300, damping: 30 },
+        });
+        carouselRef.current.scrollTo({ left: newScrollLeft, behavior: "smooth" });
+      }
+    };
+    
+    // Check scroll position to enable/disable navigation buttons
+    const checkScrollPosition = React.useCallback(() => {
+        if (carouselRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+            setIsAtStart(scrollLeft < 10);
+            setIsAtEnd(scrollWidth - scrollLeft - clientWidth < 10);
+        }
+    }, []);
+
+    React.useEffect(() => {
+        const currentCarousel = carouselRef.current;
+        if (currentCarousel) {
+            currentCarousel.addEventListener("scroll", checkScrollPosition);
+            checkScrollPosition(); // Initial check
+        }
+        return () => {
+            if (currentCarousel) {
+                currentCarousel.removeEventListener("scroll", checkScrollPosition);
+            }
+        };
+    }, [checkScrollPosition, items]);
+
+    return (
+      <div
+        ref={ref}
+        className={cn("w-full max-w-6xl rounded-2xl border bg-card p-4 shadow-sm md:p-6", className)}
+      >
+        <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-12">
+          {/* Left: Offer Section */}
+          <div className="flex flex-col items-center text-center lg:col-span-3 lg:items-start lg:text-left">
+            <div className="flex items-center gap-3">
+              {offerIcon || <Gift className="h-6 w-6 text-primary" />}
+               <p className="text-sm text-muted-foreground">Since you're flying with us!</p>
+            </div>
+            <h2 className="mt-4 text-2xl font-bold text-primary">{offerTitle}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{offerSubtitle}</p>
+            <Button variant="outline" className="mt-6 w-full max-w-xs lg:w-auto" onClick={onCtaClick}>
+              {ctaText}
+            </Button>
+          </div>
+
+          {/* Right: Carousel Section */}
+          <div className="relative lg:col-span-9">
+            <div ref={carouselRef} className="overflow-x-auto scrollbar-hide">
+              <motion.div
+                className="flex gap-4 px-1 py-2"
+                animate={controls}
+              >
+                {items.map((item) => (
+                  <ItemCard key={item.id} item={item} />
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Navigation Buttons */}
+            {!isAtStart && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full h-9 w-9 shadow-md z-10 hidden md:flex"
+                onClick={() => scroll("left")}
+                aria-label="Scroll left"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            )}
+            {!isAtEnd && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 rounded-full h-9 w-9 shadow-md z-10 hidden md:flex"
+                onClick={() => scroll("right")}
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+OffersCarousel.displayName = "OffersCarousel";
+
+demo.tsx
+import * as React from "react";
+import { Gift } from "lucide-react";
+import { OffersCarousel, type CarouselItem } from "@/components/ui/offers-carousel";
+
+// Mock data for the hotel carousel items
+const mockHotels: CarouselItem[] = [
+  {
+    id: 1,
+    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&q=80",
+    title: "Ramada by Wyndham",
+    subtitle: "5 star hotel in Katibagiya",
+    rating: 4.7,
+    price: 3671,
+    originalPrice: 5500,
+    discountPercentage: 33,
+  },
+  {
+    id: 2,
+    imageUrl: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=500&q=80",
+    title: "Hotel Clarks Avadh",
+    subtitle: "5 star hotel in Qaisar Bagh",
+    rating: 4.3,
+    price: 4114,
+    originalPrice: 8249,
+    discountPercentage: 50,
+  },
+  {
+    id: 3,
+    imageUrl: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500&q=80",
+    title: "The Oberoi Resort",
+    subtitle: "Luxury resort with private pool",
+    rating: 4.9,
+    price: 6750,
+    originalPrice: 9000,
+    discountPercentage: 25,
+  },
+  {
+    id: 4,
+    imageUrl: "https://images.unsplash.com/photo-1549294413-26f195200c16?w=500&q=80",
+    title: "Hyatt Regency",
+    subtitle: "Business hotel near airport",
+    rating: 4.6,
+    price: 5200,
+    originalPrice: 6500,
+    discountPercentage: 20,
+  },
+  {
+    id: 5,
+    imageUrl: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=500&q=80",
+    title: "Radisson Blu",
+    subtitle: "Modern hotel in city center",
+    rating: 4.5,
+    price: 4800,
+    originalPrice: 7000,
+    discountPercentage: 31,
+  },
+];
+
+const OffersCarouselDemo = () => {
+  return (
+    <div className="flex min-h-[500px] w-full items-center justify-center bg-background p-4">
+      <OffersCarousel
+        offerTitle="Flat 25% off on hotels"
+        offerSubtitle="CTBEST - Code pre-applied for you!"
+        ctaText="View all hotels"
+        onCtaClick={() => alert("Redirecting to all hotels...")}
+        items={mockHotels}
+      />
+    </div>
+  );
+};
+
+export default OffersCarouselDemo;
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

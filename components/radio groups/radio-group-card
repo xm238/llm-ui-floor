@@ -1,0 +1,142 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+radio-group-card.tsx
+"use client";
+
+import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
+import * as React from "react";
+import { cn } from "@/lib/utils";
+
+const RadioGroup = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <RadioGroupPrimitive.Root
+    ref={ref}
+    className={cn("grid gap-4 sm:grid-cols-2", className)}
+    {...props}
+  />
+));
+RadioGroup.displayName = RadioGroupPrimitive.Root.displayName;
+
+const RadioCard = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item> & {
+    title: string;
+    description?: string;
+    icon?: React.ReactNode;
+  }
+>(({ className, title, description, icon, ...props }, ref) => (
+  <RadioGroupPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left shadow-sm transition-all",
+      "hover:shadow-md",
+      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70",
+      "data-[state=checked]:border-gray-400 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground",
+      "disabled:cursor-not-allowed disabled:opacity-50",
+      className
+    )}
+    {...props}
+  >
+    <div className="flex items-center gap-3">
+      {icon && <span className="text-primary">{icon}</span>}
+      <span className="font-semibold">{title}</span>
+    </div>
+    {description && (
+      <p className="text-sm text-muted-foreground">{description}</p>
+    )}
+
+    {/* Glowing green dot indicator */}
+    <RadioGroupPrimitive.Indicator className="absolute top-3 right-3">
+      <span className="relative flex size-3">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"></span>
+        <span className="relative inline-flex size-3 rounded-full bg-green-500 shadow-[0_0_6px_2px_rgba(34,197,94,0.6)]"></span>
+      </span>
+    </RadioGroupPrimitive.Indicator>
+  </RadioGroupPrimitive.Item>
+));
+RadioCard.displayName = "RadioCard";
+
+export { RadioGroup, RadioCard };
+
+
+demo.tsx
+"use client";
+
+import { RadioGroup, RadioCard } from "@/components/ui/radio-group-card";
+import { Laptop, SunMedium, Moon } from "lucide-react";
+
+function DemoPage() {
+  return (
+    <div className="max-w-md space-y-6">
+      <p className="text-sm text-muted-foreground">
+        Select the theme that best matches your environment.
+      </p>
+
+      <RadioGroup defaultValue="system">
+        <RadioCard
+          value="light"
+          title="Light Mode"
+          description="Bright and clean layout with light backgrounds."
+          icon={<SunMedium size={20} />}
+        />
+        <RadioCard
+          value="dark"
+          title="Dark Mode"
+          description="Dimmed layout that’s easy on the eyes at night."
+          icon={<Moon size={20} />}
+        />
+        <RadioCard
+          value="system"
+          title="System"
+          description="Automatically adapts to your device’s settings."
+          icon={<Laptop size={20} />}
+        />
+      </RadioGroup>
+      <div className="mt-4 text-xs text-center text-muted-foreground">
+        Minimal design • made by{" "}
+        <a href="https://www.ruixen.com" target="_blank" className="underline">
+          ruixen.com
+        </a>
+      </div>
+    </div>
+  );
+}
+
+export default DemoPage;
+
+```
+
+Install NPM dependencies:
+```bash
+@radix-ui/react-radio-group
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

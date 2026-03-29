@@ -1,0 +1,116 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+tabs-2.tsx
+import * as Tabs from "@radix-ui/react-tabs";
+import { useState } from "react";
+
+export default function TabsComponent()  {
+  const [selectedTab, setSelectedTab] = useState("Overview");
+
+  const tabItems = [
+    "Overview",
+    "Integration",
+    "Billing",
+    "Transactions",
+    "plans",
+  ];
+
+  return (
+    <Tabs.Root
+      className="max-w-screen-xl mt-2 mx-auto px-4 md:px-8"
+      value={selectedTab}
+      orientation="vertical"
+      onValueChange={(val) => setSelectedTab(val)}
+    >
+      <Tabs.List
+        className="hidden flex-col items-start gap-y-3 py-1 text-sm sm:flex"
+        aria-label="Manage your account"
+      >
+        {tabItems.map((item, idx) => (
+          <Tabs.Trigger
+            key={idx}
+            className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700 data-[state=active]:shadow-sm outline-gray-800 py-1.5 px-3 rounded-lg duration-150 text-gray-500 hover:text-gray-700 hover:bg-gray-100 active:bg-gray-100 font-medium"
+            value={item}
+          >
+            {item}
+          </Tabs.Trigger>
+        ))}
+      </Tabs.List>
+      <div className="relative text-gray-500 sm:hidden">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className="pointer-events-none w-5 h-5 absolute right-2 inset-y-0 my-auto"
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <select
+          value={selectedTab}
+          className="py-2 px-3 w-full bg-transparent appearance-none outline-none border rounded-lg shadow-sm focus:border-gray-800 text-sm"
+          onChange={(e) => setSelectedTab(e.target.value)}
+        >
+          {tabItems.map((item, idx) => (
+            <option key={idx} idx={idx}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
+      {tabItems.map((item, idx) => (
+        <Tabs.Content key={idx} className="py-6" value={item}>
+          <p className="text-xs leading-normal">
+            This is <b>{item}</b> Tab
+          </p>
+        </Tabs.Content>
+      ))}
+    </Tabs.Root>
+  );
+};
+
+
+demo.tsx
+import TabsComponent from "@/components/ui/tabs-2";
+
+export default function DemoOne() {
+  return <TabsComponent/>;
+}
+
+```
+
+Install NPM dependencies:
+```bash
+@radix-ui/react-tabs
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

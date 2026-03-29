@@ -1,0 +1,147 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+card-21.tsx
+import * as React from "react";
+import { cn } from "@/lib/utils"; // Your utility for merging class names
+import { ArrowRight } from "lucide-react";
+
+// Define the props for the DestinationCard component
+interface DestinationCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  imageUrl: string;
+  location: string;
+  flag: string;
+  stats: string;
+  href: string;
+  themeColor: string; // e.g., "150 50% 25%" for a deep green
+}
+
+const DestinationCard = React.forwardRef<HTMLDivElement, DestinationCardProps>(
+  ({ className, imageUrl, location, flag, stats, href, themeColor, ...props }, ref) => {
+    return (
+      // The 'group' class enables hover effects on child elements
+      <div
+        ref={ref}
+        style={{
+          // @ts-ignore - CSS custom properties are valid
+          "--theme-color": themeColor,
+        } as React.CSSProperties}
+        className={cn("group w-full h-full", className)}
+        {...props}
+      >
+        <a
+          href={href}
+          className="relative block w-full h-full rounded-2xl overflow-hidden shadow-lg 
+                     transition-all duration-500 ease-in-out 
+                     group-hover:scale-105 group-hover:shadow-[0_0_60px_-15px_hsl(var(--theme-color)/0.6)]"
+          aria-label={`Explore details for ${location}`}
+          style={{
+             boxShadow: `0 0 40px -15px hsl(var(--theme-color) / 0.5)`
+          }}
+        >
+          {/* Background Image with Parallax Zoom */}
+          <div
+            className="absolute inset-0 bg-cover bg-center 
+                       transition-transform duration-500 ease-in-out group-hover:scale-110"
+            style={{ backgroundImage: `url(${imageUrl})` }}
+          />
+
+          {/* Themed Gradient Overlay */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to top, hsl(var(--theme-color) / 0.9), hsl(var(--theme-color) / 0.6) 30%, transparent 60%)`,
+            }}
+          />
+          
+          {/* Content */}
+          <div className="relative flex flex-col justify-end h-full p-6 text-white">
+            <h3 className="text-3xl font-bold tracking-tight">
+              {location} <span className="text-2xl ml-1">{flag}</span>
+            </h3>
+            <p className="text-sm text-white/80 mt-1 font-medium">{stats}</p>
+
+            {/* Explore Button */}
+            <div className="mt-8 flex items-center justify-between bg-[hsl(var(--theme-color)/0.2)] backdrop-blur-md border border-[hsl(var(--theme-color)/0.3)] 
+                           rounded-lg px-4 py-3 
+                           transition-all duration-300 
+                           group-hover:bg-[hsl(var(--theme-color)/0.4)] group-hover:border-[hsl(var(--theme-color)/0.5)]">
+              <span className="text-sm font-semibold tracking-wide">Explore Now</span>
+              <ArrowRight className="h-4 w-4 transform transition-transform duration-300 group-hover:translate-x-1" />
+            </div>
+          </div>
+        </a>
+      </div>
+    );
+  }
+);
+DestinationCard.displayName = "DestinationCard";
+
+export { DestinationCard };
+
+demo.tsx
+import { DestinationCard } from "@/components/ui/card-21"; // Adjust the import path
+
+const DestinationCardDemo = () => {
+  return (
+    <div className="flex min-h-screen w-full flex-col md:flex-row items-center justify-center gap-8 md:gap-12 p-8 bg-background">
+      <div className="w-full max-w-[320px] h-[450px]">
+        <DestinationCard
+          imageUrl="https://images.unsplash.com/photo-1524675053444-52c3ca294ad2?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGluZG9uZXNpYXxlbnwwfHwwfHx8MA%3D%3D?q=80&w=1887"
+          location="Indonesia"
+          flag="🇮🇩"
+          stats="1,345 Hotels • 24 Packages"
+          href="#"
+          // A deep, lush green HSL value
+          themeColor="150 50% 25%" 
+        />
+      </div>
+      <div className="w-full max-w-[320px] h-[450px]">
+        <DestinationCard
+          imageUrl="https://images.unsplash.com/photo-1526495124232-a04e1849168c?q=80&w=1887"
+          location="Dubai"
+          flag="🇦🇪"
+          stats="2,345 Hotels • 54 Packages"
+          href="#"
+          // A rich, twilight purple HSL value
+          themeColor="250 50% 30%"
+        />
+      </div>
+    </div>
+  );
+};
+
+export default DestinationCardDemo;
+```
+
+Install NPM dependencies:
+```bash
+lucide-react
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

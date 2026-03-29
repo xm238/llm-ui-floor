@@ -1,0 +1,400 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+notification-inbox-popover.tsx
+"use client";
+
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Bell,
+  GitMerge,
+  FileText,
+  ClipboardCheck,
+  Mail,
+  MessageSquareQuote,
+  AlertCircle,
+  LucideIcon,
+} from "lucide-react";
+
+interface Notification {
+  id: number;
+  user: string;
+  action: string;
+  target: string;
+  timestamp: string;
+  unread: boolean;
+  icon: LucideIcon;
+}
+
+const initialNotifications: Notification[] = [
+  {
+    id: 1,
+    user: "Alicia Keys",
+    action: "merged",
+    target: "PR #105: Dark mode support",
+    timestamp: "10 minutes ago",
+    unread: true,
+    icon: GitMerge,
+  },
+  {
+    id: 2,
+    user: "Daniel Green",
+    action: "shared file",
+    target: "Quarterly Report.pdf",
+    timestamp: "30 minutes ago",
+    unread: true,
+    icon: FileText,
+  },
+  {
+    id: 3,
+    user: "Sophia Turner",
+    action: "assigned you a task",
+    target: "Marketing campaign brief",
+    timestamp: "2 hours ago",
+    unread: false,
+    icon: ClipboardCheck,
+  },
+  {
+    id: 4,
+    user: "Michael Ross",
+    action: "sent you a message",
+    target: "Project feedback discussion",
+    timestamp: "5 hours ago",
+    unread: false,
+    icon: Mail,
+  },
+  {
+    id: 5,
+    user: "Priya Sharma",
+    action: "added a comment",
+    target: "UX Review Notes",
+    timestamp: "1 day ago",
+    unread: false,
+    icon: MessageSquareQuote,
+  },
+  {
+    id: 6,
+    user: "System",
+    action: "alert",
+    target: "Server downtime scheduled",
+    timestamp: "3 days ago",
+    unread: false,
+    icon: AlertCircle,
+  },
+];
+
+function NotificationInboxPopover() {
+  const [notifications, setNotifications] = useState(initialNotifications);
+  const unreadCount = notifications.filter((n) => n.unread).length;
+  const [tab, setTab] = useState("all");
+
+  const filtered = tab === "unread" ? notifications.filter((n) => n.unread) : notifications;
+
+  const markAsRead = (id: number) => {
+    setNotifications(
+      notifications.map((n) => (n.id === id ? { ...n, unread: false } : n)),
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(notifications.map((n) => ({ ...n, unread: false })));
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button size="icon" variant="outline" className="relative" aria-label="Open notifications">
+          <Bell size={16} strokeWidth={2} aria-hidden="true" />
+          {unreadCount > 0 && (
+            <Badge className="absolute -top-2 left-full min-w-5 -translate-x-1/2 px-1">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[380px] p-0">
+        {/* Header with Tabs + Mark All */}
+        <Tabs value={tab} onValueChange={setTab}>
+          <div className="flex items-center justify-between border-b px-3 py-2">
+            <TabsList className="bg-transparent">
+              <TabsTrigger value="all" className="text-sm">All</TabsTrigger>
+              <TabsTrigger value="unread" className="text-sm">
+                Unread {unreadCount > 0 && <Badge className="ml-1">{unreadCount}</Badge>}
+              </TabsTrigger>
+            </TabsList>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs font-medium text-muted-foreground hover:underline"
+              >
+                Mark all as read
+              </button>
+            )}
+          </div>
+
+          {/* Notifications List */}
+          <div className="max-h-80 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No notifications
+              </div>
+            ) : (
+              filtered.map((n) => {
+                const Icon = n.icon;
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => markAsRead(n.id)}
+                    className="flex w-full items-start gap-3 border-b px-3 py-3 text-left hover:bg-accent"
+                  >
+                    <div className="mt-1 text-muted-foreground">
+                      <Icon size={18} />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p
+                        className={`text-sm ${
+                          n.unread ? "font-semibold text-foreground" : "text-foreground/80"
+                        }`}
+                      >
+                        {n.user} {n.action}{" "}
+                        <span className="font-medium">{n.target}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">{n.timestamp}</p>
+                    </div>
+                    {n.unread && (
+                      <span className="mt-1 inline-block size-2 rounded-full bg-primary" />
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </Tabs>
+
+        {/* Footer */}
+        <div className="px-3 py-2 text-center">
+          <Button variant="ghost" size="sm" className="w-full">
+            View all notifications
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export { NotificationInboxPopover };
+
+
+demo.tsx
+"use client";
+
+import { NotificationInboxPopover  } from "@/components/ui/notification-inbox-popover";
+
+function DemoPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <NotificationInboxPopover  />
+    </div>
+  );
+}
+
+export default DemoPage;
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+originui/popover
+"use client";
+
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const Popover = PopoverPrimitive.Root;
+
+const PopoverTrigger = PopoverPrimitive.Trigger;
+
+const PopoverAnchor = PopoverPrimitive.Anchor;
+
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & {
+    showArrow?: boolean;
+  }
+>(({ className, align = "center", sideOffset = 4, showArrow = false, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 max-h-[var(--radix-popover-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-lg shadow-black/5 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className,
+      )}
+      {...props}
+    >
+      {props.children}
+      {showArrow && (
+        <PopoverPrimitive.Arrow className="-my-px fill-popover drop-shadow-[0_1px_0_hsl(var(--border))]" />
+      )}
+    </PopoverPrimitive.Content>
+  </PopoverPrimitive.Portal>
+));
+PopoverContent.displayName = PopoverPrimitive.Content.displayName;
+
+export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger };
+
+```
+```tsx
+originui/button
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+
+```
+```tsx
+originui/tabs
+"use client";
+
+import * as TabsPrimitive from "@radix-ui/react-tabs";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const Tabs = TabsPrimitive.Root;
+
+const TabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center rounded-lg bg-muted p-0.5 text-muted-foreground/70",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsList.displayName = TabsPrimitive.List.displayName;
+
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium outline-offset-2 transition-all hover:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:shadow-black/5",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
+
+const TabsContent = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Content
+    ref={ref}
+    className={cn(
+      "mt-2 outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsContent.displayName = TabsPrimitive.Content.displayName;
+
+export { Tabs, TabsContent, TabsList, TabsTrigger };
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, @radix-ui/react-popover, @radix-ui/react-slot, class-variance-authority, @radix-ui/react-tabs
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

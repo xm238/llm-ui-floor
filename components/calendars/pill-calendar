@@ -1,0 +1,184 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+pill-calendar.tsx
+"use client"
+
+import * as React from "react"
+import { cn } from "@/lib/utils"
+import {
+  Calendar as CalendarPrimitive,
+  CalendarGrid,
+  CalendarGridBody,
+  CalendarGridHeader,
+  CalendarHeaderCell,
+  CalendarCell,
+  Heading,
+  Button,
+  RangeCalendar as RangeCalendarPrimitive,
+} from "react-aria-components"
+import { getLocalTimeZone, today } from "@internationalized/date"
+import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons"
+import { composeRenderProps } from "react-aria-components"
+
+interface BaseCalendarProps {
+  className?: string
+}
+
+type CalendarProps = React.ComponentProps<typeof CalendarPrimitive> &
+  BaseCalendarProps
+
+type RangeCalendarProps = React.ComponentProps<typeof RangeCalendarPrimitive> &
+  BaseCalendarProps
+
+// --- Header with dropdown-like selectors ---
+const CalendarHeader = () => (
+  <header className="flex items-center justify-between px-2 py-1 border-b">
+    <Button
+      slot="previous"
+      className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+    >
+      <ChevronLeftIcon className="h-4 w-4" />
+    </Button>
+    <Heading className="text-sm font-semibold" />
+    <Button
+      slot="next"
+      className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+    >
+      <ChevronRightIcon className="h-4 w-4" />
+    </Button>
+  </header>
+)
+
+// --- Grid with pill-style cells ---
+const CalendarGridComponent = ({ isRange = false }: { isRange?: boolean }) => {
+  const now = today(getLocalTimeZone())
+
+  return (
+    <CalendarGrid className="p-2">
+      <CalendarGridHeader>
+        {(day) => (
+          <CalendarHeaderCell className="h-8 w-8 text-xs font-medium text-muted-foreground">
+            {day}
+          </CalendarHeaderCell>
+        )}
+      </CalendarGridHeader>
+      <CalendarGridBody>
+        {(date) => (
+          <CalendarCell
+            date={date}
+            className={cn(
+              "relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors focus:outline-none",
+              "data-[disabled]:opacity-30 data-[disabled]:pointer-events-none data-[unavailable]:line-through",
+              "data-[hovered]:bg-accent data-[hovered]:text-foreground",
+              "data-[selected]:bg-primary data-[selected]:text-primary-foreground",
+              // range variant
+              isRange &&
+                "data-[selected]:rounded-none data-[selection-start]:rounded-l-full data-[selection-end]:rounded-r-full",
+              // today indicator
+              date.compare(now) === 0 &&
+                "ring-1 ring-primary ring-offset-1 ring-offset-background",
+            )}
+          />
+        )}
+      </CalendarGridBody>
+    </CalendarGrid>
+  )
+}
+
+// --- Final Components ---
+const Calendar = ({ className, ...props }: CalendarProps) => (
+  <div className="rounded-lg border bg-card shadow-sm">
+    <CalendarPrimitive
+      {...props}
+      className={composeRenderProps(className, (className) =>
+        cn("w-fit", className),
+      )}
+    >
+      <CalendarHeader />
+      <CalendarGridComponent />
+    </CalendarPrimitive>
+  </div>
+)
+
+const RangeCalendar = ({ className, ...props }: RangeCalendarProps) => (
+  <div className="rounded-lg border bg-card shadow-sm">
+    <RangeCalendarPrimitive
+      {...props}
+      className={composeRenderProps(className, (className) =>
+        cn("w-fit", className),
+      )}
+    >
+      <CalendarHeader />
+      <CalendarGridComponent isRange />
+    </RangeCalendarPrimitive>
+  </div>
+)
+
+export { Calendar, RangeCalendar }
+
+
+demo.tsx
+"use client"
+
+import * as React from "react"
+import { Calendar, RangeCalendar } from "@/components/ui/pill-calendar"
+
+export default function CalendarDemo() {
+  const [date, setDate] = React.useState<any>(null)
+  const [range, setRange] = React.useState<any>(null)
+
+  return (
+    <div className="flex flex-col gap-10 p-8 max-w-md">
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Pick a Date</h2>
+        <Calendar value={date} onChange={setDate} />
+        {date && <p className="mt-2 text-sm">Selected: {date.toString()}</p>}
+      </div>
+
+      <div>
+        <h2 className="mb-2 text-lg font-semibold">Pick a Date Range</h2>
+        <RangeCalendar value={range} onChange={setRange} />
+        {range && (
+          <p className="mt-2 text-sm">
+            Range: {range.start?.toString()} → {range.end?.toString()}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+```
+
+Install NPM dependencies:
+```bash
+@radix-ui/react-icons, react-aria-components, @internationalized/date
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

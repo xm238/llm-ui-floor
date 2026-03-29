@@ -1,0 +1,327 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+feedback-toast.tsx
+'use client';
+
+import { useState } from 'react';
+import { ThumbsUp, ThumbsDown, X, ArrowLeft } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+
+type FeedbackType = 'up' | 'down';
+
+type Props = {
+  visible: boolean;
+  onClose: () => void;
+  onFeedback?: (type: FeedbackType, reason?: string) => void;
+};
+
+const FEEDBACK_CLOSE_DELAY = 1500; // ms
+
+export default function FeedbackToast({ visible, onClose, onFeedback }: Props) {
+  const [selected, setSelected] = useState<FeedbackType | null>(null);
+  const [showReasonInput, setShowReasonInput] = useState(false);
+  const [reason, setReason] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const closeAfterDelay = () => {
+    setTimeout(onClose, FEEDBACK_CLOSE_DELAY);
+  };
+
+  const handleThumb = (type: FeedbackType) => {
+    setSelected(type);
+
+    if (type === 'up') {
+      onFeedback?.('up');
+      setSubmitted(true);
+      closeAfterDelay();
+    } else {
+      setShowReasonInput(true);
+    }
+  };
+
+  const handleSubmit = () => {
+    onFeedback?.('down', reason);
+    setSubmitted(true);
+    closeAfterDelay();
+  };
+
+  const handleSkip = () => {
+    onFeedback?.('down');
+    setSubmitted(true);
+    closeAfterDelay();
+  };
+
+  const handleBack = () => {
+    setSelected(null);
+    setShowReasonInput(false);
+  };
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="fixed right-4 bottom-4 z-50 w-full max-w-sm"
+        >
+          <motion.div
+            layout
+            className="bg-background border-border overflow-hidden rounded-xl border p-4 shadow-xl"
+          >
+            {!submitted ? (
+              <>
+                {selected === null && (
+                  <motion.div layout className="flex items-center justify-between">
+                    <p className="text-foreground text-sm font-medium">Was this helpful?</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Thumbs up"
+                        onClick={() => handleThumb('up')}
+                        className="cursor-pointer"
+                      >
+                        <ThumbsUp className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Thumbs down"
+                        onClick={() => handleThumb('down')}
+                        className="cursor-pointer"
+                      >
+                        <ThumbsDown className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {selected === 'down' && showReasonInput && (
+                  <motion.div layout className="mt-2 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-foreground text-sm font-medium">What could be better?</p>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Close"
+                        onClick={onClose}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <Textarea
+                      placeholder="Share your reason (optional)"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      className="w-full resize-none"
+                      rows={3}
+                    />
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label="Back"
+                          onClick={handleBack}
+                          className="cursor-pointer"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="link"
+                          onClick={handleSkip}
+                          className="text-muted-foreground cursor-pointer px-0"
+                        >
+                          Skip
+                        </Button>
+                      </div>
+                      <Button onClick={handleSubmit} className="cursor-pointer">
+                        Submit
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </>
+            ) : (
+              <motion.p layout className="text-foreground text-sm">
+                Thanks — we appreciate your feedback!
+              </motion.p>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+
+demo.tsx
+'use client'
+
+import { useState } from "react"
+import FeedbackToast from "@/components/ui/feedback-toast"
+
+export default function Demo() {
+  const [isToastVisible, setIsToastVisible] = useState(false)
+
+  const handleAIResponse = () => {
+    setIsToastVisible(true)
+  }
+
+  const handleFeedback = (type: "up" | "down", comment?: string) => {
+    console.log("Feedback type:", type)
+    if (comment) {
+      console.log("User comment:", comment)
+    }
+  }
+
+  return (
+    <div className="p-8">
+      <button
+        onClick={handleAIResponse}
+        className="px-4 py-2 bg-foreground text-background rounded-xl cursor-pointer"
+      >
+        Simulate Your Response
+      </button>
+
+      <FeedbackToast
+        visible={isToastVisible}
+        onClose={() => setIsToastVisible(false)}
+        onFeedback={handleFeedback}
+      />
+    </div>
+  )
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/textarea
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Textarea.displayName = "Textarea"
+
+export { Textarea }
+
+```
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, framer-motion, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

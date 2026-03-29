@@ -1,0 +1,201 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+footer.tsx
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { ArrowRight } from 'lucide-react';
+
+type FooterProps = React.ComponentProps<'footer'> & {
+	children: React.ReactNode;
+};
+
+export function Footer({ className, ...props }: Omit<FooterProps, 'children'>) {
+	return (
+		<footer
+			className={cn(
+				'border-t bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)]',
+				className,
+			)}
+			{...props}
+		>
+			<div className="relative mx-auto max-w-5xl px-4">
+				<div className="relative grid grid-cols-1 border-x md:grid-cols-4 md:divide-x">
+					<div>
+						<SocialCard title="Facebook" href="#" />
+						<LinksGroup
+							title="About Us"
+							links={[
+								{ title: 'Pricing', href: '#' },
+								{ title: 'Testimonials', href: '#' },
+								{ title: 'FAQs', href: '#' },
+								{ title: 'Contact Us', href: '#' },
+								{ title: 'Blog', href: '#' },
+							]}
+						/>
+					</div>
+					<div>
+						<SocialCard title="Youtube" href="#" />
+						<LinksGroup
+							title="Support"
+							links={[
+								{ title: 'Help Center', href: '#' },
+								{ title: 'Terms', href: '#' },
+								{ title: 'Privacy', href: '#' },
+								{ title: 'Security', href: '#' },
+								{ title: 'Cookie Policy', href: '#' },
+							]}
+						/>
+					</div>
+
+					<div>
+						<SocialCard title="Twitter" href="#" />
+						<LinksGroup
+							title="Community"
+							links={[
+								{ title: 'Forum', href: '#' },
+								{ title: 'Events', href: '#' },
+								{ title: 'Partners', href: '#' },
+								{ title: 'Affiliates', href: '#' },
+								{ title: 'Career', href: '#' },
+							]}
+						/>
+					</div>
+					<div>
+						<SocialCard title="Instagram" href="#" />
+						<LinksGroup
+							title="Press"
+							links={[
+								{ title: 'Investors', href: '#' },
+								{ title: 'Terms of Use', href: '#' },
+								{ title: 'Privacy Policy', href: '#' },
+								{ title: 'Cookie Policy', href: '#' },
+								{ title: 'Legal', href: '#' },
+							]}
+						/>
+					</div>
+				</div>
+			</div>
+			<div className="flex justify-center border-t p-3">
+				<p className="text-muted-foreground text-xs">
+					© {new Date().getFullYear()} Asme. All rights reserved.
+				</p>
+			</div>
+		</footer>
+	);
+}
+
+interface LinksGroupProps {
+	title: string;
+	links: { title: string; href: string }[];
+}
+function LinksGroup({ title, links }: LinksGroupProps) {
+	return (
+		<div className="p-2">
+			<h3 className="text-foreground/75 mt-2 mb-4 text-xs font-medium tracking-wider uppercase">
+				{title}
+			</h3>
+			<ul>
+				{links.map((link) => (
+					<li key={link.title}>
+						<a
+							href={link.href}
+							className="text-muted-foreground hover:text-foreground text-xs"
+						>
+							{link.title}
+						</a>
+					</li>
+				))}
+			</ul>
+		</div>
+	);
+}
+
+function SocialCard({ title, href }: { title: string; href: string }) {
+	return (
+		<a
+			href={href}
+			className="hover:bg-accent hover:text-accent-foreground flex items-center justify-between border-t border-b p-2 text-sm md:border-t-0"
+		>
+			<span className="font-medium">{title}</span>
+			<ArrowRight className="h-4 w-4 transition-colors" />
+		</a>
+	);
+}
+
+
+demo.tsx
+import { Footer } from "@/components/ui/footer";
+import { cn } from '@/lib/utils';
+
+export default function DefaultDemo() {
+	return (
+		<div className="w-full">
+			<div className="w-full relative flex min-h-screen h-full items-center">
+				{/* Subtle dotted grid */}
+				<div
+					aria-hidden="true"
+					className="pointer-events-none absolute inset-0"
+					style={{
+						backgroundImage:
+							'radial-gradient(rgba(255,255,255,0.08) 0.8px, transparent 0.8px)',
+						backgroundSize: '14px 14px',
+						maskImage:
+							'radial-gradient( circle at 50% 10%, rgba(0,0,0,1), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0) 70% )',
+					}}
+				/>
+
+				{/* Radial spotlight */}
+				<div
+					aria-hidden="true"
+					className={cn(
+						'pointer-events-none absolute -top-1/2 left-1/2 h-[120vmin] w-[120vmin] -translate-x-1/2 rounded-full',
+						'bg-[radial-gradient(ellipse_at_center,--theme(--color-foreground/.1),transparent_50%)]',
+						'blur-[30px]',
+					)}
+				/>
+				<div className="container mx-auto flex flex-col items-center justify-center px-4">
+					<h1 className="text-center text-4xl font-extrabold font-mono">Footer Section</h1>
+					<p className="text-foreground/60 mt-4 text-center text-lg font-medium">
+						The Footer is a common component.
+					</p>
+				</div>
+			</div>
+
+			<Footer />
+		</div>
+	);
+}
+```
+
+Install NPM dependencies:
+```bash
+lucide-react
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,290 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+badge-delta.tsx
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+import {
+  RiArrowDownLine,
+  RiArrowDownSFill,
+  RiArrowRightLine,
+  RiArrowRightSFill,
+  RiArrowUpLine,
+  RiArrowUpSFill,
+} from "@remixicon/react"
+
+const badgeDeltaVariants = cva(
+  "inline-flex items-center text-tremor-label font-semibold",
+  {
+    variants: {
+      variant: {
+        outline:
+          "gap-x-1 rounded-tremor-small px-2 py-1 ring-1 ring-inset ring-border",
+        solid: "gap-x-1 rounded-tremor-small px-2 py-1",
+        solidOutline:
+          "gap-x-1 rounded-tremor-small px-2 py-1 ring-1 ring-inset",
+        complex:
+          "space-x-2.5 rounded-tremor-default bg-tremor-background py-1 pl-2.5 pr-1 ring-1 ring-inset ring-gray-200 dark:ring-gray-800 dark:bg-dark-tremor-background",
+      },
+      deltaType: {
+        increase: "",
+        decrease: "",
+        neutral: "",
+      },
+      iconStyle: {
+        filled: "",
+        line: "",
+      },
+    },
+    compoundVariants: [
+      {
+        deltaType: "increase",
+        variant: "outline",
+        className: "text-emerald-700 dark:text-emerald-500",
+      },
+      {
+        deltaType: "decrease",
+        variant: "outline",
+        className: "text-red-700 dark:text-red-500",
+      },
+      {
+        deltaType: "neutral",
+        variant: "outline",
+        className: "text-gray-700 dark:text-gray-400",
+      },
+      // Solid variants
+      {
+        deltaType: "increase",
+        variant: "solid",
+        className:
+          "bg-emerald-100 text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-500",
+      },
+      {
+        deltaType: "decrease",
+        variant: "solid",
+        className:
+          "bg-red-100 text-red-800 dark:bg-red-400/20 dark:text-red-500",
+      },
+      {
+        deltaType: "neutral",
+        variant: "solid",
+        className:
+          "bg-gray-200/50 text-gray-700 dark:bg-gray-500/30 dark:text-gray-300",
+      },
+      // Solid outline variants
+      {
+        deltaType: "increase",
+        variant: "solidOutline",
+        className:
+          "bg-emerald-100 text-emerald-800 ring-emerald-600/10 dark:bg-emerald-400/20 dark:text-emerald-500 dark:ring-emerald-400/20",
+      },
+      {
+        deltaType: "decrease",
+        variant: "solidOutline",
+        className:
+          "bg-red-100 text-red-800 ring-red-600/10 dark:bg-red-400/20 dark:text-red-500 dark:ring-red-400/20",
+      },
+      {
+        deltaType: "neutral",
+        variant: "solidOutline",
+        className:
+          "bg-gray-100 text-gray-700 ring-gray-600/10 dark:bg-gray-500/30 dark:text-gray-300 dark:ring-gray-400/20",
+      },
+    ],
+  },
+)
+
+interface BadgeDeltaProps
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeDeltaVariants> {
+  value: string | number
+}
+
+const DeltaIcon = ({
+  deltaType,
+  iconStyle,
+}: {
+  deltaType: "increase" | "decrease" | "neutral"
+  iconStyle: "filled" | "line"
+}) => {
+  const icons = {
+    increase: {
+      filled: RiArrowUpSFill,
+      line: RiArrowUpLine,
+    },
+    decrease: {
+      filled: RiArrowDownSFill,
+      line: RiArrowDownLine,
+    },
+    neutral: {
+      filled: RiArrowRightSFill,
+      line: RiArrowRightLine,
+    },
+  }
+
+  const Icon = icons[deltaType][iconStyle]
+  return <Icon className="-ml-0.5 size-4" aria-hidden={true} />
+}
+
+export function BadgeDelta({
+  className,
+  variant = "outline",
+  deltaType = "neutral",
+  iconStyle = "filled",
+  value,
+  ...props
+}: BadgeDeltaProps) {
+  if (variant === "complex") {
+    return (
+      <span
+        className={cn(badgeDeltaVariants({ variant, className }))}
+        {...props}
+      >
+        <span
+          className={cn(
+            "text-tremor-label font-semibold",
+            deltaType === "increase" &&
+              "text-emerald-700 dark:text-emerald-500",
+            deltaType === "decrease" && "text-red-700 dark:text-red-500",
+            deltaType === "neutral" &&
+              "text-tremor-content-emphasis dark:text-dark-tremor-content-emphasis",
+          )}
+        >
+          {value}
+        </span>
+        <span
+          className={cn(
+            "rounded-tremor-small px-2 py-1 text-tremor-label font-medium",
+            deltaType === "increase" && "bg-emerald-100 dark:bg-emerald-400/10",
+            deltaType === "decrease" && "bg-red-100 dark:bg-red-400/10",
+            deltaType === "neutral" &&
+              "bg-tremor-background-subtle dark:bg-dark-tremor-background-subtle",
+          )}
+        >
+          <DeltaIcon deltaType={deltaType} iconStyle="line" />
+        </span>
+      </span>
+    )
+  }
+
+  return (
+    <span
+      className={cn(badgeDeltaVariants({ variant, deltaType, className }))}
+      {...props}
+    >
+      <DeltaIcon deltaType={deltaType} iconStyle={iconStyle} />
+      {value}
+    </span>
+  )
+}
+
+
+demo.tsx
+import { BadgeDelta } from "@/components/ui/badge-delta"
+
+export function BadgeDeltaDefault() {
+  return (
+    <div className="flex flex-wrap justify-center gap-4">
+      <BadgeDelta 
+        variant="outline"
+        deltaType="increase"
+        iconStyle="filled"
+        value="9.3%"
+      />
+      <BadgeDelta 
+        variant="outline"
+        deltaType="decrease"
+        iconStyle="filled"
+        value="1.9%"
+      />
+      <BadgeDelta 
+        variant="outline"
+        deltaType="neutral"
+        iconStyle="filled"
+        value="0.6%"
+      />
+    </div>
+  )
+}
+```
+
+Install NPM dependencies:
+```bash
+@remixicon/react, class-variance-authority
+```
+
+Extend existing tailwind.config.js with this code:
+```js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  theme: {
+    extend: {
+      borderRadius: {
+        'tremor-small': '0.375rem',
+        'tremor-default': '0.5rem',
+      },
+      fontSize: {
+        'tremor-label': ['0.75rem'],
+      },
+      colors: {
+        tremor: {
+          background: {
+            subtle: '#f3f4f6',
+          },
+          'content-emphasis': '#374151',
+        },
+        'dark-tremor': {
+          background: {
+            subtle: '#1f2937',
+          },
+          'content-emphasis': '#d1d5db',
+        },
+      },
+    }
+  }
+}
+```
+
+Extend existing globals.css with this code:
+```css
+@layer base {
+  :root {
+    --tremor-ring: 229 231 235;
+    --dark-tremor-ring: 31 41 55;
+  }
+
+  .dark {
+    
+    --tremor-ring: 31 41 55;
+    --dark-tremor-ring: 229 231 235;
+  }
+}
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

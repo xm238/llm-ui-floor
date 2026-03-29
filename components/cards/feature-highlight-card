@@ -1,0 +1,230 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+feature-highlight-card.tsx
+import * as React from "react";
+import { motion, Variants } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+// Define the props for the component
+interface FeatureHighlightCardProps {
+  imageSrc: string;
+  imageAlt?: string;
+  title: string;
+  description: string;
+  buttonText: string;
+  className?: string;
+}
+
+// Animation variants for Framer Motion
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.6,
+      ease: [0.6, -0.05, 0.01, 0.99],
+    },
+  },
+};
+
+const imageContainerVariants: Variants = {
+    hidden: { scale: 0.9, opacity: 0 },
+    visible: {
+        scale: 1,
+        opacity: 1,
+        transition: {
+            duration: 0.8,
+            ease: "easeOut"
+        }
+    }
+}
+
+/**
+ * A responsive and animated card component to highlight a feature.
+ * Built with TypeScript, Tailwind CSS, and Framer Motion.
+ * It supports shadcn/ui theming for light and dark modes.
+ */
+export const FeatureHighlightCard = React.forwardRef<
+  HTMLDivElement,
+  FeatureHighlightCardProps
+>(({ imageSrc, imageAlt = "Feature image", title, description, buttonText, className }, ref) => {
+  return (
+    <motion.div
+      ref={ref}
+      className={cn(
+        "relative w-full max-w-lg overflow-hidden rounded-2xl border bg-card p-8 text-center shadow-sm",
+        className
+      )}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Background glow effect */}
+      <div className="absolute left-1/2 top-0 -z-10 h-2/3 w-2/3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl" />
+      
+      {/* Image Section */}
+      <motion.div variants={imageContainerVariants} className="mb-6 flex justify-center">
+        <img
+          src={imageSrc}
+          alt={imageAlt}
+          className="h-auto w-full object-contain"
+        />
+      </motion.div>
+
+      {/* Title Section */}
+      <motion.h2
+        variants={itemVariants}
+        className="text-3xl font-bold tracking-tight text-card-foreground md:text-4xl"
+      >
+        {title}
+      </motion.h2>
+
+      {/* Description Section */}
+      <motion.p
+        variants={itemVariants}
+        className="mt-4 text-base text-muted-foreground"
+      >
+        {description}
+      </motion.p>
+
+      {/* Button Section */}
+      <motion.div variants={itemVariants} className="mt-8">
+        <Button size="lg" className="w-full sm:w-auto">
+          {buttonText}
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+});
+
+FeatureHighlightCard.displayName = "FeatureHighlightCard";
+
+demo.tsx
+import { FeatureHighlightCard } from "@/components/ui/feature-highlight-card";
+
+/**
+ * A demo component to showcase the FeatureHighlightCard.
+ */
+export default function FeatureHighlightCardDemo() {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-background p-4">
+      <FeatureHighlightCard
+        // Replace this with your actual image source
+        imageSrc="https://forecaster.biz/wp-content/uploads/2025/06/Forecaster-terminal_OBS_Home-Page.avif"
+        imageAlt="Stopwatch and financial chart on a phone screen"
+        title="Perfect Your Timing"
+        description="Utilize advanced technical indicators to pinpoint ideal entry and exit points. Clearly identify overbought and oversold conditions in real-time, ensuring optimal timing and better risk management for your trades."
+        buttonText="Try Now for Free"
+      />
+    </div>
+  );
+}
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+framer-motion, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,390 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+hero-gallery-scroll-animation.tsx
+"use client"
+
+import * as React from "react"
+import { VariantProps, cva } from "class-variance-authority"
+import {
+  HTMLMotionProps,
+  MotionValue,
+  motion,
+  useScroll,
+  useTransform,
+} from "motion/react"
+
+import { cn } from "@/lib/utils"
+
+const bentoGridVariants = cva(
+  "relative grid gap-4 [&>*:first-child]:origin-top-right [&>*:nth-child(3)]:origin-bottom-right [&>*:nth-child(4)]:origin-top-right",
+  {
+    variants: {
+      variant: {
+        default: `
+          grid-cols-8 grid-rows-[1fr_0.5fr_0.5fr_1fr]
+          [&>*:first-child]:col-span-8 md:[&>*:first-child]:col-span-6 [&>*:first-child]:row-span-3
+          [&>*:nth-child(2)]:col-span-2 md:[&>*:nth-child(2)]:row-span-2 [&>*:nth-child(2)]:hidden md:[&>*:nth-child(2)]:block
+          [&>*:nth-child(3)]:col-span-2 md:[&>*:nth-child(3)]:row-span-2 [&>*:nth-child(3)]:hidden md:[&>*:nth-child(3)]:block
+          [&>*:nth-child(4)]:col-span-4 md:[&>*:nth-child(4)]:col-span-3
+          [&>*:nth-child(5)]:col-span-4 md:[&>*:nth-child(5)]:col-span-3
+        `,
+        threeCells: `
+          grid-cols-2 grid-rows-2
+          [&>*:first-child]:col-span-2
+      `,
+        fourCells: `
+        grid-cols-3 grid-rows-2
+        [&>*:first-child]:col-span-1
+        [&>*:nth-child(2)]:col-span-2
+        [&>*:nth-child(3)]:col-span-2
+      `,
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+interface ContainerScrollContextValue {
+  scrollYProgress: MotionValue<number>
+}
+const ContainerScrollContext = React.createContext<
+  ContainerScrollContextValue | undefined
+>(undefined)
+function useContainerScrollContext() {
+  const context = React.useContext(ContainerScrollContext)
+  if (!context) {
+    throw new Error(
+      "useContainerScrollContext must be used within a ContainerScroll Component"
+    )
+  }
+  return context
+}
+const ContainerScroll = ({
+  children,
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: scrollRef,
+  })
+  return (
+    <ContainerScrollContext.Provider value={{ scrollYProgress }}>
+      <div
+        ref={scrollRef}
+        className={cn("relative min-h-screen w-full", className)}
+        {...props}
+      >
+        {children}
+      </div>
+    </ContainerScrollContext.Provider>
+  )
+}
+
+const BentoGrid = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof bentoGridVariants>
+>(({ variant, className, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn(bentoGridVariants({ variant }), className)}
+      {...props}
+    />
+  )
+})
+BentoGrid.displayName = "BentoGrid"
+
+const BentoCell = React.forwardRef<HTMLDivElement, HTMLMotionProps<"div">>(
+  ({ className, style, ...props }, ref) => {
+    const { scrollYProgress } = useContainerScrollContext()
+    const translate = useTransform(scrollYProgress, [0.1, 0.9], ["-35%", "0%"])
+    const scale = useTransform(scrollYProgress, [0, 0.9], [0.5, 1])
+
+    return (
+      <motion.div
+        ref={ref}
+        className={className}
+        style={{ translate, scale, ...style }}
+        {...props}
+      ></motion.div>
+    )
+  }
+)
+BentoCell.displayName = "BentoCell"
+
+const ContainerScale = React.forwardRef<HTMLDivElement, HTMLMotionProps<"div">>(
+  ({ className, style, ...props }, ref) => {
+    const { scrollYProgress } = useContainerScrollContext()
+    const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+    const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+
+    const position = useTransform(scrollYProgress, (pos) =>
+      pos >= 0.6 ? "absolute" : "fixed"
+    )
+    return (
+      <motion.div
+        ref={ref}
+        className={cn("left-1/2 top-1/2  size-fit", className)}
+        style={{
+          translate: "-50% -50%",
+          scale,
+          position,
+          opacity,
+          ...style,
+        }}
+        {...props}
+      />
+    )
+  }
+)
+ContainerScale.displayName = "ContainerScale"
+export { ContainerScroll, BentoGrid, BentoCell, ContainerScale }
+
+
+demo.tsx
+import { BentoCell, BentoGrid, ContainerScale, ContainerScroll } from "@/components/blocks/hero-gallery-scroll-animation"
+
+import { Button } from "@/components/ui/button"
+
+const IMAGES = [
+  "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2388&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/photo-1498036882173-b41c28a8ba34?q=80&w=2264&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?q=80&w=2368&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dG9reW98ZW58MHx8MHx8fDA%3D",
+  "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fHRva3lvfGVufDB8fDB8fHww",
+]
+const HeroDemo1 = () => {
+  return (
+    <ContainerScroll className="h-[350vh]">
+      <BentoGrid className="sticky left-0 top-0 z-0 h-screen w-full p-4">
+        {IMAGES.map((imageUrl, index) => (
+          <BentoCell
+            key={index}
+            className="overflow-hidden rounded-xl shadow-xl"
+          >
+            <img
+              className="size-full object-cover object-center"
+              src={imageUrl}
+              alt=""
+            />
+          </BentoCell>
+        ))}
+      </BentoGrid>
+
+      <ContainerScale className="relative z-10 text-center">
+        <h1 className="max-w-xl text-5xl font-bold tracking-tighter text-slate-800 ">
+          Your Animated Hero
+        </h1>
+        <p className="my-6 max-w-xl text-sm text-slate-700 md:text-base">
+          Yet another hero section, this time with scroll trigger animations,
+          animating the hero content with motion.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <Button className="bg-indigo-500 px-4 py-2 font-medium hover:bg-indigo-400">
+            Get Started
+          </Button>
+          <Button
+            variant="link"
+            className="bg-transparent px-4 py-2 font-medium"
+          >
+            Learn more
+          </Button>
+        </div>
+      </ContainerScale>
+    </ContainerScroll>
+  )
+}
+
+const HeroDemo2 = () => {
+  return (
+    <ContainerScroll className="h-[350vh]">
+      <BentoGrid
+        variant={"fourCells"}
+        className="sticky left-0 top-0 h-svh w-full p-4"
+      >
+        {IMAGES.filter((_, index) => index <= 3).map((imageUrl, index) => (
+          <BentoCell
+            key={index}
+            className="overflow-hidden rounded-xl shadow-xl"
+          >
+            <img
+              className="size-full object-cover object-center"
+              width="100%"
+              height="100%"
+              src={imageUrl}
+            />
+          </BentoCell>
+        ))}
+      </BentoGrid>
+      <ContainerScale className="text-center">
+        <h1
+          className="max-w-xl text-5xl font-bold tracking-tighter"
+        >
+          Your Animated Hero
+        </h1>
+        <p className="my-6 max-w-xl text-sm text-stone-500 md:text-base">
+          Yet another hero section, this time with scroll trigger animations,
+          animating the hero content with motion.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <Button className="bg-indigo-700 px-4 py-2 font-medium   hover:bg-indigo-200">
+            Get Started
+          </Button>
+          <Button
+            variant={"link"}
+            className="bg-transparent px-4 py-2 font-medium  "
+          >
+            Learn more
+          </Button>
+        </div>
+      </ContainerScale>
+    </ContainerScroll>
+  )
+}
+
+
+const HeroDemo3 = () => {
+  return (
+    <ContainerScroll className="h-[350vh] bg-slate-900 text-slate-100">
+      <BentoGrid
+        variant={"threeCells"}
+        className="sticky left-0 top-0 h-svh w-full p-4"
+      >
+        {IMAGES.filter((_, index) => index <= 2).map((imageUrl, index) => (
+          <BentoCell
+            key={index}
+            className="overflow-hidden rounded-xl shadow-xl"
+          >
+            <img
+              className="size-full object-cover object-center"
+              width="100%"
+              height="100%"
+              src={imageUrl}
+            />
+          </BentoCell>
+        ))}
+      </BentoGrid>
+      <ContainerScale className="text-center">
+        <h1 className="max-w-xl text-5xl font-bold tracking-tighter ">
+          Your Animated Hero
+        </h1>
+        <p className="my-6 max-w-xl text-sm opacity-80 md:text-base">
+          Yet another hero section, this time with scroll trigger animations,
+          animating the hero content with motion.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <Button className="bg-indigo-700 px-4 py-2 font-medium   hover:bg-indigo-400">
+            Get Started
+          </Button>
+          <Button
+            variant={"link"}
+            className="bg-transparent px-4 py-2 font-medium text-white  "
+          >
+            Learn more
+          </Button>
+        </div>
+      </ContainerScale>
+    </ContainerScroll>
+  )
+}
+export { HeroDemo1, HeroDemo2, HeroDemo3 }
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+motion, class-variance-authority, @radix-ui/react-slot
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

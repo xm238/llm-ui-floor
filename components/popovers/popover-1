@@ -1,0 +1,113 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+popover-1.tsx
+"use client"
+
+import * as React from "react"
+import {
+  Dialog as AriaDialog,
+  DialogProps as AriaDialogProps,
+  DialogTrigger as AriaDialogTrigger,
+  Popover as AriaPopover,
+  PopoverProps as AriaPopoverProps,
+  composeRenderProps,
+} from "react-aria-components"
+
+import { cn } from "@/lib/utils"
+
+const PopoverTrigger = AriaDialogTrigger
+
+const Popover = ({ className, offset = 4, ...props }: AriaPopoverProps) => (
+  <AriaPopover
+    offset={offset}
+    className={composeRenderProps(className, (className) =>
+      cn(
+        "z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none",
+        /* Entering */
+        "data-[entering]:animate-in data-[entering]:fade-in-0 data-[entering]:zoom-in-95",
+        /* Exiting */
+        "data-[exiting]:animate-out data-[exiting]:fade-out-0 data-[exiting]:zoom-out-95",
+        /* Placement */
+        "data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2",
+        className
+      )
+    )}
+    {...props}
+  />
+)
+
+function PopoverDialog({ className, ...props }: AriaDialogProps) {
+  return (
+    <AriaDialog className={cn("p-4 outline outline-0", className)} {...props} />
+  )
+}
+
+export { Popover, PopoverTrigger, PopoverDialog }
+
+
+demo.tsx
+import { Button } from "@/components/ui/button-1"
+import {
+  Popover,
+  PopoverDialog,
+  PopoverTrigger,
+} from "@/components/ui/popover-1"
+import { Switch } from "@/components/ui/switch-1"
+
+export default function PopoverDemo() {
+  return (
+    <PopoverTrigger>
+      <Button variant="outline">Settings</Button>
+      <Popover>
+        <PopoverDialog>
+          <div className="flex flex-col gap-4">
+            <Switch defaultSelected>
+              <div className="indicator" /> Wi-Fi
+            </Switch>
+            <Switch defaultSelected>
+              <div className="indicator" /> Bluetooth
+            </Switch>
+            <Switch>
+              <div className="indicator" /> Mute
+            </Switch>
+          </div>
+        </PopoverDialog>
+      </Popover>
+    </PopoverTrigger>
+  )
+}
+
+```
+
+Install NPM dependencies:
+```bash
+react-aria-components
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

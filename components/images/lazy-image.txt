@@ -1,0 +1,250 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+lazy-image.tsx
+'use client';
+
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { useInView } from 'framer-motion';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+
+interface LazyImageProps {
+	alt: string;
+	src: string;
+	className?: string;
+	AspectRatioClassName?: string;
+	/** URL of the fallback image. default: undefined */
+	fallback?: string;
+	/** The ratio of the image. */
+	ratio: number;
+	/** Whether the image should only load when it is in view. default: false */
+	inView?: boolean;
+}
+
+export function LazyImage({
+	alt,
+	src,
+	ratio,
+	fallback,
+	inView = false,
+	className,
+	AspectRatioClassName,
+}: LazyImageProps) {
+	const ref = React.useRef<HTMLDivElement | null>(null);
+	const imgRef = React.useRef<HTMLImageElement | null>(null);
+	const isInView = useInView(ref, { once: true });
+
+	const [imgSrc, setImgSrc] = React.useState<string | undefined>(
+		inView ? undefined : src,
+	);
+	const [isLoading, setIsLoading] = React.useState(true);
+
+	const handleError = () => {
+		if (fallback) {
+			setImgSrc(fallback);
+		}
+		setIsLoading(false);
+	};
+
+	const handleLoad = () => {
+		setIsLoading(false);
+	};
+
+	// Load image only when inView
+	React.useEffect(() => {
+		if (inView && isInView && !imgSrc) {
+			setImgSrc(src);
+		}
+	}, [inView, isInView, src, imgSrc]);
+
+	// Handle cached images instantly
+	React.useEffect(() => {
+		if (imgRef.current && imgRef.current.complete) {
+			handleLoad();
+		}
+	}, [imgSrc]);
+
+	return (
+		<AspectRatio
+			ref={ref}
+			ratio={ratio}
+			className={cn(
+				'relative size-full overflow-hidden rounded-lg border',
+				AspectRatioClassName,
+			)}
+		>
+			{/* Skeleton / fallback */}
+			<div
+				className={cn(
+					'bg-accent/30 absolute inset-0 animate-pulse rounded-lg transition-opacity will-change-[opacity]',
+					{ 'opacity-0': !isLoading },
+				)}
+			/>
+
+			{imgSrc && (
+				<img
+					ref={imgRef}
+					alt={alt}
+					src={imgSrc}
+					className={cn(
+						'size-full rounded-lg object-cover opacity-0 transition-opacity duration-2000 will-change-[opacity]',
+						{
+							'opacity-100': !isLoading,
+						},
+						className,
+					)}
+					onLoad={handleLoad}
+					onError={handleError}
+					loading="lazy"
+					decoding="async"
+					fetchPriority={inView ? 'high' : 'low'}
+				/>
+			)}
+		</AspectRatio>
+	);
+}
+
+
+demo.tsx
+'use client';
+import React from 'react';
+import { LazyImage } from '@/components/ui/lazy-image';
+import { Button } from '@/components/ui/button';
+
+export default function Demo() {
+	const [instance, setInstance] = React.useState(0);
+	return (
+		<LazyImageDemo
+			key={instance}
+			onReload={() => setInstance((prev) => prev + 1)}
+		/>
+	);
+}
+
+function LazyImageDemo({ onReload }: { onReload: () => void }) {
+	const [seed] = React.useState(() => Math.floor(Math.random() * 1000));
+
+	const imageUrl = `https://picsum.photos/seed/${seed}/1280/720`;
+
+	return (
+		<div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 p-4">
+			<Button onClick={onReload}>Load Image</Button>
+			<div className="mx-auto w-full max-w-4xl">
+				<LazyImage
+					alt="Random"
+					src={imageUrl}
+					ratio={16 / 9}
+					fallback="https://placehold.co/1280x720?text=fallback-image"
+				/>
+			</div>
+		</div>
+	);
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/aspect-ratio
+"use client"
+
+import * as AspectRatioPrimitive from "@radix-ui/react-aspect-ratio"
+
+const AspectRatio = AspectRatioPrimitive.Root
+
+export { AspectRatio }
+
+```
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+
+Install NPM dependencies:
+```bash
+framer-motion, @radix-ui/react-aspect-ratio, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

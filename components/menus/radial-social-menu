@@ -1,0 +1,119 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+radial-social-menu.tsx
+import React, { useEffect, useState } from "react";
+import { Github, Linkedin, Twitter, Mail, Code, User, Fingerprint } from "lucide-react";
+
+export const Component: React.FC = () => {
+  const icons = [
+    { icon: <Github /> },
+    { icon: <Linkedin /> },
+    { icon: <Twitter /> },
+    { icon: <Mail /> },
+    { icon: <Code /> },
+    { icon: <Fingerprint /> },
+  ];
+
+  const radius = 140;
+  const [angleOffset, setAngleOffset] = useState(0);
+
+  useEffect(() => {
+    let animationFrame: number;
+    const animate = () => {
+      setAngleOffset(prev => prev + 0.002);
+      animationFrame = requestAnimationFrame(animate);
+    };
+    animate();
+    return () => cancelAnimationFrame(animationFrame);
+  }, []);
+
+  return (
+    <div className="relative h-screen w-screen flex items-center justify-center">
+     
+      <div className="relative z-10 flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 shadow-xl ring-4 ring-blue-200/30 animate-pulse-slow">
+        <User className="text-white w-16 h-16" />
+      </div>
+
+    
+      <div
+        className="absolute rounded-full border-1 border-dashed border-gray-300"
+        style={{
+          width: `${radius * 2}px`,
+          height: `${radius * 2}px`,
+          top: `calc(50% - ${radius}px)`,
+          left: `calc(50% - ${radius}px)`,
+        }}
+      />
+
+    
+      {icons.map((item, index) => {
+        const angle = (index / icons.length) * 2 * Math.PI + angleOffset;
+        const x = radius * Math.cos(angle);
+        const y = radius * Math.sin(angle);
+
+        return (
+          <button
+            key={index}
+            className="absolute flex items-center justify-center w-14 h-14 rounded-full bg-white border border-gray-200 shadow-md hover:scale-110 hover:shadow-2xl transition-transform duration-300 animate-float"
+            style={{
+              transform: `translate(${x}px, ${y}px)`,
+            }}
+          >
+            {React.cloneElement(item.icon, { size: 28, className: "text-gray-700" })}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+
+demo.tsx
+import { Component } from "@/components/ui/radial-social-menu";
+
+export default function DemoOne() {
+  return <div className="w-full h-screen flex items-center justify-center mx-auto relative" > <Component /> <div
+  className = "absolute w-full h-full -z-10"
+  style = {{
+    backgroundImage:
+    "url('data:image/svg+xml,%3Csvg width=\\'4\\' height=\\'4\\' viewBox=\\'0 0 6 6\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Ccircle cx=\\'6\\' cy=\\'6\\' r=\\'1\\' fill=\\'%23aaa\\' fill-opacity=\\'0.25\\' /%3E%3C/svg%3E')",
+      backgroundColor: "transparent",
+                }
+}
+              > </div></div >;
+}
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,653 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+toast.tsx
+import { ReactNode, useCallback, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import clsx from "clsx";
+import { Button } from "@/components/ui/button-1";
+
+const CloseIcon = ({ className }: { className: string }) => (
+  <svg height="16" strokeLinejoin="round" viewBox="0 0 16 16" width="16" className={className}>
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M12.4697 13.5303L13 14.0607L14.0607 13L13.5303 12.4697L9.06065 7.99999L13.5303 3.53032L14.0607 2.99999L13 1.93933L12.4697 2.46966L7.99999 6.93933L3.53032 2.46966L2.99999 1.93933L1.93933 2.99999L2.46966 3.53032L6.93933 7.99999L2.46966 12.4697L1.93933 13L2.99999 14.0607L3.53032 13.5303L7.99999 9.06065L12.4697 13.5303Z"
+    />
+  </svg>
+);
+
+const UndoIcon = () => (
+  <svg height="16" strokeLinejoin="round" viewBox="0 0 16 16" width="16" className="fill-gray-1000">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M13.5 8C13.5 4.96643 11.0257 2.5 7.96452 2.5C5.42843 2.5 3.29365 4.19393 2.63724 6.5H5.25H6V8H5.25H0.75C0.335787 8 0 7.66421 0 7.25V2.75V2H1.5V2.75V5.23347C2.57851 2.74164 5.06835 1 7.96452 1C11.8461 1 15 4.13001 15 8C15 11.87 11.8461 15 7.96452 15C5.62368 15 3.54872 13.8617 2.27046 12.1122L1.828 11.5066L3.03915 10.6217L3.48161 11.2273C4.48831 12.6051 6.12055 13.5 7.96452 13.5C11.0257 13.5 13.5 11.0336 13.5 8Z"
+    />
+  </svg>
+);
+
+type Toast = {
+  id: number;
+  text: string | ReactNode;
+  measuredHeight?: number;
+  timeout?: NodeJS.Timeout;
+  remaining?: number;
+  start?: number;
+  pause?: () => void;
+  resume?: () => void;
+  preserve?: boolean;
+  action?: string;
+  onAction?: () => void;
+  onUndoAction?: () => void;
+  type: "message" | "success" | "warning" | "error";
+};
+
+let root: ReturnType<typeof createRoot> | null = null;
+let toastId = 0;
+
+const toastStore = {
+  toasts: [] as Toast[],
+  listeners: new Set<() => void>(),
+
+  add(
+    text: string | ReactNode,
+    type: "message" | "success" | "warning" | "error",
+    preserve?: boolean,
+    action?: string,
+    onAction?: () => void,
+    onUndoAction?: () => void
+  ) {
+    const id = toastId++;
+
+    const toast: Toast = {
+      id,
+      text,
+      preserve,
+      action,
+      onAction,
+      onUndoAction,
+      type
+    };
+
+    if (!toast.preserve) {
+      toast.remaining = 3000;
+      toast.start = Date.now();
+
+      const close = () => {
+        this.toasts = this.toasts.filter((t) => t.id !== id);
+        this.notify();
+      };
+
+      toast.timeout = setTimeout(close, toast.remaining);
+
+      toast.pause = () => {
+        if (!toast.timeout) return;
+        clearTimeout(toast.timeout);
+        toast.timeout = undefined;
+        toast.remaining! -= Date.now() - toast.start!;
+      };
+
+      toast.resume = () => {
+        if (toast.timeout) return;
+        toast.start = Date.now();
+        toast.timeout = setTimeout(close, toast.remaining);
+      };
+    }
+
+    this.toasts.push(toast);
+    this.notify();
+  },
+
+  remove(id: number) {
+    toastStore.toasts = toastStore.toasts.filter((t) => t.id !== id);
+    toastStore.notify();
+  },
+
+  subscribe(listener: () => void) {
+    toastStore.listeners.add(listener);
+    return () => {
+      toastStore.listeners.delete(listener);
+    };
+  },
+
+  notify() {
+    toastStore.listeners.forEach((fn) => fn());
+  }
+};
+
+const ToastContainer = () => {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [shownIds, setShownIds] = useState<number[]>([]);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+
+  const measureRef = (toast: Toast) => (node: HTMLDivElement | null) => {
+    if (node && toast.measuredHeight == null) {
+      toast.measuredHeight = node.getBoundingClientRect().height;
+      toastStore.notify();
+    }
+  };
+
+  useEffect(() => {
+    setToasts([...toastStore.toasts]);
+
+    return toastStore.subscribe(() => {
+      setToasts([...toastStore.toasts]);
+    });
+  }, []);
+
+  useEffect(() => {
+    const unseen = toasts.filter(t => !shownIds.includes(t.id)).map(t => t.id);
+    if (unseen.length > 0) {
+      requestAnimationFrame(() => {
+        setShownIds(prev => [...prev, ...unseen]);
+      });
+    }
+  }, [toasts]);
+
+  const lastVisibleCount = 3;
+  const lastVisibleStart = Math.max(0, toasts.length - lastVisibleCount);
+
+  const getFinalTransform = (index: number, length: number) => {
+    if (index === length - 1) {
+      return "none";
+    }
+    const offset = length - 1 - index;
+    let translateY = toasts[length - 1]?.measuredHeight || 63;
+    for (let i = length - 1; i > index; i--) {
+      if (isHovered) {
+        translateY += (toasts[i - 1]?.measuredHeight || 63) + 10;
+      } else {
+        translateY += 20;
+      }
+    }
+    const z = -offset;
+    const scale = isHovered ? 1 : (1 - 0.05 * offset);
+    return `translate3d(0, calc(100% - ${translateY}px), ${z}px) scale(${scale})`;
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    toastStore.toasts.forEach((t) => t.pause?.());
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    toastStore.toasts.forEach((t) => t.resume?.());
+  };
+
+  const visibleToasts = toasts.slice(lastVisibleStart);
+  const containerHeight = visibleToasts.reduce((acc, toast) => {
+    return acc + (toast.measuredHeight ?? 63);
+  }, 0);
+
+
+  return (
+    <div
+      className="fixed bottom-4 right-4 z-[9999] pointer-events-none w-[420px]"
+      style={{ height: containerHeight }}
+    >
+      <div
+        className="relative pointer-events-auto w-full"
+        style={{ height: containerHeight }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {toasts.map((toast, index) => {
+          const isVisible = index >= lastVisibleStart;
+
+          return (
+            <div
+              key={toast.id}
+              ref={measureRef(toast)}
+              className={clsx(
+                "absolute right-0 bottom-0 shadow-menu rounded-xl leading-[21px] p-4 h-fit",
+                {
+                  message: "bg-geist-background text-gray-1000",
+                  success: "bg-blue-700 text-contrast-fg",
+                  warning: "bg-amber-800 text-gray-1000 dark:text-gray-100",
+                  error: "bg-red-800 text-contrast-fg"
+                }[toast.type],
+                isVisible ? "opacity-100" : "opacity-0",
+                index < lastVisibleStart && "pointer-events-none"
+              )}
+              style={{
+                width: 420,
+                transition: "all .35s cubic-bezier(.25,.75,.6,.98)",
+                transform: shownIds.includes(toast.id)
+                  ? getFinalTransform(index, toasts.length)
+                  : "translate3d(0, 100%, 150px) scale(1)"
+              }}
+            >
+              <div className="flex flex-col items-center justify-between text-[.875rem]">
+                <div className="w-full h-full flex items-center justify-between gap-4">
+                  <span>{toast.text}</span>
+                  {!toast.action && (
+                    <div className="flex gap-1">
+                      {toast.onUndoAction && (
+                        <Button
+                          type="tertiary"
+                          svgOnly
+                          size="small"
+                          onClick={() => {
+                            toast.onUndoAction?.();
+                            toastStore.remove(toast.id);
+                          }}
+                        >
+                          <UndoIcon />
+                        </Button>
+                      )}
+                      <Button
+                        type="tertiary"
+                        svgOnly
+                        size="small"
+                        onClick={() => toastStore.remove(toast.id)}
+                      >
+                        <CloseIcon className={{
+                          message: "fill-gray-1000",
+                          success: "fill-contrast-fg",
+                          warning: "fill-gray-1000 dark:fill-gray-100",
+                          error: "fill-contrast-fg"
+                        }[toast.type]} />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {toast.action && (
+                  <div className="w-full flex items-center justify-end gap-2">
+                    <Button
+                      type="tertiary"
+                      size="small"
+                      onClick={() => toastStore.remove(toast.id)}
+                    >
+                      Dismiss
+                    </Button>
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={() => {
+                        if (toast?.onAction) {
+                          toast?.onAction();
+                        }
+                        toastStore.remove(toast.id);
+                      }}
+                    >
+                      {toast.action}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const mountContainer = () => {
+  if (root) return;
+  const el = document.createElement("div");
+  el.className = "fixed bottom-4 right-4 z-[9999]";
+  document.body.appendChild(el);
+  root = createRoot(el);
+  root.render(<ToastContainer />);
+};
+
+interface Message {
+  text: string | ReactNode;
+  preserve?: boolean;
+  action?: string;
+  onAction?: () => void;
+  onUndoAction?: () => void;
+}
+
+export const useToasts = () => {
+  return {
+    message: useCallback(({ text, preserve, action, onAction, onUndoAction }: Message) => {
+      mountContainer();
+      toastStore.add(text, "message", preserve, action, onAction, onUndoAction);
+    }, []),
+    success: useCallback((text: string) => {
+      mountContainer();
+      toastStore.add(text, "success");
+    }, []),
+    warning: useCallback((text: string) => {
+      mountContainer();
+      toastStore.add(text, "warning");
+    }, []),
+    error: useCallback((text: string) => {
+      mountContainer();
+      toastStore.add(text, "error");
+    }, [])
+  };
+};
+
+
+
+demo.tsx
+import { useToasts } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button-1";
+
+export default function DefaultDemo() {
+  const toasts = useToasts();
+  return (
+        <Button
+          onClick={(): void => {
+            toasts.message({
+              text: `The Evil Rabbit jumped over the fence.`
+            });
+          }}
+        >
+          Show Toast
+        </Button>
+  );
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shugar/button-1
+import React from "react";
+import { Spinner } from "@/components/ui/spinner-1";
+import clsx from "clsx";
+
+const sizes = [
+  {
+    tiny: "px-1.5 h-6 text-sm",
+    small: "px-1.5 h-8 text-sm",
+    medium: "px-2.5 h-10 text-sm",
+    large: "px-3.5 h-12 text-base"
+  },
+  {
+    tiny: "w-6 h-6 text-sm",
+    small: "w-8 h-8 text-sm",
+    medium: "w-10 h-10 text-sm",
+    large: "w-12 h-12 text-base"
+  }
+];
+
+const types = {
+  primary: "bg-gray-1000 hover:bg-gray-1000-h text-background-100 fill-background-100",
+  secondary: "bg-background-100 hover:bg-gray-alpha-200 text-gray-1000 fill-gray-1000 border border-gray-alpha-400",
+  tertiary: "bg-none hover:bg-gray-alpha-200 text-gray-1000 fill-gray-1000",
+  error: "bg-red-800 hover:bg-red-900 text-white fill-white",
+  warning: "bg-amber-800 hover:bg-amber-850 text-black fill-black"
+};
+
+const shapes = {
+  square: {
+    tiny: "rounded",
+    small: "rounded-md",
+    medium: "rounded-md",
+    large: "rounded-lg"
+  },
+  circle: {
+    tiny: "rounded-[100%]",
+    small: "rounded-[100%]",
+    medium: "rounded-[100%]",
+    large: "rounded-[100%]"
+  },
+  rounded: {
+    tiny: "rounded-[100px]",
+    small: "rounded-[100px]",
+    medium: "rounded-[100px]",
+    large: "rounded-[100px]"
+  }
+};
+
+export interface ButtonProps {
+  size?: keyof typeof sizes[0];
+  type?: keyof typeof types;
+  variant?: "styled" | "unstyled";
+  shape?: keyof typeof shapes;
+  svgOnly?: boolean;
+  children?: React.ReactNode;
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+  shadow?: boolean;
+  loading?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  ref?: React.Ref<HTMLButtonElement>;
+  className?: string;
+}
+
+export const Button = ({
+  size = "medium",
+  type = "primary",
+  variant = "styled",
+  shape = "square",
+  svgOnly = false,
+  children,
+  prefix,
+  suffix,
+  shadow = false,
+  loading = false,
+  disabled = false,
+  fullWidth = false,
+  onClick,
+  ref,
+  className,
+  ...rest
+}: ButtonProps) => {
+  return (
+    <button
+      ref={ref}
+      type="submit"
+      disabled={disabled}
+      onClick={onClick}
+      tabIndex={0}
+      className={clsx(
+        "flex justify-center items-center gap-0.5 duration-150",
+        sizes[+svgOnly][size],
+        (disabled || loading) ? "bg-gray-100 text-gray-700 border border-gray-400 cursor-not-allowed" : types[type],
+        shapes[shape][size],
+        shadow && "shadow-border-small border-none",
+        fullWidth && "w-full",
+        variant === "unstyled" ? "outline-none px-0 h-fit bg-transparent hover:bg-transparent text-gray-1000" : "focus:shadow-focus-ring focus:outline-0",
+        className
+      )}
+      {...rest}
+    >
+      {loading
+        ? <Spinner size={size === "large" ? 24 : 16} />
+        : prefix
+      }
+      <span className={clsx(
+        "relative overflow-hidden whitespace-nowrap overflow-ellipsis font-sans",
+        size !== "tiny" && variant !== "unstyled" && "px-1.5"
+      )}>
+        {children}
+      </span>
+      {!loading && suffix}
+    </button>
+  );
+};
+```
+```tsx
+shugar/spinner-1
+import React from "react";
+
+interface SpinnerProps {
+  size?: number;
+  color?: string;
+}
+
+const bars = [
+  {
+    animationDelay: "-1.2s",
+    transform: "rotate(.0001deg) translate(146%)"
+  },
+  {
+    animationDelay: "-1.1s",
+    transform: "rotate(30deg) translate(146%)"
+  },
+  {
+    animationDelay: "-1.0s",
+    transform: "rotate(60deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.9s",
+    transform: "rotate(90deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.8s",
+    transform: "rotate(120deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.7s",
+    transform: "rotate(150deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.6s",
+    transform: "rotate(180deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.5s",
+    transform: "rotate(210deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.4s",
+    transform: "rotate(240deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.3s",
+    transform: "rotate(270deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.2s",
+    transform: "rotate(300deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.1s",
+    transform: "rotate(330deg) translate(146%)"
+  }
+];
+
+export const Spinner = ({ size = 20, color = "#8f8f8f" }: SpinnerProps) => {
+  return (
+    <div style={{ width: size, height: size }}>
+      <div className="relative top-1/2 left-1/2" style={{ width: size, height: size }}>
+        {bars.map((item) => (
+          <div
+            key={item.transform}
+            className="absolute h-[8%] w-[24%] -left-[10%] -top-[3.9%] rounded-[5px] animate-fade-spin"
+            style={{ backgroundColor: color, ...item }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+Install NPM dependencies:
+```bash
+clsx
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --color-context-card-border: var(--context-card-border);
+  --color-red-800: var(--ds-red-800);
+  --color-red-900: var(--ds-red-900);
+  --color-blue-700: var(--ds-blue-700);
+  --color-amber-800: var(--ds-amber-800);
+  --color-amber-850: var(--ds-amber-850);
+  --color-gray-100: var(--ds-gray-100);
+  --color-gray-400: var(--ds-gray-400);
+  --color-gray-700: var(--ds-gray-700);
+  --color-gray-1000: var(--ds-gray-1000);
+  --color-gray-1000-h: var(--ds-gray-1000-h);
+  --color-gray-alpha-200: var(--ds-gray-alpha-200);
+  --color-gray-alpha-400: var(--ds-gray-alpha-400);
+  --color-background-100: var(--ds-background-100);
+  --color-contrast-fg: var(--ds-contrast-fg);
+  --color-geist-background: var(--geist-background);
+  --shadow-focus-ring: var(--ds-focus-ring);
+  --shadow-border-small: var(--ds-shadow-border-small);
+  --shadow-menu: var(--ds-shadow-menu);
+  --animate-fade-spin: fade-spin 1.2s linear infinite;
+}
+
+:root {
+  --context-card-border: hsla(0, 0%, 92%, 1);
+  --ds-contrast-fg: #ffffff;
+  --geist-background: #fff;
+  --ds-shadow-menu: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px -4px rgba(0, 0, 0, 0.04), 0px 16px 24px -8px rgba(0, 0, 0, 0.06);
+  --ds-red-800: oklch(58.19% 0.2482 25.15);
+  --ds-red-900: oklch(54.99% 0.232 25.29);
+  --ds-blue-700: oklch(57.61% 0.2508 258.23);
+  --ds-amber-800: oklch(77.21% 0.1991 64.28);
+  --ds-amber-850: hsl(33, 96%, 42%);
+  --ds-gray-100: hsla(0, 0%, 95%, 1);
+  --ds-gray-400: hsla(0, 0%, 92%, 1);
+  --ds-gray-700: hsla(0, 0%, 56%, 1);
+  --ds-gray-1000: hsla(0, 0%, 9%, 1);
+  --ds-gray-1000-h: hsl(0, 0%, 22%);
+  --ds-gray-alpha-200: hsla(0, 0%, 0%, 0.08);
+  --ds-gray-alpha-400: hsla(0, 0%, 0%, 0.08);
+  --ds-background-100: hsla(0, 0%, 100%, 1);
+  --ds-focus-color: var(--ds-blue-700);
+  --ds-focus-ring: 0 0 0 2px var(--ds-background-100), 0 0 0 4px var(--ds-focus-color);
+  --ds-shadow-border: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --ds-shadow-small: 0px 2px 2px rgba(0, 0, 0, 0.04);
+  --ds-shadow-border-small: var(--ds-shadow-border), var(--ds-shadow-small);
+}
+
+.dark {
+  --context-card-border: hsla(0, 0%, 18%, 1);
+  --geist-background: #000;
+  --ds-shadow-menu: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px -4px rgba(0, 0, 0, 0.04), 0px 16px 24px -8px rgba(0, 0, 0, 0.06);
+  --ds-red-800: oklch(58.01% 0.227 25.12);
+  --ds-red-900: oklch(69.96% 0.2136 22.03);
+  --ds-blue-700: oklch(57.61% 0.2321 258.23);
+  --ds-amber-800: oklch(77.21% 0.1991 64.28);
+  --ds-gray-100: hsla(0, 0%, 10%, 1);
+  --ds-gray-400: hsla(0, 0%, 18%, 1);
+  --ds-gray-700: hsla(0, 0%, 56%, 1);
+  --ds-gray-1000: hsla(0, 0%, 93%, 1);
+  --ds-gray-1000-h: hsl(0, 0%, 80%);
+  --ds-gray-alpha-200: hsla(0, 0%, 100%, 0.09);
+  --ds-gray-alpha-400: hsla(0, 0%, 100%, 0.14);
+  --ds-background-100: hsla(0,0%,4%, 1);
+  --ds-shadow-border: 0 0 0 1px rgba(255, 255, 255, 0.145);
+  --ds-shadow-small: 0px 1px 2px rgba(0, 0, 0, 0.16);
+  --ds-shadow-border-small: var(--ds-shadow-border), 0px 1px 2px rgba(0, 0, 0, 0.16);
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

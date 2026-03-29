@@ -1,0 +1,209 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+accordion-1.tsx
+"use client";
+
+import React from "react";
+import * as SubframeCore from "@subframe/core";
+import { FeatherChevronDown } from "@subframe/core";
+
+export const SubframeUtils = {
+  twClassNames: SubframeCore.createTwClassNames([
+    "text-caption",
+    "text-caption-bold",
+    "text-body",
+    "text-body-bold",
+    "text-heading-3",
+    "text-heading-2",
+    "text-heading-1",
+    "text-monospace-body",
+  ]),
+};
+
+interface ChevronProps
+  extends React.ComponentProps<typeof SubframeCore.Collapsible.Chevron> {
+  className?: string;
+}
+
+const Chevron = React.forwardRef<
+  React.ElementRef<typeof FeatherChevronDown>,
+  ChevronProps
+>(function Chevron({ className, ...otherProps }: ChevronProps, ref) {
+  return (
+    <SubframeCore.Collapsible.Chevron {...otherProps}>
+      <FeatherChevronDown
+        className={SubframeUtils.twClassNames(
+          "text-body font-body text-default-font",
+          className
+        )}
+        ref={ref}
+      />
+    </SubframeCore.Collapsible.Chevron>
+  );
+});
+
+interface ContentProps
+  extends React.ComponentProps<typeof SubframeCore.Collapsible.Content> {
+  children?: React.ReactNode;
+  className?: string;
+}
+
+const Content = React.forwardRef<HTMLDivElement, ContentProps>(function Content(
+  { children, className, ...otherProps }: ContentProps,
+  ref
+) {
+  return children ? (
+    <SubframeCore.Collapsible.Content asChild {...otherProps}>
+      <div
+        className={SubframeUtils.twClassNames(
+          // было w-full → делаем гибким
+          "flex w-auto flex-col items-start gap-2",
+          className
+        )}
+        ref={ref}
+      >
+        {children}
+      </div>
+    </SubframeCore.Collapsible.Content>
+  ) : null;
+});
+
+interface TriggerProps
+  extends React.ComponentProps<typeof SubframeCore.Collapsible.Trigger> {
+  children?: React.ReactNode;
+  className?: string;
+}
+
+const Trigger = React.forwardRef<HTMLDivElement, TriggerProps>(function Trigger(
+  { children, className, ...otherProps }: TriggerProps,
+  ref
+) {
+  return children ? (
+    <SubframeCore.Collapsible.Trigger asChild {...otherProps}>
+      <div
+        className={SubframeUtils.twClassNames(
+          // было w-full → делаем гибким
+          "flex w-auto cursor-pointer flex-col items-start gap-2",
+          className
+        )}
+        ref={ref}
+      >
+        {children}
+      </div>
+    </SubframeCore.Collapsible.Trigger>
+  ) : null;
+});
+
+interface AccordionRootProps
+  extends React.ComponentProps<typeof SubframeCore.Collapsible.Root> {
+  trigger?: React.ReactNode;
+  children?: React.ReactNode;
+  className?: string;
+}
+
+const AccordionRoot = React.forwardRef<HTMLDivElement, AccordionRootProps>(
+  function AccordionRoot(
+    { trigger, children, className, ...otherProps }: AccordionRootProps,
+    ref
+  ) {
+    return (
+      <SubframeCore.Collapsible.Root asChild {...otherProps}>
+        <div
+          className={SubframeUtils.twClassNames(
+            // было w-full → теперь по содержимому; ширину можно задавать через className снаружи
+            "group/d2e81e20 flex w-auto flex-col items-start rounded-md",
+            className
+          )}
+          ref={ref}
+        >
+          <Trigger>
+            {trigger ? (
+              <div className="flex w-auto flex-col items-start group-data-[state=open]/d2e81e20:h-auto">
+                {trigger}
+              </div>
+            ) : null}
+          </Trigger>
+          <Content>
+            {children ? (
+              <div className="flex w-auto flex-col items-start">
+                {children}
+              </div>
+            ) : null}
+          </Content>
+        </div>
+      </SubframeCore.Collapsible.Root>
+    );
+  }
+);
+
+export const Accordion = Object.assign(AccordionRoot, {
+  Chevron,
+  Content,
+  Trigger,
+});
+
+
+demo.tsx
+"use client";
+
+import React from "react";
+import { Accordion } from "@/components/ui/accordion-1";
+
+function AccordionExample() {
+  return (
+    <Accordion
+      trigger={
+        <div className="flex w-full items-center gap-2 px-3 py-2">
+          <span className="grow shrink-0 basis-0 text-body font-body text-default-font">
+            Accordion header
+          </span>
+          <Accordion.Chevron />
+        </div>
+      }
+      defaultOpen={false}
+    >
+      <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2 px-3 py-2">
+        <span className="text-body font-body text-default-font">
+          Accordion contents
+        </span>
+      </div>
+    </Accordion>
+  );
+}
+
+export default AccordionExample;
+
+```
+
+Install NPM dependencies:
+```bash
+@subframe/core
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,775 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+story.tsx
+'use client';
+import { cn } from '@/lib/utils';
+import * as React from 'react';
+import { Button, ButtonProps } from '@/components/ui/button';
+import { PauseIcon, PlayIcon, ReplyIcon } from 'lucide-react';
+
+interface StoryProps extends React.HTMLAttributes<HTMLDivElement> {
+  mediaLength: number;
+  duration?: number;
+}
+interface StoryContextValue {
+  mediaLength: number;
+  currentIndex: number;
+  progress: number;
+  isPaused: boolean;
+  isEnded: boolean;
+  handleControl: () => void;
+  setCurrentIndex: (index: number) => void;
+  setIsPaused: (paused: boolean) => void;
+  setIsEnded: (ended: boolean) => void;
+}
+const StoryContext = React.createContext<StoryContextValue | undefined>(
+  undefined,
+);
+function useStoryContext() {
+  const context = React.useContext(StoryContext);
+  if (context === undefined) {
+    throw new Error('useStoryContext must be used within a StoryProvider');
+  }
+  return context;
+}
+export const Story = React.forwardRef<HTMLDivElement, StoryProps>(
+  ({ mediaLength, duration = 2000, className, children, ...props }, ref) => {
+    const [currentIndex, setCurrentIndex] = React.useState(0);
+    const [progress, setProgress] = React.useState(0);
+    const [isPaused, setIsPaused] = React.useState(false);
+    const [isEnded, setIsEnded] = React.useState(false);
+    const progressRef = React.useRef<number>(0);
+    const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(
+      null,
+    );
+
+    React.useEffect(() => {
+      progressRef.current = 0;
+      setProgress(0);
+    }, [currentIndex, duration, mediaLength]);
+    React.useEffect(() => {
+      if (mediaLength === 0 || isPaused) return;
+
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
+      const tick = 50;
+      const totalTicks = duration / tick;
+
+      intervalRef.current = setInterval(() => {
+        progressRef.current += 1;
+        const newProgress = (progressRef.current / totalTicks) * 100;
+        setProgress(newProgress);
+
+        if (progressRef.current >= totalTicks) {
+          clearInterval(intervalRef.current!);
+          intervalRef.current = null;
+
+          if (currentIndex < mediaLength - 1) {
+            setCurrentIndex((idx) => idx + 1);
+          } else {
+            setIsPaused(true);
+            setIsEnded(true);
+          }
+        }
+      }, tick);
+
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
+    }, [isPaused, currentIndex, duration, mediaLength]);
+
+    if (mediaLength === 0) {
+      return (
+        <div className="text-center text-secondary">No stories to display</div>
+      );
+    }
+
+    const handleControl = () => {
+      if (isEnded) {
+        setCurrentIndex(0);
+        setIsEnded(false);
+        setIsPaused(false);
+      } else {
+        setIsPaused((prev) => !prev);
+      }
+    };
+
+    return (
+      <StoryContext.Provider
+        value={{
+          mediaLength,
+          currentIndex,
+          progress,
+          isPaused,
+          isEnded,
+          handleControl,
+          setCurrentIndex,
+          setIsPaused,
+          setIsEnded,
+        }}
+      >
+        <div className={cn('mx-auto', className)} ref={ref} {...props}>
+          {children}
+        </div>
+      </StoryContext.Provider>
+    );
+  },
+);
+Story.displayName = 'Story';
+
+export const StoryProgress = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    progressWrapClass?: string;
+    progressActiveClass?: string;
+  }
+>(({ className, progressWrapClass, progressActiveClass, ...props }, ref) => {
+  const {
+    mediaLength,
+    currentIndex,
+    progress,
+    setCurrentIndex,
+    setIsEnded,
+    setIsPaused,
+  } = useStoryContext();
+
+  const handleProgressClick = (index: number) => {
+    setCurrentIndex(index);
+    setIsPaused(false);
+    setIsEnded(false);
+  };
+
+  return (
+    <div className={cn('space-x-1 flex', className)} ref={ref} {...props}>
+      {Array.from({ length: mediaLength }).map((_, index) => {
+        const isActive = index === currentIndex;
+        const isCompleted = index < currentIndex;
+
+        return (
+          <div
+            key={index}
+            className={cn(
+              'h-1 flex-1 rounded bg-secondary cursor-pointer transition-colors',
+              'hover:bg-secondary/80',
+              progressWrapClass,
+            )}
+            onClick={() => handleProgressClick(index)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleProgressClick(index);
+              }
+            }}
+          >
+            <div
+              className={cn(
+                'h-full rounded-[inherit] transition-all duration-200',
+                isActive
+                  ? 'bg-primary'
+                  : isCompleted
+                    ? 'bg-primary'
+                    : 'bg-transparent',
+                progressActiveClass,
+              )}
+              style={{
+                width: isActive ? `${progress}%` : isCompleted ? '100%' : '0%',
+              }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+StoryProgress.displayName = 'StoryProgress';
+
+export const StorySlide = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { index: number }
+>(({ index, className, ...props }, ref) => {
+  const { currentIndex } = useStoryContext();
+  if (index !== currentIndex) return null;
+  return (
+    <div className={cn('animate-in fade-in', className)} ref={ref} {...props} />
+  );
+});
+StorySlide.displayName = 'StorySlide';
+
+export const StoryControls = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, ...props }, ref) => {
+    const { isPaused, isEnded, handleControl } = useStoryContext();
+    return (
+      <Button
+        onClick={handleControl}
+        size="icon"
+        {...props}
+        ref={ref}
+        className={className}
+      >
+        {isPaused ? isEnded ? <ReplyIcon /> : <PlayIcon /> : <PauseIcon />}
+      </Button>
+    );
+  },
+);
+StoryControls.displayName = 'StoryControls';
+
+export const StoryOverlay: React.FC = () => (
+  <div className=" absolute inset-0 ">
+    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black to-transparent" />
+    <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent" />
+  </div>
+);
+
+
+demo.tsx
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+import { Story,
+  StoryProgress,
+  StoryControls,
+  StorySlide,
+  StoryOverlay, } from "@/components/ui/story";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+const FABRIZIO_STORIES = [
+  {
+    title: 'Champions league will begin soon',
+    caption: 'whos you are running for ?',
+    storyImage:
+      'https://images.unsplash.com/photo-1569617234470-9e9813ee1dae?q=80&w=2235&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  },
+  {
+    title: "who's your favourite player ?",
+    caption: 'who you think will win the champions league ?',
+    storyImage:
+      'https://images.unsplash.com/photo-1570498839593-e565b39455fc?q=80&w=2235&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  },
+];
+
+const SHADCN_STORIES = [
+  {
+    title: 'Easy vibes',
+    caption: 'In the System Prompts.',
+    storyImage:
+      'https://pbs.twimg.com/media/Gr5BeX6WwAAgGH_?format=jpg&name=large',
+  },
+  {
+    title: 'The new calendar.tsx is here',
+    caption: `
+    → Latest react-daypicker
+    → Tailwind v3 and v4
+    → Date, range & time pickers
+    → Persian, Hijri & timezone support
+    → 30+ examples to copy, paste, and build.
+    `,
+    storyImage:
+      'https://pbs.twimg.com/media/GsxdzRfb0AIUBSs?format=jpg&name=large',
+  },
+  {
+    title: '🤣🤣🤣🤣🤣',
+    caption: 'Me walking away after adding min-w-0 and it works.',
+    storyImage:
+      'https://pbs.twimg.com/media/Gsh-UBoasAM_Uin?format=jpg&name=medium',
+  },
+];
+
+const NBA_STORIES = [
+  {
+    title: 'Shai follows 38 in Game 1 with 34 tonight 🔥🔥🔥',
+    caption:
+      'MOST POINTS EVER by a player in his first 2 career Finals games 🚨🚨',
+    storyImage:
+      'https://pbs.twimg.com/media/Gs-BiiMbsAAIK9p?format=jpg&name=large',
+  },
+];
+
+const StoryDemo = () => {
+  return  <section className="min-h-dvh p-12 w-full place-content-center">
+      <div className="flex gap-4 justify-center">
+        <Dialog>
+          <DialogTrigger>
+            <Avatar className="size-12">
+              <AvatarImage
+                src="https://scontent.forn3-5.fna.fbcdn.net/v/t39.30808-1/347110386_993663875383747_583934797072922306_n.jpg?stp=c0.124.1179.1179a_cp0_dst-jpg_s80x80_tt6&_nc_cat=1&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=sznTMSftQGgQ7kNvwFnYrhK&_nc_oc=Adl88GWERQJFnS-FhRo3kmyRvwQeqel4uE97CRcHAX2hgEouXRhN98vLowFYZewYbKE&_nc_zt=24&_nc_ht=scontent.forn3-5.fna&_nc_gid=zgCgewXONoFNXl_Ycl7B9Q&oh=00_AfP29XsY8aMHX1lZasw43qaYzda8eY9esKHCjO-ZARUk5A&oe=684D1280"
+                alt="@fabrizioRomano"
+              />
+              <AvatarFallback>FR</AvatarFallback>
+            </Avatar>
+          </DialogTrigger>
+          <DialogContent className="aspect-[12/16] w-auto h-[90vh] overflow-hidden p-0">
+            <DialogTitle className="sr-only">Story</DialogTitle>
+
+            <Story
+              className="relative size-full "
+              duration={5000}
+              mediaLength={FABRIZIO_STORIES.length}
+            >
+              <DialogHeader className="px-4 py-6">
+                <div className="relative z-10 flex items-center gap-2">
+                  <Avatar className="size-10">
+                    <AvatarImage
+                      src="https://scontent.forn3-5.fna.fbcdn.net/v/t39.30808-1/347110386_993663875383747_583934797072922306_n.jpg?stp=c0.124.1179.1179a_cp0_dst-jpg_s80x80_tt6&_nc_cat=1&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=sznTMSftQGgQ7kNvwFnYrhK&_nc_oc=Adl88GWERQJFnS-FhRo3kmyRvwQeqel4uE97CRcHAX2hgEouXRhN98vLowFYZewYbKE&_nc_zt=24&_nc_ht=scontent.forn3-5.fna&_nc_gid=zgCgewXONoFNXl_Ycl7B9Q&oh=00_AfP29XsY8aMHX1lZasw43qaYzda8eY9esKHCjO-ZARUk5A&oe=684D1280"
+                      alt="@fabrizioRomano"
+                    />
+                    <AvatarFallback>FR</AvatarFallback>
+                  </Avatar>
+
+                  <StoryProgress
+                    className="flex-1"
+                    progressWrapClass="h-1.5"
+                    progressActiveClass="bg-blue-500"
+                  />
+                  <StoryControls
+                    variant="ghost"
+                    className="text-white rounded-full"
+                  />
+                </div>
+              </DialogHeader>
+              {FABRIZIO_STORIES.map((story, idx) => (
+                <StorySlide
+                  key={idx}
+                  index={idx}
+                  className="absolute inset-0 size-full"
+                >
+                  {/* Example with image */}
+                  <img
+                    src={story.storyImage}
+                    className="w-full h-auto max-h-auto"
+                    alt={story.title}
+                  />
+
+                  <div className="absolute bottom-4 left-4  z-10 space-y-1 text-white p-4">
+                    <a
+                      className="text-secondary"
+                      href="https://x.com/FabrizioRomano"
+                    >
+                      @FabrizioRomano
+                    </a>
+                    <h3 className="text-medium tracking-tight text-foreground-muted">
+                      {story.title}
+                    </h3>
+                    <p className="text-sm text-slate-200">{story.caption}</p>
+                  </div>
+                </StorySlide>
+              ))}
+              <StoryOverlay />
+            </Story>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog>
+          <DialogTrigger>
+            <Avatar className="size-12">
+              <AvatarImage
+                src="https://pbs.twimg.com/profile_images/1593304942210478080/TUYae5z7_400x400.jpg"
+                alt="@shadcn"
+              />
+              <AvatarFallback>SC</AvatarFallback>
+            </Avatar>
+          </DialogTrigger>
+          <DialogContent className="aspect-[12/16] w-auto h-[90vh] overflow-hidden p-0 rounded-md">
+            <DialogTitle className="sr-only">Story</DialogTitle>
+
+            <Story
+              className="relative size-full "
+              duration={5000}
+              mediaLength={SHADCN_STORIES.length}
+            >
+              <DialogHeader className="px-4 py-6">
+                <div className="relative z-10 flex items-center gap-2">
+                  <Avatar className="size-10">
+                    <AvatarImage
+                      src="https://pbs.twimg.com/profile_images/1593304942210478080/TUYae5z7_400x400.jpg"
+                      alt="@shadcn"
+                    />
+                    <AvatarFallback>SC</AvatarFallback>
+                  </Avatar>
+
+                  <StoryProgress
+                    className="flex-1"
+                    progressWrapClass="h-1.5"
+                    progressActiveClass="bg-pink-500"
+                  />
+                  <StoryControls
+                    variant="ghost"
+                    className="text-white rounded-full"
+                  />
+                </div>
+              </DialogHeader>
+              {SHADCN_STORIES.map((story, idx) => (
+                <StorySlide
+                  key={idx}
+                  index={idx}
+                  className="absolute inset-0 size-full"
+                >
+                  <img
+                    src={story.storyImage}
+                    className="w-full h-auto max-h-auto"
+                    alt={story.title}
+                  />
+
+                  <div className="absolute bottom-4 left-4  z-10 space-y-1 text-white p-4">
+                    <a
+                      className="text-secondary"
+                      href="https://x.com/FabrizioRomano"
+                    >
+                      @Shadcn
+                    </a>
+                    <h3 className="text-medium tracking-tight text-foreground-muted">
+                      {story.title}
+                    </h3>
+                    <p className="text-sm text-slate-200">{story.caption}</p>
+                  </div>
+                </StorySlide>
+              ))}
+              <StoryOverlay />
+            </Story>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog>
+          <DialogTrigger>
+            <Avatar className="size-12">
+              <AvatarImage
+                src="https://pbs.twimg.com/profile_images/1931904469446377472/mjaR8LDc_400x400.jpg"
+                alt="@nba"
+              />
+              <AvatarFallback>SC</AvatarFallback>
+            </Avatar>
+          </DialogTrigger>
+          <DialogContent className="aspect-[12/16] w-auto h-[90vh] overflow-hidden p-0 rounded-md">
+            <DialogTitle className="sr-only">Story</DialogTitle>
+
+            <Story
+              className="relative size-full "
+              duration={8000}
+              mediaLength={NBA_STORIES.length}
+            >
+              <DialogHeader className="px-4 py-6">
+                <div className="relative z-10 flex items-center gap-2">
+                  <Avatar className="size-10">
+                    <AvatarImage
+                      src="https://pbs.twimg.com/profile_images/1931904469446377472/mjaR8LDc_400x400.jpg"
+                      alt="@nba"
+                    />
+                    <AvatarFallback>SC</AvatarFallback>
+                  </Avatar>
+
+                  <StoryProgress
+                    className="flex-1"
+                    progressWrapClass="h-1.5"
+                    progressActiveClass="bg-red-500"
+                  />
+                  <StoryControls
+                    variant="ghost"
+                    className="text-white rounded-full"
+                  />
+                </div>
+              </DialogHeader>
+              {NBA_STORIES.map((story, idx) => (
+                <StorySlide
+                  key={idx}
+                  index={idx}
+                  className="absolute inset-0 size-full"
+                >
+                  <img
+                    src={story.storyImage}
+                    className="w-full h-auto max-h-auto"
+                    alt={story.title}
+                  />
+
+                  <div className="absolute bottom-4 left-4  z-10 space-y-1 text-white p-4">
+                    <a
+                      className="text-secondary"
+                      href="https://x.com/FabrizioRomano"
+                    >
+                      @nba
+                    </a>
+                    <h3 className="text-medium tracking-tight text-foreground-muted">
+                      {story.title}
+                    </h3>
+                    <p className="text-sm text-slate-200">{story.caption}</p>
+                  </div>
+                </StorySlide>
+              ))}
+              <StoryOverlay />
+            </Story>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </section>;
+};
+
+export { StoryDemo };
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/avatar
+"use client"
+
+import * as React from "react"
+import * as AvatarPrimitive from "@radix-ui/react-avatar"
+
+import { cn } from "@/lib/utils"
+
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      className,
+    )}
+    {...props}
+  />
+))
+Avatar.displayName = AvatarPrimitive.Root.displayName
+
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Image
+    ref={ref}
+    className={cn("aspect-square h-full w-full", className)}
+    {...props}
+  />
+))
+AvatarImage.displayName = AvatarPrimitive.Image.displayName
+
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Fallback
+    ref={ref}
+    className={cn(
+      "flex h-full w-full items-center justify-center rounded-full bg-muted",
+      className,
+    )}
+    {...props}
+  />
+))
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
+
+export { Avatar, AvatarImage, AvatarFallback }
+
+```
+```tsx
+originui/dialog
+"use client";
+
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+import { Cross2Icon } from "@radix-ui/react-icons";
+
+const Dialog = DialogPrimitive.Root;
+
+const DialogTrigger = DialogPrimitive.Trigger;
+
+const DialogPortal = DialogPrimitive.Portal;
+
+const DialogClose = DialogPrimitive.Close;
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-[101] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className,
+    )}
+    {...props}
+  />
+));
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed left-1/2 top-1/2 z-[101] grid max-h-[calc(100%-4rem)] w-full -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto border bg-background p-6 shadow-lg shadow-black/5 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:max-w-[400px] sm:rounded-xl",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="group absolute right-3 top-3 flex size-7 items-center justify-center rounded-lg outline-offset-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none">
+        <Cross2Icon
+          width={16}
+          height={16}
+          strokeWidth={2}
+          className="opacity-60 transition-opacity group-hover:opacity-100"
+        />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+DialogContent.displayName = DialogPrimitive.Content.displayName;
+
+const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
+);
+DialogHeader.displayName = "DialogHeader";
+
+const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3", className)}
+    {...props}
+  />
+);
+DialogFooter.displayName = "DialogFooter";
+
+const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn("text-lg font-semibold tracking-tight", className)}
+    {...props}
+  />
+));
+DialogTitle.displayName = DialogPrimitive.Title.displayName;
+
+const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+));
+DialogDescription.displayName = DialogPrimitive.Description.displayName;
+
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+};
+
+```
+```tsx
+originui/button
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, @radix-ui/react-avatar, @radix-ui/react-icons, @radix-ui/react-dialog, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

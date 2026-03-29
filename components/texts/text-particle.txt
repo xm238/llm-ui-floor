@@ -1,0 +1,282 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+text-particle.tsx
+"use client"
+
+import type React from "react"
+
+import { useEffect, useRef, useState } from "react"
+
+interface Particle {
+  x: number
+  y: number
+  size: number
+  baseX: number
+  baseY: number
+  density: number
+  color: string
+}
+
+interface TextParticleAnimationProps {
+  text: string
+  fontSize?: number
+  fontFamily?: string
+  particleSize?: number
+  particleColor?: string
+  particleDensity?: number
+  backgroundColor?: string
+  className?: string
+}
+
+export function TextParticle({
+  text,
+  fontSize = 80,
+  fontFamily = "Arial, sans-serif",
+  particleSize = 2,
+  particleColor = "#000000",
+  particleDensity = 8,
+  backgroundColor = "transparent",
+  className = "",
+}: TextParticleAnimationProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [particles, setParticles] = useState<Particle[]>([])
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  const [mouse, setMouse] = useState({ x: null as number | null, y: null as number | null })
+  const animationRef = useRef<number | null>(null)
+
+  // Initialize canvas and particles
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const handleResize = () => {
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+      setDimensions({ width: canvas.width, height: canvas.height })
+      initText()
+    }
+
+    const initText = () => {
+      if (!ctx) return
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.font = `${fontSize}px ${fontFamily}`
+      ctx.fillStyle = "black"
+      ctx.textAlign = "center"
+      ctx.textBaseline = "middle"
+
+      // Measure text width to center it properly
+      const textMetrics = ctx.measureText(text)
+      const textWidth = textMetrics.width
+
+      // Calculate position to center text
+      const x = canvas.width / 2
+      const y = canvas.height / 2
+
+      ctx.fillText(text, x, y)
+
+      const textCoordinates = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const newParticles: Particle[] = []
+
+      for (let y = 0; y < textCoordinates.height; y += particleDensity) {
+        for (let x = 0; x < textCoordinates.width; x += particleDensity) {
+          const index = (y * textCoordinates.width + x) * 4
+          const alpha = textCoordinates.data[index + 3]
+
+          if (alpha > 128) {
+            newParticles.push({
+              x,
+              y,
+              size: particleSize,
+              baseX: x,
+              baseY: y,
+              density: Math.random() * 30 + 1,
+              color: particleColor,
+            })
+          }
+        }
+      }
+
+      setParticles(newParticles)
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+    }
+
+    window.addEventListener("resize", handleResize)
+    handleResize()
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [text, fontSize, fontFamily, particleSize, particleColor, particleDensity])
+
+  // Animation loop
+  useEffect(() => {
+    if (particles.length === 0) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      if (backgroundColor !== "transparent") {
+        ctx.fillStyle = backgroundColor
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
+
+      particles.forEach((particle) => {
+        let dx = 0
+        let dy = 0
+        let distance = 0
+        let forceDirectionX = 0
+        let forceDirectionY = 0
+
+        // Calculate force if mouse is present
+        if (mouse.x !== null && mouse.y !== null) {
+          dx = mouse.x - particle.x
+          dy = mouse.y - particle.y
+          distance = Math.sqrt(dx * dx + dy * dy)
+
+          if (distance < 100) {
+            forceDirectionX = (dx / distance) * 3
+            forceDirectionY = (dy / distance) * 3
+          }
+        }
+
+        // Apply force and calculate new position
+        const moveX = forceDirectionX + (particle.baseX - particle.x) * 0.05
+        const moveY = forceDirectionY + (particle.baseY - particle.y) * 0.05
+
+        particle.x += moveX
+        particle.y += moveY
+
+        // Draw particle
+        ctx.beginPath()
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+        ctx.fillStyle = particle.color
+        ctx.fill()
+      })
+
+      animationRef.current = requestAnimationFrame(animate)
+    }
+
+    animate()
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [particles, mouse, backgroundColor])
+
+  // Mouse interaction
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    setMouse({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    })
+  }
+
+  const handleMouseLeave = () => {
+    setMouse({ x: null, y: null })
+  }
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={`w-full h-full ${className}`}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    />
+  )
+}
+
+
+demo.tsx
+import { TextParticle } from "@/components/ui/text-particle"
+
+export function TextParticles() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="w-full max-w-4xl space-y-8">
+        <h1 className="text-3xl font-bold text-center">Text Particle</h1>
+
+        <div className="h-64 w-full border border-gray-200 rounded-lg overflow-hidden">
+          <TextParticle
+            text="Vercel"
+            fontSize={150}
+            particleColor="#3b82f6"
+            particleSize={1}
+            particleDensity={5}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="h-48 w-full border border-gray-200 rounded-lg overflow-hidden bg-gray-900">
+            <TextParticle
+              text="Nextjs"
+              fontSize={100}
+              particleColor="#f43f5e"
+              particleSize={1}
+              particleDensity={8}
+              backgroundColor="#111827"
+            />
+          </div>
+
+          <div className="h-48 w-full border border-gray-200 rounded-lg overflow-hidden">
+            <TextParticle
+              text="Designali"
+              fontSize={60}
+              particleColor="#10b981"
+              particleSize={1}
+              particleDensity={4}
+            />
+          </div>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

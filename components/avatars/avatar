@@ -1,0 +1,428 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+avatar.tsx
+import React from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import clsx from "clsx";
+
+interface AvatarProps {
+  placeholder?: boolean;
+  size?: number;
+  src?: string;
+}
+
+export const Avatar = ({ placeholder = false, size = 24, src }: AvatarProps) => {
+  if (placeholder) {
+    return (
+      <Skeleton rounded height={size} width={size} className="border border-gray-alpha-400" />
+    );
+  }
+
+  return (
+    <span
+      className="rounded-full inline-block overflow-hidden border border-gray-alpha-400 duration-200"
+      style={{ width: size, height: size }}
+    >
+      {src && (
+        <img
+          src={src}
+          alt="Avatar"
+          className="w-full h-full"
+        />
+      )}
+    </span>
+  );
+};
+
+interface GitAvatarProps {
+  username?: string;
+  size?: number;
+  src?: string;
+}
+
+const GitHubIcon = () => (
+  <svg
+    className="text-[#000000] h-3.5 w-3.5"
+    height="16"
+    strokeLinejoin="round"
+    viewBox="0 0 16 16"
+    width="16">
+    <g clipPath="url(#clip0_872_3147)"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M8 0C3.58 0 0 3.57879 0 7.99729C0 11.5361 2.29 14.5251 5.47 15.5847C5.87 15.6547 6.02 15.4148 6.02 15.2049C6.02 15.0149 6.01 14.3851 6.01 13.7154C4 14.0852 3.48 13.2255 3.32 12.7757C3.23 12.5458 2.84 11.836 2.5 11.6461C2.22 11.4961 1.82 11.1262 2.49 11.1162C3.12 11.1062 3.57 11.696 3.72 11.936C4.44 13.1455 5.59 12.8057 6.05 12.5957C6.12 12.0759 6.33 11.726 6.56 11.5261C4.78 11.3262 2.92 10.6364 2.92 7.57743C2.92 6.70773 3.23 5.98797 3.74 5.42816C3.66 5.22823 3.38 4.40851 3.82 3.30888C3.82 3.30888 4.49 3.09895 6.02 4.1286C6.66 3.94866 7.34 3.85869 8.02 3.85869C8.7 3.85869 9.38 3.94866 10.02 4.1286C11.55 3.08895 12.22 3.30888 12.22 3.30888C12.66 4.40851 12.38 5.22823 12.3 5.42816C12.81 5.98797 13.12 6.69773 13.12 7.57743C13.12 10.6464 11.25 11.3262 9.47 11.5261C9.76 11.776 10.01 12.2558 10.01 13.0056C10.01 14.0752 10 14.9349 10 15.2049C10 15.4148 10.15 15.6647 10.55 15.5847C12.1381 15.0488 13.5182 14.0284 14.4958 12.6673C15.4735 11.3062 15.9996 9.67293 16 7.99729C16 3.57879 12.42 0 8 0Z"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_872_3147">
+        <rect width="16" height="16" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
+const GitLabIcon = () => (
+  <svg aria-label="gitlab" height="14" viewBox="0 0 24 22" width="14" className="scale-75 fill-white">
+    <path
+      d="M1.279 8.29L.044 12.294c-.117.367 0 .78.325 1.014l11.323 8.23-.009-.012-.03-.039L1.279 8.29zM22.992 13.308a.905.905 0 00.325-1.014L22.085 8.29 11.693 21.52l11.299-8.212z"
+    />
+    <path
+      d="M1.279 8.29l10.374 13.197.03.039.01-.006L22.085 8.29H1.28z"
+      opacity="0.4"
+    />
+    <path
+      d="M15.982 8.29l-4.299 13.236-.004.011.014-.017L22.085 8.29h-6.103zM7.376 8.29H1.279l10.374 13.197L7.376 8.29z"
+      opacity="0.6"
+    />
+    <path
+      d="M18.582.308l-2.6 7.982h6.103L19.48.308c-.133-.41-.764-.41-.897 0zM1.279 8.29L3.88.308c.133-.41.764-.41.897 0l2.6 7.982H1.279z"
+      opacity="0.4"
+    />
+  </svg>
+);
+
+const BitbucketIcon = () => (
+  <svg height="14" viewBox="-2 -2 65 59" width="14" className="scale-[65%]">
+    <defs>
+      <linearGradient id="bitbucketGradient" x1="104.953%" x2="46.569%" y1="21.921%" y2="75.234%">
+        <stop offset="7%" stopColor="white" stopOpacity=".4" />
+        <stop offset="100%" stopColor="white" />
+      </linearGradient>
+    </defs>
+    <path
+      d="M59.696 18.86h-18.77l-3.15 18.39h-13L9.426 55.47a2.71 2.71 0 001.75.66h40.74a2 2 0 002-1.68l5.78-35.59z"
+      fill="url(#bitbucketGradient)"
+      fillRule="nonzero"
+      transform="translate(-.026 .82)"
+    />
+    <path
+      d="M2 .82a2 2 0 00-2 2.32l8.49 51.54a2.7 2.7 0 00.91 1.61 2.71 2.71 0 001.75.66l15.76-18.88H24.7l-3.47-18.39h38.44l2.7-16.53a2 2 0 00-2-2.32L2 .82z"
+      fillRule="nonzero"
+      className="fill-white"
+    />
+  </svg>
+);
+
+export const GitHubAvatar = ({ username, size = 24, src }: GitAvatarProps) => {
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <span
+        className="rounded-full inline-block overflow-hidden border border-gray-alpha-400 duration-200"
+        style={{ width: size, height: size }}
+      >
+      {src && (
+        <img
+          src={src}
+          alt={`Avatar for ${username}`}
+          className="w-full h-full"
+        />
+      )}
+      </span>
+      <div className="absolute -left-[3px] -bottom-[5px] flex items-center justify-center rounded-full overflow-hidden bg-white border border-background">
+        <GitHubIcon />
+      </div>
+    </div>
+  );
+};
+
+export const GitLabAvatar = ({ username, size = 24, src }: GitAvatarProps) => {
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <span
+        className="rounded-full inline-block overflow-hidden border border-gray-alpha-400 duration-200"
+        style={{ width: size, height: size }}
+      >
+      {src && (
+        <img
+          src={src}
+          alt={`Avatar for ${username}`}
+          className="w-full h-full"
+        />
+      )}
+      </span>
+      <div
+        className="absolute -left-[3px] -bottom-[5px] flex items-center justify-center rounded-full overflow-hidden bg-[#6b4fbb] border border-background">
+        <GitLabIcon />
+      </div>
+    </div>
+  );
+};
+
+export const BitbucketAvatar = ({ username, size = 24, src }: GitAvatarProps) => {
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <span
+        className="rounded-full inline-block overflow-hidden border border-gray-alpha-400 duration-200"
+        style={{ width: size, height: size }}
+      >
+      {src && (
+        <img
+          src={src}
+          alt={`Avatar for ${username}`}
+          className="w-full h-full"
+        />
+      )}
+      </span>
+      <div
+        className="absolute -left-[3px] -bottom-[5px] flex items-center justify-center rounded-full overflow-hidden bg-[#0052cc] border border-background">
+        <BitbucketIcon />
+      </div>
+    </div>
+  );
+};
+
+interface AvatarGroupProps {
+  members: {
+    username?: string;
+    src?: string;
+  }[];
+  size?: number;
+  limit?: number;
+}
+
+export const AvatarGroup = ({ members, size, limit = 3 }: AvatarGroupProps) => {
+  return (
+    <div className="flex items-center">
+      {(members.length >= limit ? members.slice(0, limit - 1) : members).map((member, index) => (
+        <span
+          key={member.username}
+          className={clsx("inline-flex items-center", index !== 0 && "-ml-2")}
+          style={{ zIndex: index + 1 }}
+          aria-label={`Avatar for ${member.username}`}
+        >
+          <span
+            className="rounded-full inline-block overflow-hidden border border-gray-alpha-400 duration-200"
+            style={{ width: size, height: size }}
+          >
+            {member.src && (
+              <img
+                src={member.src}
+                alt={`Avatar for ${member.username}`}
+                className="w-full h-full"
+              />
+            )}
+          </span>
+        </span>
+      ))}
+      {members.length === limit && (
+        <span
+          className="inline-flex items-center -ml-2"
+          style={{ zIndex: limit }}
+          aria-label="1 more avatars in this group"
+        >
+          <span
+            className="rounded-full inline-block overflow-hidden border border-gray-alpha-400 duration-200"
+            style={{ width: size, height: size }}
+          >
+            <img
+              src="https://vercel.com/api/www/avatar?u=rauchg&s=64"
+              alt="1 more avatars in this group"
+              className="w-full h-full"
+            />
+          </span>
+        </span>
+      )}
+      {members.length > limit && (
+        <span
+          className="inline-flex items-center -ml-2 dark"
+          style={{ zIndex: limit }}
+          aria-label={`${members.length - limit + 1} more avatars in this group`}
+        >
+          <span
+            className="rounded-full overflow-hidden border border-gray-400 bg-gray-100 duration-200 flex justify-center items-center text-gray-1000 text-[0.625rem] leading-3 font-semibold"
+            style={{ width: size, height: size }}
+          >
+            +{members.length - limit + 1}
+          </span>
+        </span>
+      )}
+    </div>
+  );
+};
+
+demo.tsx
+import React from "react";
+import { Avatar, AvatarGroup, BitbucketAvatar, GitHubAvatar, GitLabAvatar } from "@/components/ui/avatar";
+
+export const Group = () => {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="font-bold text-xl dark:text-white">Group</div>
+      <AvatarGroup
+        members={[
+          { username: "evilrabbit", src: "https://vercel.com/api/www/avatar?u=evilrabbit&s=64" },
+          { username: "leerob", src: "https://vercel.com/api/www/avatar?u=leerob&s=64" },
+          { username: "rauchg", src: "https://avatars.githubusercontent.com/rauchg?s=64" }
+        ]}
+        size={32}
+      />
+      <AvatarGroup
+        limit={4}
+        members={[
+          { username: "sambecker", src: "https://vercel.com/api/www/avatar?u=sambecker&s=64" },
+          { username: "rauno", src: "https://vercel.com/api/www/avatar?u=rauno&s=64" },
+          { username: "shuding", src: "https://vercel.com/api/www/avatar?u=shuding&s=64" },
+          { username: "skllcrn" },
+          { username: "almonk" }
+        ]}
+        size={32}
+      />
+    </div>
+  );
+};
+
+export const Placeholder = () => {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="font-bold text-xl dark:text-white">Placeholder</div>
+      <Avatar placeholder size={90} />
+    </div>
+  );
+};
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shugar/skeleton
+import React from "react";
+import clsx from "clsx";
+import { Property } from "csstype";
+import { twMerge } from "tailwind-merge";
+
+interface SkeletonProps {
+  width?: Property.Width | number;
+  height?: Property.Height | number;
+  boxHeight?: number;
+  show?: boolean;
+  pill?: boolean;
+  rounded?: boolean;
+  squared?: boolean;
+  animated?: boolean;
+  children?: React.ReactNode;
+  className?: string;
+}
+
+export const Skeleton = ({
+  width,
+  height,
+  boxHeight,
+  show = true,
+  pill = false,
+  rounded = false,
+  squared = false,
+  animated = true,
+  children,
+  className
+}: SkeletonProps) => {
+  return (
+    <span
+      className={twMerge(clsx(
+        "block rounded-[5px]",
+        !children && show && "bg-skeleton-gradient bg-[length:400%_100%]",
+        children && show && !width && !height && "relative after:absolute after:top-0 after:bottom-0 after:left-0 after:right-0 after:rounded after:bg-skeleton-gradient after:bg-[length:400%_100%]",
+        pill && "rounded-full after:rounded-full",
+        rounded && "rounded-[50%] after:rounded-[50%]",
+        squared && "rounded-none after:rounded-none",
+        animated && !children && show && "animate-skeleton-loading",
+        animated && children && show && "after:animate-skeleton-loading",
+        className
+      ))}
+      style={{
+        minHeight: height || 24,
+        width: children ? "fit-content" : width,
+        marginBottom: `calc(${(boxHeight || "100%")} - (${typeof height === "number" ? height : 0}))`
+    }}
+    >
+      {children}
+    </span>
+  );
+};
+```
+
+Install NPM dependencies:
+```bash
+clsx, csstype, tailwind-merge
+```
+
+Extend existing tailwind.config.js with this code:
+```js
+/** @type {import("tailwindcss").Config} */
+
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        "gray-100": "var(--ds-gray-100)",
+        "gray-400": "var(--ds-gray-400)",
+        "gray-1000": "var(--ds-gray-1000)",
+        "gray-alpha-400": "var(--ds-gray-alpha-400)",
+        "background": "var(--geist-background)"
+      },
+      backgroundImage: {
+        "skeleton-gradient": "linear-gradient(270deg, var(--accents-1), var(--accents-2), var(--accents-2), var(--accents-1))"
+      },
+      animation: {
+        "skeleton-loading": "skeletonLoading 8s infinite ease-in-out"
+      },
+      keyframes: {
+        skeletonLoading: {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" }
+        }
+      }
+    }
+  },
+};
+
+```
+
+Extend existing globals.css with this code:
+```css
+@layer base {
+    :root {
+        --ds-gray-alpha-400: hsla(0, 0%, 0%, 0.08);
+        --geist-background: #fff;
+        --accents-1: #fafafa;
+        --accents-2: #eaeaea;
+    }
+
+    .dark {
+        --ds-gray-100: hsla(0, 0%, 10%, 1);
+        --ds-gray-400: hsla(0, 0%, 18%, 1);
+        --ds-gray-1000: hsla(0, 0%, 93%, 1);
+        --ds-gray-alpha-400: hsla(0, 0%, 100%, 0.14);
+        --geist-background: #000;
+        --accents-2: #333333;
+        --accents-1: #111111;
+    }
+}
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

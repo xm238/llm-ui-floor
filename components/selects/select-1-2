@@ -1,0 +1,231 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+select-1.tsx
+"use client"
+
+import { ChevronDown } from "lucide-react"
+import {
+  Button as AriaButton,
+  ButtonProps as AriaButtonProps,
+  ListBox as AriaListBox,
+  ListBoxProps as AriaListBoxProps,
+  PopoverProps as AriaPopoverProps,
+  Select as AriaSelect,
+  SelectProps as AriaSelectProps,
+  SelectValue as AriaSelectValue,
+  SelectValueProps as AriaSelectValueProps,
+  ValidationResult as AriaValidationResult,
+  composeRenderProps,
+  Text,
+} from "react-aria-components"
+
+import { cn } from "@/lib/utils"
+
+import { FieldError, Label } from "@/components/ui/text-field-basic"
+import {
+  ListBoxCollection,
+  ListBoxHeader,
+  ListBoxItem,
+  ListBoxSection,
+} from "@/components/ui/list-box"
+import { Popover } from "@/components/ui/popover-1"
+
+const Select = AriaSelect
+
+const SelectItem = ListBoxItem
+
+const SelectHeader = ListBoxHeader
+
+const SelectSection = ListBoxSection
+
+const SelectCollection = ListBoxCollection
+
+const SelectValue = <T extends object>({
+  className,
+  ...props
+}: AriaSelectValueProps<T>) => (
+  <AriaSelectValue
+    className={composeRenderProps(className, (className) =>
+      cn(
+        "line-clamp-1 data-[placeholder]:text-muted-foreground",
+        /* Description */
+        "[&>[slot=description]]:hidden",
+        className
+      )
+    )}
+    {...props}
+  />
+)
+
+const SelectTrigger = ({ className, children, ...props }: AriaButtonProps) => (
+  <AriaButton
+    className={composeRenderProps(className, (className) =>
+      cn(
+        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
+        /* Disabled */
+        "data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50",
+        /* Focused */
+        "data-[focus-visible]:outline-none data-[focus-visible]:ring-2 data-[focus-visible]:ring-ring data-[focus-visible]:ring-offset-2",
+        /* Resets */
+        "focus-visible:outline-none",
+        className
+      )
+    )}
+    {...props}
+  >
+    {composeRenderProps(children, (children) => (
+      <>
+        {children}
+        <ChevronDown aria-hidden="true" className="size-4 opacity-50" />
+      </>
+    ))}
+  </AriaButton>
+)
+
+const SelectPopover = ({ className, ...props }: AriaPopoverProps) => (
+  <Popover
+    className={composeRenderProps(className, (className) =>
+      cn("w-[--trigger-width]", className)
+    )}
+    {...props}
+  />
+)
+
+const SelectListBox = <T extends object>({
+  className,
+  ...props
+}: AriaListBoxProps<T>) => (
+  <AriaListBox
+    className={composeRenderProps(className, (className) =>
+      cn(
+        "max-h-[inherit] overflow-auto p-1 outline-none [clip-path:inset(0_0_0_0_round_calc(var(--radius)-2px))]",
+        className
+      )
+    )}
+    {...props}
+  />
+)
+
+interface JollySelectProps<T extends object>
+  extends Omit<AriaSelectProps<T>, "children"> {
+  label?: string
+  description?: string
+  errorMessage?: string | ((validation: AriaValidationResult) => string)
+  items?: Iterable<T>
+  children: React.ReactNode | ((item: T) => React.ReactNode)
+}
+
+function JollySelect<T extends object>({
+  label,
+  description,
+  errorMessage,
+  children,
+  className,
+  items,
+  ...props
+}: JollySelectProps<T>) {
+  return (
+    <Select
+      className={composeRenderProps(className, (className) =>
+        cn("group flex flex-col gap-2", className)
+      )}
+      {...props}
+    >
+      <Label>{label}</Label>
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      {description && (
+        <Text className="text-sm text-muted-foreground" slot="description">
+          {description}
+        </Text>
+      )}
+      <FieldError>{errorMessage}</FieldError>
+      <SelectPopover>
+        <SelectListBox items={items}>{children}</SelectListBox>
+      </SelectPopover>
+    </Select>
+  )
+}
+
+export {
+  Select,
+  SelectValue,
+  SelectTrigger,
+  SelectItem,
+  SelectPopover,
+  SelectHeader,
+  SelectListBox,
+  SelectSection,
+  SelectCollection,
+  JollySelect,
+}
+export type { JollySelectProps }
+
+
+demo.tsx
+import { Label } from "@/components/ui/text-field-basic"
+import {
+  Select,
+  SelectItem,
+  SelectListBox,
+  SelectPopover,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select-1"
+
+export default function SelectDemo() {
+  return (
+    <Select className="w-[200px]" placeholder="Select an animal">
+      <Label>Favorite Animal</Label>
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectPopover>
+        <SelectListBox>
+          <SelectItem>Aardvark</SelectItem>
+          <SelectItem>Cat</SelectItem>
+          <SelectItem>Dog</SelectItem>
+          <SelectItem>Kangaroo</SelectItem>
+          <SelectItem>Panda</SelectItem>
+          <SelectItem>Snake</SelectItem>
+        </SelectListBox>
+      </SelectPopover>
+    </Select>
+  )
+}
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, react-aria-components
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

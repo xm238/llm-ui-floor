@@ -1,0 +1,359 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+drawer.tsx
+'use client';
+
+import * as React from 'react';
+import { Drawer as DrawerPrimitive } from 'vaul';
+import { cn } from '@/lib/utils';
+
+function Drawer({
+	...props
+}: React.ComponentProps<typeof DrawerPrimitive.Root>) {
+	return <DrawerPrimitive.Root data-slot="drawer" {...props} />;
+}
+
+function DrawerTrigger({
+	...props
+}: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
+	return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />;
+}
+
+function DrawerPortal({
+	...props
+}: React.ComponentProps<typeof DrawerPrimitive.Portal>) {
+	return <DrawerPrimitive.Portal data-slot="drawer-portal" {...props} />;
+}
+
+function DrawerClose({
+	...props
+}: React.ComponentProps<typeof DrawerPrimitive.Close>) {
+	return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
+}
+
+function DrawerOverlay({
+	className,
+	...props
+}: React.ComponentProps<typeof DrawerPrimitive.Overlay>) {
+	return (
+		<DrawerPrimitive.Overlay
+			data-slot="drawer-overlay"
+			className={cn(
+				'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 bg-background/50 fixed inset-0 z-50 backdrop-blur',
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
+
+function DrawerContent({
+	className,
+	children,
+	...props
+}: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+	return (
+		<DrawerPortal data-slot="drawer-portal">
+			<DrawerOverlay />
+			<DrawerPrimitive.Content
+				data-slot="drawer-content"
+				className={cn(
+					'group/drawer-content bg-background fixed z-50 flex h-auto flex-col',
+					'data-[vaul-drawer-direction=top]:inset-x-0 data-[vaul-drawer-direction=top]:top-0 data-[vaul-drawer-direction=top]:mb-24 data-[vaul-drawer-direction=top]:max-h-[80vh] data-[vaul-drawer-direction=top]:rounded-b-3xl data-[vaul-drawer-direction=top]:border-b',
+					'data-[vaul-drawer-direction=bottom]:inset-x-0 data-[vaul-drawer-direction=bottom]:bottom-0 data-[vaul-drawer-direction=bottom]:mt-24 data-[vaul-drawer-direction=bottom]:max-h-[80vh] data-[vaul-drawer-direction=bottom]:rounded-t-3xl data-[vaul-drawer-direction=bottom]:border-t',
+					'data-[vaul-drawer-direction=right]:inset-y-0 data-[vaul-drawer-direction=right]:right-0 data-[vaul-drawer-direction=right]:w-3/4 data-[vaul-drawer-direction=right]:border-l data-[vaul-drawer-direction=right]:sm:max-w-sm',
+					'data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-3/4 data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=left]:sm:max-w-sm',
+					className,
+				)}
+				{...props}
+			>
+				<div className="bg-muted mx-auto my-2 hidden h-2 w-24 shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
+
+				{children}
+			</DrawerPrimitive.Content>
+		</DrawerPortal>
+	);
+}
+
+function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
+	return (
+		<div
+			data-slot="drawer-header"
+			className={cn(
+				'flex w-full flex-col gap-1 rounded-t-3xl border-b px-4 py-2 md:mx-auto md:max-w-md',
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
+
+function DrawerBody({ className, ...props }: React.ComponentProps<'div'>) {
+	return (
+		<div
+			data-slot="drawer-body"
+			className={cn('w-full px-4 py-6 md:mx-auto md:max-w-md', className)}
+			{...props}
+		/>
+	);
+}
+
+function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
+	return (
+		<div
+			data-slot="drawer-footer"
+			className={cn(
+				'mt-auto grid w-full gap-2 border-t px-4 py-3 md:mx-auto md:max-w-md',
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
+
+function DrawerTitle({
+	className,
+	...props
+}: React.ComponentProps<typeof DrawerPrimitive.Title>) {
+	return (
+		<DrawerPrimitive.Title
+			data-slot="drawer-title"
+			className={cn('text-foreground font-heading font-medium', className)}
+			{...props}
+		/>
+	);
+}
+
+function DrawerDescription({
+	className,
+	...props
+}: React.ComponentProps<typeof DrawerPrimitive.Description>) {
+	return (
+		<DrawerPrimitive.Description
+			data-slot="drawer-description"
+			className={cn('text-muted-foreground text-sm', className)}
+			{...props}
+		/>
+	);
+}
+
+export {
+	Drawer,
+	DrawerPortal,
+	DrawerOverlay,
+	DrawerTrigger,
+	DrawerClose,
+	DrawerContent,
+	DrawerHeader,
+	DrawerBody,
+	DrawerFooter,
+	DrawerTitle,
+	DrawerDescription,
+};
+
+
+demo.tsx
+'use client';
+
+import * as React from 'react';
+import { Button } from '@/components/ui/button';
+import {
+	Drawer,
+	DrawerBody,
+	DrawerClose,
+	DrawerContent,
+	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from '@/components/ui/drawer';
+import { 
+	Minus, 
+	Plus, 
+} from 'lucide-react';
+
+export default function Default() {
+	const [goal, setGoal] = React.useState(350);
+
+	function onClick(adjustment: number) {
+		setGoal(Math.max(200, Math.min(400, goal + adjustment)));
+	}
+
+	return (
+		<Drawer>
+			<DrawerTrigger asChild>
+				<Button variant="outline">Open Drawer</Button>
+			</DrawerTrigger>
+			<DrawerContent>
+				<DrawerHeader>
+					<DrawerTitle>Move Goal</DrawerTitle>
+					<DrawerDescription>Set your daily activity goal.</DrawerDescription>
+				</DrawerHeader>
+				<DrawerBody>
+					<div className="flex items-center justify-center space-x-2">
+						<Button
+							variant="outline"
+							size="icon"
+							className="h-12 w-12 shrink-0 rounded-full"
+							onClick={() => onClick(-10)}
+							disabled={goal <= 200}
+						>
+							<Minus />
+							<span className="sr-only">Decrease</span>
+						</Button>
+						<div className="flex-1 text-center">
+							<div className="text-7xl font-bold tracking-tighter">{goal}</div>
+							<div className="text-muted-foreground text-[0.70rem] uppercase">
+								Calories/day
+							</div>
+						</div>
+						<Button
+							variant="outline"
+							size="icon"
+							className="h-12 w-12 shrink-0 rounded-full"
+							onClick={() => onClick(10)}
+							disabled={goal >= 400}
+						>
+							<Plus />
+							<span className="sr-only">Increase</span>
+						</Button>
+					</div>
+				</DrawerBody>
+				<DrawerFooter className="grid-cols-2">
+					<DrawerClose asChild>
+						<Button className="w-full" variant="outline">
+							Cancel
+						</Button>
+					</DrawerClose>
+					<Button className="w-full">Submit</Button>
+				</DrawerFooter>
+			</DrawerContent>
+		</Drawer>
+	);
+}
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+```tsx
+shadcn/input
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Input.displayName = "Input"
+
+export { Input }
+
+```
+
+Install NPM dependencies:
+```bash
+vaul, @radix-ui/react-slot, class-variance-authority
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

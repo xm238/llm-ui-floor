@@ -1,0 +1,137 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+project-badge.tsx
+// component.tsx
+'use client';
+
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Component, Book, BarChart, LucideIcon } from 'lucide-react';
+
+export interface Project {
+   id: string;
+   name: string;
+   icon: LucideIcon;
+}
+
+export const projects: Project[] = [
+   { id: 'proj-1', name: 'UI Components', icon: Component },
+   { id: 'proj-2', name: 'Documentation', icon: Book },
+   { id: 'proj-3', name: 'Analytics Dashboard', icon: BarChart },
+];
+
+interface ProjectBadgeProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+   project: Project;
+}
+
+const ProjectBadge = React.forwardRef<HTMLAnchorElement, ProjectBadgeProps>(
+   ({ project, className, ...props }, ref) => {
+      const Icon = project.icon;
+
+      return (
+         <a ref={ref} className={cn('inline-block', className)} {...props}>
+            <Badge
+               variant="outline"
+               className="gap-1.5 rounded-full bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+               <Icon className="size-3.5" />
+               {project.name}
+            </Badge>
+         </a>
+      );
+   }
+);
+ProjectBadge.displayName = 'ProjectBadge';
+
+export default ProjectBadge;
+
+demo.tsx
+// demo.tsx
+'use client';
+
+import * as React from 'react';
+import { GitBranch, Star, Zap } from 'lucide-react';
+import ProjectBadge, { projects } from '@/components/ui/project-badge';
+
+const ProjectBadgeDemo = () => {
+   return (
+      <div className="flex w-full flex-col items-center justify-center gap-10 p-4">
+         <div className="flex flex-col items-center gap-2 text-center">
+            <h2 className="text-lg font-semibold">Project Badges</h2>
+            <p className="text-sm text-muted-foreground">
+               Clickable badges to represent different projects.
+            </p>
+         </div>
+
+         <div className="flex flex-wrap items-center justify-center gap-4">
+            {projects.map((project) => (
+               <ProjectBadge key={project.id} project={project} href="#" />
+            ))}
+         </div>
+
+         <div className="w-full max-w-lg space-y-4">
+            <h3 className="text-center font-medium text-muted-foreground">Example Usage in a List</h3>
+            <ul className="divide-y divide-border rounded-lg border">
+               <li className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                     <Zap className="size-5 text-yellow-500" />
+                     <span className="font-medium">Design new landing page</span>
+                  </div>
+                  <ProjectBadge project={projects[0]} href="#" />
+               </li>
+               <li className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                     <GitBranch className="size-5 text-blue-500" />
+                     <span className="font-medium">Refactor state management</span>
+                  </div>
+                  <ProjectBadge project={projects[2]} href="#" />
+               </li>
+               <li className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                     <Star className="size-5 text-green-500" />
+                     <span className="font-medium">Write API documentation</span>
+                  </div>
+                  <ProjectBadge project={projects[1]} href="#" />
+               </li>
+            </ul>
+         </div>
+      </div>
+   );
+};
+
+export { ProjectBadgeDemo as DemoOne };
+```
+
+Install NPM dependencies:
+```bash
+lucide-react
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

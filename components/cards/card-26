@@ -1,0 +1,154 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+card-26.tsx
+// file: components/ui/link-card.tsx
+import React from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils'; // Assuming you have a utility for class names
+
+// Props interface for type safety and clarity
+interface LinkCardProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  title: string;
+  description: string;
+  imageUrl: string;
+  href: string;
+}
+
+const LinkCard = React.forwardRef<HTMLAnchorElement, LinkCardProps>(
+  ({ className, title, description, imageUrl, href, ...props }, ref) => {
+    // Animation variants for framer-motion
+    const cardVariants = {
+      initial: { scale: 1, y: 0 },
+      hover: {
+        scale: 1.03,
+        y: -5,
+        transition: {
+          type: 'spring',
+          stiffness: 300,
+          damping: 15,
+        },
+      },
+    };
+
+    return (
+      <motion.a
+        ref={ref}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn(
+          'group relative flex h-80 w-full max-w-sm flex-col justify-between overflow-hidden',
+          'rounded-2xl border bg-card p-6 text-card-foreground shadow-sm',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          className
+        )}
+        variants={cardVariants}
+        initial="initial"
+        whileHover="hover"
+        aria-label={`Link to ${title}`}
+        {...props}
+      >
+        {/* Text content */}
+        <div className="z-10">
+          <h3 className="mb-2 font-serif text-3xl font-medium tracking-tight text-card-foreground">
+            {title}
+          </h3>
+          <p className="max-w-[80%] text-sm text-muted-foreground">
+            {description}
+          </p>
+        </div>
+
+        {/* Image container with a subtle scale effect on hover */}
+        <div className="absolute bottom-0 right-0 h-48 w-48 translate x-1/4 translate y-1/4 transform">
+          <motion.img
+            src={imageUrl}
+            alt={`${title} illustration`}
+            className="h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-110"
+          />
+        </div>
+      </motion.a>
+    );
+  }
+);
+
+LinkCard.displayName = 'LinkCard';
+
+export { LinkCard };
+
+demo.tsx
+// file: demo.tsx
+import { LinkCard } from '@/components/ui/card-26'; // Adjust the import path as needed
+
+// Data for the cards to demonstrate reusability
+const cardData = [
+  {
+    title: 'LinkedIn',
+    description: "I am not posting that often on LinkedIn, but hey, let's connect.",
+    imageUrl: 'https://www.thiings.co/_next/image?url=https%3A%2F%2Flftz25oez4aqbxpq.public.blob.vercel-storage.com%2Fimage-DtrNxOB0jqKQ31PsOtpWE6sbvajnjM.png&w=320&q=75', // Replace with your image URL
+    href: 'https://www.linkedin.com/',
+  },
+  {
+    title: 'Instagram',
+    description: 'No design stuff here. Everyday life, hobbies and my daughter Marta.',
+    imageUrl: 'https://www.thiings.co/_next/image?url=https%3A%2F%2Flftz25oez4aqbxpq.public.blob.vercel-storage.com%2Fimage-iz7IqPk6hVuaRd4cYUxWTnK6M1CN9Q.png&w=320&q=75', // Replace with your image URL
+    href: 'https://www.instagram.com/',
+  },
+  {
+    title: 'Pudding Studio',
+    description: 'Check Puddings website. You will find some designs there too.',
+    imageUrl: 'https://www.thiings.co/_next/image?url=https%3A%2F%2Flftz25oez4aqbxpq.public.blob.vercel-storage.com%2Fimage-PBC8rCnk8vraLCfYgyCEoHw0TJSCGY.png&w=320&q=75', // Replace with your image URL
+    href: 'https://pudding.cool/',
+  },
+];
+
+export default function LinkCardDemo() {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-background p-4 md:p-8">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {cardData.map((card) => (
+          <LinkCard
+            key={card.title}
+            title={card.title}
+            description={card.description}
+            imageUrl={card.imageUrl}
+            href={card.href}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+Install NPM dependencies:
+```bash
+framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

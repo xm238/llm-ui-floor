@@ -1,0 +1,772 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+vercel-footer.tsx
+"use client";
+
+import { useTheme } from "next-themes"; 
+import { useCallback, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+
+import { Button } from "@/components/ui/button"; 
+import { SquareArrowOutUpRight, ChevronDown, Monitor, Moon, Sun } from "@aliimam/icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Link from "next/link"; 
+import { Github, LinkedIn, Vercel, X, YouTube } from "@aliimam/logos";
+
+const linksPro = [
+  {
+    group: "Product",
+    items: [
+      {
+        title: "AI",
+        href: "#",
+      },
+      {
+        title: "Enterprise",
+        href: "#",
+      },
+      {
+        title: "Fluid Compute",
+        href: "#",
+      },
+      {
+        title: "Next.js",
+        href: "#",
+      },
+      {
+        title: "Observability",
+        href: "#",
+      },
+      {
+        title: "Previews",
+        href: "#",
+      },
+      {
+        title: "Rendering",
+        href: "#",
+      },
+      {
+        title: "Security",
+        href: "#",
+      },
+      {
+        title: "Turbo",
+        href: "#",
+      },
+      {
+        title: "Domains",
+        href: "#",
+      },
+    ],
+  },
+];
+
+const linksRes = [
+  {
+    group: "Resources",
+    items: [
+      {
+        title: "Docs",
+        href: "#",
+      },
+      {
+        title: "Guides",
+        href: "#",
+      },
+      {
+        title: "Academy",
+        href: "#",
+      },
+      {
+        title: "Help",
+        href: "#",
+      },
+      {
+        title: "Integrations",
+        href: "#",
+      },
+      {
+        title: "Pricing",
+        href: "#",
+      },
+      {
+        title: "Resources",
+        href: "#",
+      },
+      {
+        title: "Solution Partners",
+        href: "#",
+      },
+      {
+        title: "Startups",
+        href: "#",
+      },
+      {
+        title: "Templates",
+        href: "#",
+      },
+    ],
+  },
+];
+
+const linksCom = [
+  {
+    group: "Company",
+    items: [
+      {
+        title: "About",
+        href: "#",
+      },
+      {
+        title: "Blog",
+        href: "#",
+      },
+      {
+        title: "Careers",
+        href: "#",
+      },
+      {
+        title: "Changelog",
+        href: "#",
+      },
+      {
+        title: "Contact Us",
+        href: "#",
+      },
+      {
+        title: "Customers",
+        href: "#",
+      },
+      {
+        title: "Events",
+        href: "#",
+      },
+      {
+        title: "Partners",
+        href: "#",
+      },
+      {
+        title: "Shipped",
+        href: "#",
+      },
+      {
+        title: "Privacy Policy",
+        href: "#",
+      },
+    ],
+  },
+];
+
+export function Footer() {
+  return (
+    <footer className="py-16">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="">
+          <div className="grid gap-14 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            <div className="grid gap-3">
+              {linksPro.map((link, index) => (
+                <div key={index} className="space-y-3 text-sm">
+                  <span className="block font-medium">{link.group}</span>
+                  {link.items.map((item, index) => (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className="text-muted-foreground hover:text-primary block duration-150"
+                    >
+                      <span>{item.title}</span>
+                    </Link>
+                  ))}
+                  <Link
+                    href={"#"}
+                    className="text-muted-foreground flex gap-1 items-center text-sm hover:text-primary duration-150"
+                  >
+                    v0
+                    <SquareArrowOutUpRight strokeWidth={2} size={16} />
+                  </Link>
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-3">
+              {linksRes.map((link, index) => (
+                <div key={index} className="space-y-3 text-sm">
+                  <span className="block font-medium">{link.group}</span>
+                  <Link
+                    href={"#"}
+                    className="text-muted-foreground flex gap-1 items-center text-sm hover:text-primary duration-150"
+                  >
+                    Community
+                    <SquareArrowOutUpRight strokeWidth={2} size={16} />
+                  </Link>
+                  {link.items.map((item, index) => (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className="text-muted-foreground hover:text-primary block duration-150"
+                    >
+                      <span>{item.title}</span>
+                    </Link>
+                  ))}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="text-muted-foreground flex gap-1 items-center hover:text-primary text-sm">
+                      SDKs by Vercel <ChevronDown strokeWidth={2} size={16} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      side="top"
+                      align="end"
+                      className="w-60 p-1"
+                    >
+                      <DropdownMenuItem className="h-10 px-4">
+                        AI SDK{" "}
+                        <SquareArrowOutUpRight strokeWidth={2} size={16} />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Flags SDK{" "}
+                        <SquareArrowOutUpRight strokeWidth={2} size={16} />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Chat SDK{" "}
+                        <SquareArrowOutUpRight strokeWidth={2} size={16} />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Streamdown AI{" "}
+                        <SquareArrowOutUpRight strokeWidth={2} size={16} />
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-3">
+              {linksCom.map((link, index) => (
+                <div key={index} className="space-y-3 text-sm">
+                  <span className="block font-medium">{link.group}</span>
+
+                  {link.items.map((item, index) => (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className="text-muted-foreground hover:text-primary block duration-150"
+                    >
+                      <span>{item.title}</span>
+                    </Link>
+                  ))}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="text-muted-foreground flex gap-1 items-center hover:text-primary text-sm">
+                      Legal <ChevronDown strokeWidth={2} size={16} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      side="top"
+                      align="end"
+                      className="w-60 p-1"
+                    >
+                      <DropdownMenuItem className="h-10 px-4">
+                        Cookie Policy
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Cookie Preferences
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        DMCA Policy
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        DORA Addendum
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        DPA
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-16 px-4">
+                        Domain Name Registration and Services Terms
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Event Code of Conduct
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Event Terms and Conditions
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Inactivity Policy
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Job Applicant Privacy Notice
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Privacy Policy
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        SLA
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Sub-processors
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Support Terms
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Terms of Service
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="h-10 px-4">
+                        Trademark Policy
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-3">
+              <div className="space-y-3 text-sm">
+                <span className="block font-medium">Social</span> 
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary block duration-150"
+                >
+                  <span className="flex gap-2 items-center">
+                    <Github size={14}/>
+                    Github
+                  </span>
+                </Link>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary block duration-150"
+                >
+                  <span className="flex gap-2 items-center">
+                    <LinkedIn className="grayscale" size={14}/>
+                    LinkedIn
+                  </span>
+                </Link>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary block duration-150"
+                >
+                  <span className="flex gap-2 items-center">
+                    <X size={14}/>
+                    Twitter
+                  </span>
+                </Link>
+                <Link
+                  href="#"
+                  className="text-muted-foreground hover:text-primary block duration-150"
+                >
+                  <span className="flex gap-2 items-center">
+                    <YouTube className=" grayscale" size={14}/>
+                    YouTube
+                  </span>
+                </Link>
+              </div>
+            </div>
+            <div className="flex justify-end">
+             <Vercel size={18}/>
+             </div>
+          </div>
+         
+        </div>
+        <div className="mt-10 flex flex-wrap items-end justify-between gap-6 py-6">
+          <Button
+            className="text-blue-500 cursor-pointer hover:text-blue-500"
+            variant={"ghost"}
+          >
+            <span className="block size-3 rounded-full border border-background bg-blue-500" />
+            All systems normal.
+          </Button>
+          <ThemeSwitcher />
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+
+
+const themes = [
+  {
+    key: "system",
+    icon: Monitor,
+    label: "System theme",
+  },
+  {
+    key: "light",
+    icon: Sun,
+    label: "Light theme",
+  },
+  {
+    key: "dark",
+    icon: Moon,
+    label: "Dark theme",
+  },
+];
+
+type ThemeSwitcherProps = {
+  value?: "light" | "dark" | "system";
+  onChange?: (theme: "light" | "dark" | "system") => void;
+  defaultValue?: "light" | "dark" | "system";
+  className?: string;
+};
+
+const ThemeSwitcher = ({ 
+  className,
+}: ThemeSwitcherProps) => {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  const handleThemeClick = useCallback(
+    (themeKey: "light" | "dark" | "system") => {
+      setTheme(themeKey);
+    },
+    [setTheme]
+  );
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  return (
+    <div
+      className={cn(
+        "relative isolate flex h-7 rounded-full bg-background p-1 ring-1 ring-border",
+        className
+      )}
+    >
+      {themes.map(({ key, icon: Icon, label }) => {
+        const isActive = theme === key;
+
+        return (
+          <button
+            aria-label={label}
+            className="relative h-5 w-6 rounded-full"
+            key={key}
+            onClick={() => handleThemeClick(key as "light" | "dark" | "system")}
+            type="button"
+          >
+            {isActive && (
+              <div className="absolute inset-0 rounded-full bg-secondary" />
+            )}
+            <Icon
+              className={cn(
+                "relative z-10 m-auto h-3.5 w-3.5",
+                isActive ? "text-foreground" : "text-muted-foreground"
+              )}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+
+demo.tsx
+import { Footer } from "@/components/ui/vercel-footer";
+
+export default function DemoOne() {
+  return <Footer />;
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/button
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  },
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+```
+```tsx
+shadcn/dropdown-menu
+"use client"
+
+import * as React from "react"
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
+import { Check, ChevronRight, Circle } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const DropdownMenu = DropdownMenuPrimitive.Root
+
+const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
+
+const DropdownMenuGroup = DropdownMenuPrimitive.Group
+
+const DropdownMenuPortal = DropdownMenuPrimitive.Portal
+
+const DropdownMenuSub = DropdownMenuPrimitive.Sub
+
+const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
+
+const DropdownMenuSubTrigger = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
+    inset?: boolean
+  }
+>(({ className, inset, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubTrigger
+    ref={ref}
+    className={cn(
+      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent",
+      inset && "pl-8",
+      className,
+    )}
+    {...props}
+  >
+    {children}
+    <ChevronRight className="ml-auto h-4 w-4" />
+  </DropdownMenuPrimitive.SubTrigger>
+))
+DropdownMenuSubTrigger.displayName =
+  DropdownMenuPrimitive.SubTrigger.displayName
+
+const DropdownMenuSubContent = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubContent
+    ref={ref}
+    className={cn(
+      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+      className,
+    )}
+    {...props}
+  />
+))
+DropdownMenuSubContent.displayName =
+  DropdownMenuPrimitive.SubContent.displayName
+
+const DropdownMenuContent = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
+>(({ className, sideOffset = 4, ...props }, ref) => (
+  <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className,
+      )}
+      {...props}
+    />
+  </DropdownMenuPrimitive.Portal>
+))
+DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
+
+const DropdownMenuItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
+    inset?: boolean
+  }
+>(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      inset && "pl-8",
+      className,
+    )}
+    {...props}
+  />
+))
+DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
+
+const DropdownMenuCheckboxItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
+>(({ className, children, checked, ...props }, ref) => (
+  <DropdownMenuPrimitive.CheckboxItem
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className,
+    )}
+    checked={checked}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.CheckboxItem>
+))
+DropdownMenuCheckboxItem.displayName =
+  DropdownMenuPrimitive.CheckboxItem.displayName
+
+const DropdownMenuRadioItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
+>(({ className, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.RadioItem
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className,
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Circle className="h-2 w-2 fill-current" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.RadioItem>
+))
+DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName
+
+const DropdownMenuLabel = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & {
+    inset?: boolean
+  }
+>(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Label
+    ref={ref}
+    className={cn(
+      "px-2 py-1.5 text-sm font-semibold",
+      inset && "pl-8",
+      className,
+    )}
+    {...props}
+  />
+))
+DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName
+
+const DropdownMenuSeparator = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.Separator
+    ref={ref}
+    className={cn("-mx-1 my-1 h-px bg-muted", className)}
+    {...props}
+  />
+))
+DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
+
+const DropdownMenuShortcut = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) => {
+  return (
+    <span
+      className={cn("ml-auto text-xs tracking-widest opacity-60", className)}
+      {...props}
+    />
+  )
+}
+DropdownMenuShortcut.displayName = "DropdownMenuShortcut"
+
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+}
+
+```
+
+Install NPM dependencies:
+```bash
+next, next-themes, @aliimam/icons, @aliimam/logos, @radix-ui/react-slot, class-variance-authority, lucide-react, @radix-ui/react-dropdown-menu
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

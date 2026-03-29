@@ -1,0 +1,349 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+accordion-1.tsx
+"use client";
+
+import * as React from "react";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
+
+const accordionVariants = cva("w-full max-w-xl", {
+  variants: {
+    variant: {
+      default:
+        "border border-border rounded-xl overflow-hidden shadow-md/2",
+      ghost: "",
+      outline:
+        "border border-border rounded-xl shadow-md/2",
+    },
+    size: {
+      sm: "text-sm max-w-lg",
+      default: "max-w-2xl",
+      lg: "text-lg max-w-4xl",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "default",
+  },
+});
+
+const accordionItemVariants = cva(
+  "border-b border-border last:border-b-0",
+  {
+    variants: {
+      variant: {
+        default: "",
+        ghost:
+          "border-b border-border last:border-b-0 mb-2 last:mb-0",
+        outline: "",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+const accordionTriggerVariants = cva(
+  "flex flex-1 items-center justify-between py-4 px-6 text-left font-medium transition-all hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+  {
+    variants: {
+      variant: {
+        default: "",
+        ghost: "px-0",
+        outline: "",
+      },
+      size: {
+        sm: "py-3 px-4 text-sm",
+        default: "py-4 px-6",
+        lg: "py-5 px-6 text-lg",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+
+const accordionContentVariants = cva(
+  "px-6 pb-4 pt-0 text-muted-foreground",
+  {
+    variants: {
+      variant: {
+        default: "",
+        ghost: "px-0",
+        outline: "",
+      },
+      size: {
+        sm: "px-4 pb-3 text-sm",
+        default: "px-6 pb-4",
+        lg: "px-6 pb-5",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+
+export interface AccordionProps extends VariantProps<typeof accordionVariants> {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+// Single accordion props
+export interface AccordionSingleProps extends AccordionProps {
+  type: "single";
+  collapsible?: boolean;
+  defaultValue?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+// Multiple accordion props
+export interface AccordionMultipleProps extends AccordionProps {
+  type: "multiple";
+  defaultValue?: string[];
+  value?: string[];
+  onValueChange?: (value: string[]) => void;
+}
+
+export type AccordionCombinedProps =
+  | AccordionSingleProps
+  | AccordionMultipleProps;
+
+export interface AccordionItemProps
+  extends VariantProps<typeof accordionItemVariants> {
+  value: string;
+  disabled?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export interface AccordionTriggerProps
+  extends VariantProps<typeof accordionTriggerVariants> {
+  icon?: React.ReactNode;
+  hideChevron?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  onClick?: () => void;
+}
+
+export interface AccordionContentProps
+  extends VariantProps<typeof accordionContentVariants> {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+const Accordion = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Root>,
+  AccordionCombinedProps
+>(({ className, variant, size, children, ...props }, ref) => (
+  <AccordionPrimitive.Root
+    ref={ref}
+    className={cn(accordionVariants({ variant, size }), className)}
+    {...props}
+  >
+    {children}
+  </AccordionPrimitive.Root>
+));
+Accordion.displayName = "Accordion";
+
+const AccordionItem = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Item>,
+  AccordionItemProps
+>(({ className, variant, children, ...props }, ref) => (
+  <AccordionPrimitive.Item
+    ref={ref}
+    className={cn(accordionItemVariants({ variant }), className)}
+    {...props}
+  >
+    {children}
+  </AccordionPrimitive.Item>
+));
+AccordionItem.displayName = "AccordionItem";
+
+const AccordionTrigger = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Trigger>,
+  AccordionTriggerProps
+>(
+  (
+    { className, children, variant, size, icon, hideChevron = false, ...props },
+    ref
+  ) => (
+    <AccordionPrimitive.Header className="flex">
+      <AccordionPrimitive.Trigger
+        ref={ref}
+        className={cn(accordionTriggerVariants({ variant, size }), className)}
+        {...props}
+      >
+        <div className="flex items-center gap-2">
+          {icon && <span className="shrink-0">{icon}</span>}
+          <span className="text-left">
+            {children}
+          </span>
+        </div>
+        {!hideChevron && (
+          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+        )}
+      </AccordionPrimitive.Trigger>
+    </AccordionPrimitive.Header>
+  )
+);
+AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
+
+const AccordionContent = React.forwardRef<
+  React.ElementRef<typeof AccordionPrimitive.Content>,
+  AccordionContentProps
+>(({ className, children, variant, size, ...props }, ref) => (
+  <AccordionPrimitive.Content
+    ref={ref}
+    className="overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    {...props}
+  >
+    <div className={cn(accordionContentVariants({ variant, size }), className)}>
+      {children}
+    </div>
+  </AccordionPrimitive.Content>
+));
+AccordionContent.displayName = AccordionPrimitive.Content.displayName;
+
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+
+demo.tsx
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion-1";
+import { Star, Shield, Zap, Heart,Palette,TrendingUp,BarChart3,DollarSign,MessageCircle} from "lucide-react";
+
+
+export default function DemoOne() {
+  return(
+    <>
+    <Accordion type="single" collapsible className="w-full">
+      <AccordionItem value="features">
+        <AccordionTrigger icon={<Star className="h-4 w-4" />}>
+          Features
+        </AccordionTrigger>
+        <AccordionContent>
+          Our platform includes advanced features like real-time collaboration,
+          version control, and automated deployments.
+        </AccordionContent>
+      </AccordionItem>
+      
+      <AccordionItem value="security">
+        <AccordionTrigger icon={<Shield className="h-4 w-4" />}>
+          Security
+        </AccordionTrigger>
+        <AccordionContent>
+          We implement enterprise-grade security with end-to-end encryption,
+          two-factor authentication, and regular security audits.
+        </AccordionContent>
+      </AccordionItem>
+      
+      <AccordionItem value="pricing">
+        <AccordionTrigger icon={<DollarSign className="h-4 w-4" />}>
+          Pricing
+        </AccordionTrigger>
+        <AccordionContent>
+          Choose from our flexible pricing plans: Starter ($9/month), Pro ($29/month), 
+          and Enterprise (custom pricing). All plans include a 14-day free trial.
+        </AccordionContent>
+      </AccordionItem>
+      
+      <AccordionItem value="support">
+        <AccordionTrigger icon={<MessageCircle className="h-4 w-4" />}>
+          Support
+        </AccordionTrigger>
+        <AccordionContent>
+          Get help when you need it with 24/7 chat support, comprehensive documentation, 
+          video tutorials, and dedicated account managers for enterprise customers.
+        </AccordionContent>
+      </AccordionItem>
+      
+      <AccordionItem value="integrations">
+        <AccordionTrigger icon={<Zap className="h-4 w-4" />}>
+          Integrations
+        </AccordionTrigger>
+        <AccordionContent>
+          Connect with over 100+ popular tools including Slack, GitHub, Jira, 
+          Google Workspace, Microsoft 365, and many more through our API.
+        </AccordionContent>
+      </AccordionItem>
+      
+      <AccordionItem value="performance">
+        <AccordionTrigger icon={<TrendingUp className="h-4 w-4" />}>
+          Performance
+        </AccordionTrigger>
+        <AccordionContent>
+          Experience lightning-fast load times with our global CDN, 99.9% uptime SLA, 
+          and automatic scaling to handle traffic spikes seamlessly.
+        </AccordionContent>
+      </AccordionItem>
+      
+      <AccordionItem value="analytics">
+        <AccordionTrigger icon={<BarChart3 className="h-4 w-4" />}>
+          Analytics & Reporting
+        </AccordionTrigger>
+        <AccordionContent>
+          Gain insights with detailed analytics, custom dashboards, automated reports, 
+          and real-time monitoring of your key performance metrics.
+        </AccordionContent>
+      </AccordionItem>
+      
+      <AccordionItem value="customization">
+        <AccordionTrigger icon={<Palette className="h-4 w-4" />}>
+          Customization
+        </AccordionTrigger>
+        <AccordionContent>
+          Tailor the platform to your brand with custom themes, white-label options, 
+          personalized workflows, and configurable user permissions.
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+    </>
+  )
+}
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, class-variance-authority, @radix-ui/react-accordion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

@@ -1,0 +1,306 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+input.tsx
+"use client";
+
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { Eye, EyeOff, X } from "lucide-react";
+
+const inputVariants = cva(
+  "flex w-full rounded-ele border border-border bg-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm/2",
+  {
+    variants: {
+      variant: {
+        default: "border-border",
+        destructive:
+          "border-destructive focus-visible:ring-destructive",
+        ghost:
+          "border-transparent bg-accent focus-visible:bg-input focus-visible:border-border",
+      },
+      size: {
+        default: "h-9 px-3 py-2",
+        sm: "h-8 px-2 py-1 text-xs",
+        lg: "h-10 px-4 py-2",
+        xl: "h-12 px-6 py-3 text-base",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface InputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
+    VariantProps<typeof inputVariants> {
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  error?: boolean;
+  clearable?: boolean;
+  onClear?: () => void;
+}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      type = "text",
+      leftIcon,
+      rightIcon,
+      error,
+      clearable,
+      onClear,
+      value,
+      ...props
+    },
+    ref,
+  ) => {
+    const [showPassword, setShowPassword] = React.useState(false);
+    const [internalValue, setInternalValue] = React.useState(
+      props.defaultValue || "",
+    );
+    
+    // Create internal ref if no ref is provided
+    const internalRef = React.useRef<HTMLInputElement>(null);
+    const inputRef = ref || internalRef;
+
+    const inputVariant = error ? "destructive" : variant;
+    const isPassword = type === "password";
+    const actualType = isPassword && showPassword ? "text" : type;
+
+    // Determine if this is a controlled component
+    const isControlled = value !== undefined;
+    const inputValue = isControlled ? value : internalValue;
+    const showClearButton =
+      clearable && inputValue && String(inputValue).length > 0;
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!isControlled) {
+        setInternalValue(e.target.value);
+      }
+      props.onChange?.(e);
+    };
+
+    const handleClear = () => {
+      // Get reference to the input element
+      const inputElement = typeof inputRef === 'function' ? null : inputRef?.current;
+      
+      if (inputElement) {
+        // Set the input's value directly
+        inputElement.value = "";
+        
+        // Create a proper synthetic event
+        const event = new Event('input', { bubbles: true });
+        Object.defineProperty(event, 'target', {
+          writable: false,
+          value: inputElement
+        });
+        
+        // Dispatch the event to trigger onChange handlers
+        inputElement.dispatchEvent(event);
+      }
+
+      // Update internal state for uncontrolled components
+      if (!isControlled) {
+        setInternalValue("");
+      }
+      
+      // Call the onClear callback
+      onClear?.();
+      
+      // Create synthetic React event for onChange
+      if (props.onChange) {
+        const syntheticEvent = {
+          target: { value: "" },
+          currentTarget: { value: "" },
+          preventDefault: () => {},
+          stopPropagation: () => {},
+        } as React.ChangeEvent<HTMLInputElement>;
+        
+        props.onChange(syntheticEvent);
+      }
+    };
+
+    const togglePasswordVisibility = () => {
+      setShowPassword(!showPassword);
+    };
+
+    return (
+      <div className="relative w-full">
+        {leftIcon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0 z-10">
+            {leftIcon}
+          </div>
+        )}
+
+        <input
+          type={actualType}
+          className={cn(
+            inputVariants({ variant: inputVariant, size, className }),
+            leftIcon && "pl-10",
+            (rightIcon || isPassword || showClearButton) && "pr-10"
+          )}
+          ref={inputRef}
+          {...(isControlled
+            ? { value: inputValue }
+            : { defaultValue: props.defaultValue })}
+          onChange={handleInputChange}
+          {...(({ defaultValue, ...rest }) => rest)(props)}
+        />
+
+        {/* Right side icons container */}
+        {(rightIcon || isPassword || showClearButton) && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
+            {/* Custom right icon */}
+            {rightIcon && (
+              <div className="text-muted-foreground [&_svg]:size-4 [&_svg]:shrink-0">
+                {rightIcon}
+              </div>
+            )}
+
+            {/* Clear button */}
+            {showClearButton && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="text-muted-foreground hover:text-foreground transition-colors [&_svg]:size-4 [&_svg]:shrink-0"
+                tabIndex={-1}
+              >
+                <X />
+              </button>
+            )}
+
+            {/* Password visibility toggle */}
+            {isPassword && (
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="text-muted-foreground hover:text-foreground transition-colors [&_svg]:size-4 [&_svg]:shrink-0"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff /> : <Eye />}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  },
+);
+
+Input.displayName = "Input";
+
+export { Input, inputVariants };
+
+demo.tsx
+import { Input } from "@/components/ui/input";
+import { Search, User, Mail } from "lucide-react";
+
+export default function DemoOne() {
+  return (
+    <>
+      <div>
+        <Input
+          placeholder="Search..."
+          leftIcon={<Search />}
+          clearable
+        />
+      </div>
+    </>
+  );
+}
+
+```
+
+Install NPM dependencies:
+```bash
+lucide-react, class-variance-authority
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --hu-font-geist: var(--font-geist);
+  --hu-font-jetbrains: var(--font-jetbrains-mono);
+  --radius: 0.8rem;
+  --card-radius: 1rem;
+  --hu-background: 0, 0%, 100%;
+  --hu-foreground: 0, 0%, 14%;
+  --hu-card: 0, 0%, 99%;
+  --hu-card-foreground: 0, 0%, 14%;
+  --hu-primary: 235, 100%, 60%;
+  --hu-primary-foreground: 0, 0%, 98%;
+  --hu-secondary: 0, 0%, 97%;
+  --hu-secondary-foreground: 0, 0%, 20%;
+  --hu-muted: 0, 0%, 97%;
+  --hu-muted-foreground: 0, 0%, 56%;
+  --hu-accent: 0, 0%, 96%;
+  --hu-accent-foreground: 0, 0%, 20%;
+  --hu-destructive: 9, 96%, 47%;
+  --hu-destructive-foreground: 0, 0%, 98%;
+  --hu-border: 0, 0%, 92%;
+  --hu-input: 0, 0%, 100%;
+  --hu-ring: 0, 0%, 71%;
+  --color-fd-background: hsl(var(--hu-background));
+  --color-fd-card: hsl(var(--hu-background));
+}
+
+.dark {
+  --hu-background: 0, 0%, 7%;
+  --hu-foreground: 0, 0%, 100%;
+  --hu-card: 0, 0%, 9%;
+  --hu-card-foreground: 0, 0%, 100%;
+  --hu-primary: 235, 100%, 60%;
+  --hu-primary-foreground: 0, 0%, 98%;
+  --hu-secondary: 0, 0%, 15%;
+  --hu-secondary-foreground: 0, 0%, 100%;
+  --hu-muted: 0, 0%, 15%;
+  --hu-muted-foreground: 0, 0%, 71%;
+  --hu-accent: 0, 0%, 15%;
+  --hu-accent-foreground: 0, 0%, 100%;
+  --hu-destructive: 0, 84%, 50%;
+  --hu-destructive-foreground: 0, 0%, 98%;
+  --hu-border: 0, 0%, 100%, 10%;
+  --hu-input: 0, 0%, 100%, 5%;
+  --hu-ring: 0, 0%, 56%;
+  --color-fd-background: hsl(var(--hu-background));
+  --color-fd-card: hsl(var(--hu-background));
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

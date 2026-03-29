@@ -1,0 +1,533 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+product-image-card.tsx
+// components/product-image-card.tsx
+"use client";
+
+import * as React from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+
+export type ProductImage = {
+  src: string;
+  alt?: string;
+  thumbSrc?: string; // optional smaller thumbnail; falls back to src
+};
+
+export interface ProductImageCardProps {
+  title?: string;
+  images: ProductImage[];
+  initialIndex?: number;
+  onIndexChange?: (index: number) => void;
+  className?: string;
+}
+
+export function ProductImageCard({
+  title = "Product Details",
+  images,
+  initialIndex = 0,
+  onIndexChange,
+  className,
+}: ProductImageCardProps) {
+  const [index, setIndex] = React.useState(initialIndex);
+
+  const setSafeIndex = (i: number) => {
+    const next = (i + images.length) % images.length;
+    setIndex(next);
+    onIndexChange?.(next);
+  };
+
+  const prev = () => setSafeIndex(index - 1);
+  const next = () => setSafeIndex(index + 1);
+
+  // optional keyboard support
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, images.length]);
+
+  if (!images?.length) return null;
+
+  return (
+    <Card
+      className={cn(
+        "relative mx-auto w-full max-w-3xl rounded-3xl border-border bg-card/70 p-4 shadow-sm",
+        className
+      )}
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <Button asChild size="icon" variant="outline" className="rounded-full">
+          <Link href="#" aria-label="Back">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+
+        <h2 className="text-xl font-semibold sm:text-2xl">{title}</h2>
+
+        <Button size="icon" variant="outline" className="rounded-full" aria-label="Favorite">
+          <Heart className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Separator className="my-4" />
+
+      {/* Content grid */}
+      <div className="grid grid-cols-12 gap-4">
+        {/* Thumbnails */}
+        <div className="order-2 col-span-12 sm:order-1 sm:col-span-3">
+          {/* vertical on sm+, horizontal on xs */}
+          <ScrollArea className="h-auto sm:h-[420px]">
+            <div className="flex gap-3 sm:flex-col">
+              {images.map((img, i) => {
+                const active = i === index;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSafeIndex(i)}
+                    aria-pressed={active}
+                    className={cn(
+                      "relative overflow-hidden rounded-xl border p-0 outline-none transition",
+                      "focus-visible:ring-2 focus-visible:ring-ring",
+                      active
+                        ? "border-foreground"
+                        : "border-border hover:border-foreground/50"
+                    )}
+                  >
+                    <img
+                      src={img.thumbSrc ?? img.src}
+                      alt={img.alt ?? `Thumbnail ${i + 1}`}
+                      className="h-20 w-20 object-cover sm:h-16 sm:w-full"
+                      loading={i === 0 ? "eager" : "lazy"}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Main image */}
+        <div className="order-1 col-span-12 sm:order-2 sm:col-span-9">
+          <div className="relative">
+            <AspectRatio ratio={4 / 5}>
+              <div className="h-full w-full overflow-hidden rounded-3xl bg-muted">
+                <img
+                  src={images[index].src}
+                  alt={images[index].alt ?? "Selected view"}
+                  className="h-full w-full rounded-3xl object-contain"
+                />
+              </div>
+            </AspectRatio>
+
+            {/* Next/Prev controls */}
+            <div className="absolute bottom-3 right-3 flex gap-2">
+              <Button
+                size="icon"
+                variant="secondary"
+                className="rounded-full bg-background/80 backdrop-blur"
+                onClick={prev}
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="rounded-full bg-background/80 backdrop-blur"
+                onClick={next}
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+
+demo.tsx
+// app/product-demo/page.tsx
+import { ProductImageCard } from "@/components/ui/product-image-card";
+import type { ProductImage } from "@/components/ui/product-image-card";
+
+export default function Page() {
+  const images: ProductImage[] = [
+    {
+      src: "https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/v1.png",
+      alt: "Front view",
+    },
+    {
+      src: "https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/v2.png",
+      alt: "Back view",
+    },
+    {
+      src: "https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/v3.png",
+      alt: "Side angle",
+    },
+    {
+      src: "https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/v4.png",
+      alt: "Detail patch",
+    },
+    {
+      src: "https://pub-940ccf6255b54fa799a9b01050e6c227.r2.dev/v1.png",
+      alt: "Other view",
+    }
+  ];
+
+  return (
+    <main>
+      <div className="container mx-auto max-w-5xl px-4">
+        <ProductImageCard title="Product Details" images={images} initialIndex={0} />
+      </div>
+    </main>
+  );
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shadcn/card
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className,
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className,
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+```
+```tsx
+originui/tabs
+"use client";
+
+import * as TabsPrimitive from "@radix-ui/react-tabs";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const Tabs = TabsPrimitive.Root;
+
+const TabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center rounded-lg bg-muted p-0.5 text-muted-foreground/70",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsList.displayName = TabsPrimitive.List.displayName;
+
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium outline-offset-2 transition-all hover:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:shadow-black/5",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
+
+const TabsContent = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Content
+    ref={ref}
+    className={cn(
+      "mt-2 outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsContent.displayName = TabsPrimitive.Content.displayName;
+
+export { Tabs, TabsContent, TabsList, TabsTrigger };
+
+```
+```tsx
+originui/button
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-sm shadow-black/5 hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm shadow-black/5 hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm shadow-black/5 hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-10 rounded-lg px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+
+```
+```tsx
+shadcn/scroll-area
+"use client"
+
+import * as React from "react"
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
+
+import { cn } from "@/lib/utils"
+
+const ScrollArea = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
+>(({ className, children, ...props }, ref) => (
+  <ScrollAreaPrimitive.Root
+    ref={ref}
+    className={cn("relative overflow-hidden", className)}
+    {...props}
+  >
+    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+      {children}
+    </ScrollAreaPrimitive.Viewport>
+    <ScrollBar />
+    <ScrollAreaPrimitive.Corner />
+  </ScrollAreaPrimitive.Root>
+))
+ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
+
+const ScrollBar = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
+>(({ className, orientation = "vertical", ...props }, ref) => (
+  <ScrollAreaPrimitive.ScrollAreaScrollbar
+    ref={ref}
+    orientation={orientation}
+    className={cn(
+      "flex touch-none select-none transition-colors",
+      orientation === "vertical" &&
+        "h-full w-2.5 border-l border-l-transparent p-[1px]",
+      orientation === "horizontal" &&
+        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+      className,
+    )}
+    {...props}
+  >
+    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+  </ScrollAreaPrimitive.ScrollAreaScrollbar>
+))
+ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
+
+export { ScrollArea, ScrollBar }
+
+```
+```tsx
+shadcn/separator
+"use client"
+
+import * as React from "react"
+import * as SeparatorPrimitive from "@radix-ui/react-separator"
+
+import { cn } from "@/lib/utils"
+
+const Separator = React.forwardRef<
+  React.ElementRef<typeof SeparatorPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
+>(
+  (
+    { className, orientation = "horizontal", decorative = true, ...props },
+    ref
+  ) => (
+    <SeparatorPrimitive.Root
+      ref={ref}
+      decorative={decorative}
+      orientation={orientation}
+      className={cn(
+        "shrink-0 bg-border",
+        orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
+        className
+      )}
+      {...props}
+    />
+  )
+)
+Separator.displayName = SeparatorPrimitive.Root.displayName
+
+export { Separator }
+
+```
+```tsx
+shadcn/aspect-ratio
+"use client"
+
+import * as AspectRatioPrimitive from "@radix-ui/react-aspect-ratio"
+
+const AspectRatio = AspectRatioPrimitive.Root
+
+export { AspectRatio }
+
+```
+
+Install NPM dependencies:
+```bash
+next, lucide-react, @radix-ui/react-tabs, @radix-ui/react-slot, class-variance-authority, @radix-ui/react-scroll-area, @radix-ui/react-separator, @radix-ui/react-aspect-ratio
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

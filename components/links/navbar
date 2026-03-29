@@ -1,0 +1,195 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+navbar.tsx
+import Link from 'next/link';
+import { useState } from 'react';
+import { motion, MotionConfig } from 'framer-motion';
+import * as React from 'react'
+
+export type IMenu = {
+  id: number;
+  title: string;
+  url: string;
+  dropdown?: boolean;
+  items?: IMenu[];
+};
+
+type MenuProps = {
+  list: IMenu[];
+};
+
+const Menu = ({ list }: MenuProps) => {
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  return (
+    <MotionConfig transition={{ bounce: 0, type: 'tween' }}>
+      <nav className={'relative'}>
+        <ul className={'flex items-center'}>
+          {list?.map((item) => {
+            return (
+              <li key={item.id} className={'relative'}>
+                <Link
+                  className={`
+                    relative flex items-center justify-center rounded px-8 py-3 transition-all
+                    hover:bg-foreground/10
+                    ${hovered === item?.id ? 'bg-foreground/10' : ''}
+                  `}
+                  onMouseEnter={() => setHovered(item.id)}
+                  onMouseLeave={() => setHovered(null)}
+                  href={item?.url}
+                >
+                  {item?.title}
+                </Link>
+                {hovered === item?.id && !item?.dropdown && (
+                  <motion.div
+                    layout
+                    layoutId={`cursor`}
+                    className={'absolute h-0.5 w-full bg-foreground'}
+                  />
+                )}
+                {item?.dropdown && hovered === item?.id && (
+                  <div
+                    className='absolute left-0 top-full'
+                    onMouseEnter={() => setHovered(item.id)}
+                    onMouseLeave={() => setHovered(null)}
+                  >
+                    <motion.div
+                      layout
+                      transition={{ bounce: 0 }}
+                      initial={{ y: 10 }}
+                      animate={{ y: 0 }}
+                      exit={{ y: 10 }}
+                      style={{
+                        borderRadius: '8px',
+                      }}
+                      className='mt-4 flex w-64 flex-col rounded bg-background border'
+                      layoutId={'cursor'}
+                    >
+                      {item?.items?.map((nav) => {
+                        return (
+                          <motion.a
+                            key={`link-${nav?.id}`}
+                            href={`${nav?.url}`}
+                            className={'w-full p-4 hover:bg-muted'}
+                          >
+                            {nav?.title}
+                          </motion.a>
+                        );
+                      })}
+                    </motion.div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </MotionConfig>
+  );
+};
+
+export default Menu;
+
+
+demo.tsx
+import NavBar from "@/components/ui/navbar"
+
+const menus = [
+  {
+    id: 1,
+    title: 'Home',
+    url: '/',
+    dropdown: false,
+  },
+  {
+    id: 2,
+    title: 'Products',
+    url: '/products',
+    dropdown: true,
+    items: [
+      {
+        id: 21,
+        title: 'Electronics',
+        url: '/products/electronics',
+      },
+      {
+        id: 22,
+        title: 'Clothing',
+        url: '/products/clothing',
+      },
+      {
+        id: 23,
+        title: 'Accessories',
+        url: '/products/accessories',
+      },
+    ],
+  },
+  {
+    id: 3,
+    title: 'Services',
+    url: '/services',
+    dropdown: true,
+    items: [
+      {
+        id: 31,
+        title: 'Consulting',
+        url: '/services/consulting',
+      },
+      {
+        id: 32,
+        title: 'Support',
+        url: '/services/support',
+      },
+    ],
+  },
+  {
+    id: 4,
+    title: 'About Us',
+    url: '/about',
+    dropdown: false,
+  },
+  {
+    id: 5,
+    title: 'Contact',
+    url: '/contact',
+    dropdown: false,
+  },
+];
+
+export function NavBarDemo() {
+  return <NavBar list={menus} />
+}
+```
+
+Install NPM dependencies:
+```bash
+framer-motion
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them

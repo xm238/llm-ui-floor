@@ -1,0 +1,853 @@
+You are given a task to integrate an existing React component in the codebase
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+```tsx
+command-menu.tsx
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Modal } from "@/components/ui/modal";
+
+const CommandMenuContext = createContext<{
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  inputValue: string;
+  onChangeInputValue: (value: string) => void;
+} | null>(null);
+
+interface CommandMenuRootProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  children: React.ReactNode;
+}
+
+const CommandMenuRoot = ({ open, setOpen, children }: CommandMenuRootProps) => {
+  const [inputValue, setInputValue] = useState<string>("");
+
+  return (
+    <Modal.Modal active={open} onClickOutside={() => setOpen(false)}>
+      <Modal.Body className="!p-0">
+        <CommandMenuContext value={{
+          open,
+          setOpen,
+          inputValue,
+          onChangeInputValue: (value: string) => setInputValue(value)
+        }}>
+          {children}
+        </CommandMenuContext>
+      </Modal.Body>
+    </Modal.Modal>
+  );
+};
+
+interface CommandMenuInputProps {
+  placeholder?: string;
+}
+
+const CommandMenuInput = ({ placeholder }: CommandMenuInputProps) => {
+  const context = useContext(CommandMenuContext);
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (context?.open) {
+      ref.current?.focus();
+    }
+  }, [context?.open]);
+
+  return (
+    <div
+      className="py-3 px-4 border-b border-gray-alpha-400 bg-background-100 flex items-center justify-between gap-3"
+      onClick={() => ref?.current?.focus()}
+    >
+      <input
+        ref={ref}
+        placeholder={placeholder}
+        value={context?.inputValue}
+        onChange={(e) => context?.onChangeInputValue(e.target.value)}
+        className="h-7 text-lg text-sans bg-transparent text-gray-1000 placeholder:text-gray-900 placeholder:opacity-70 border-none outline-0"
+      />
+      <button
+        className="h-5 shadow-border rounded bg-background-100 text-xs border-none px-1 ml-auto hover:bg-gray-100 duration-200"
+        onClick={() => context?.setOpen(false)}
+      >
+        Esc
+      </button>
+    </div>
+  );
+};
+
+interface CommandMenuListProps {
+  children: React.ReactNode;
+}
+
+const CommandMenuList = ({ children }: CommandMenuListProps) => {
+  const context = useContext(CommandMenuContext);
+
+  const filteredChildren = React.Children.toArray(children)
+    .map((child) => {
+      if (React.isValidElement<CommandMenuItemProps>(child) && child.type === CommandMenu.Item) {
+        const text = child.props.children?.toString().toLowerCase() || "";
+        return text.includes(context?.inputValue?.toLowerCase() || "") ? child : null;
+      }
+
+      if (React.isValidElement<CommandMenuGroupProps>(child) && child.type === CommandMenu.Group) {
+        const groupChildren = React.Children.toArray(child.props.children);
+        const filteredGroupChildren = groupChildren.filter((item) => {
+          if (React.isValidElement<CommandMenuItemProps>(item) && item.type === CommandMenu.Item) {
+            const text = item.props.children?.toString().toLowerCase() || "";
+            return text.includes(context?.inputValue?.toLowerCase() || "");
+          }
+          return false;
+        });
+
+        if (filteredGroupChildren.length > 0) {
+          return React.cloneElement(child, {
+            children: filteredGroupChildren
+          });
+        }
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+
+  return (
+    <div className="p-2 bg-background-100 overflow-y-auto duration-100">
+      {filteredChildren.length > 0 ? filteredChildren : (
+        <div className="py-[30px]">
+          <p className="text-gray-900 text-sm text-center">
+            No results found for <span className="text-gray-1000">"{context?.inputValue}"</span>.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface CommandMenuItemProps {
+  callback?: () => void;
+  children: React.ReactNode;
+}
+
+const CommandMenuItem = ({ callback, children }: CommandMenuItemProps) => {
+  const context = useContext(CommandMenuContext);
+
+  const onClick = () => {
+    context?.setOpen(false);
+    if (callback) {
+      callback();
+    }
+  };
+
+  return (
+    <div
+      className="min-h-10 rounded-md flex items-center gap-3 px-2 text-sm font-sans cursor-pointer hover:bg-gray-alpha-100"
+      onClick={onClick}
+    >
+      {children}
+    </div>
+  );
+};
+
+interface CommandMenuGroupProps {
+  heading: string;
+  children: React.ReactNode;
+}
+
+const CommandMenuGroup = ({ heading, children }: CommandMenuGroupProps) => {
+  return (
+    <div>
+      <div className="text-[13px] font-sans text-gray-900 h-10 flex items-center px-2">{heading}</div>
+      {children}
+    </div>
+  );
+};
+
+export const CommandMenu = {
+  Root: CommandMenuRoot,
+  Input: CommandMenuInput,
+  List: CommandMenuList,
+  Item: CommandMenuItem,
+  Group: CommandMenuGroup
+};
+
+demo.tsx
+import { Button } from "@/components/ui/button-1";
+import { CommandMenu } from "@/components/ui/command-menu";
+import React, { useState } from "react";
+
+export default function DefaultDemo() {
+  const [open, setOpen] = useState<boolean>(false);
+
+  function callback(): void {
+    // no op
+  }
+
+  return (
+    <>
+        <Button onClick={() => setOpen(true)}>Open Command Menu</Button>
+        <CommandMenu.Root open={open} setOpen={setOpen}>
+          <CommandMenu.Input placeholder="What do you need?" />
+          <CommandMenu.List>
+            <CommandMenu.Item callback={callback}>Item 1</CommandMenu.Item>
+            <CommandMenu.Item callback={callback}>Item 2</CommandMenu.Item>
+            <CommandMenu.Item callback={callback}>Item 3</CommandMenu.Item>
+            <CommandMenu.Group heading="Group 1">
+              <CommandMenu.Item callback={callback}>
+                Grouped Item 1
+              </CommandMenu.Item>
+              <CommandMenu.Item callback={callback}>
+                Grouped Item 2
+              </CommandMenu.Item>
+            </CommandMenu.Group>
+          </CommandMenu.List>
+        </CommandMenu.Root>
+    </>
+  );
+}
+
+```
+
+Copy-paste these files for dependencies:
+```tsx
+shugar/modal
+import React, { useEffect, useLayoutEffect, useRef } from "react";
+import { Button, ButtonProps } from "@/components/ui/button-1";
+import clsx from "clsx";
+import { Drawer } from "@/components/ui/drawer";
+import { Material } from "@/components/ui/material-1";
+import useBreakpoints from "@/components/ui/use-breakpoints";
+
+interface ModalProps {
+  active: boolean;
+  onClickOutside: () => void;
+  children: React.ReactNode;
+  sticky?: boolean;
+  initialFocusRef?: React.RefObject<HTMLButtonElement> | React.RefObject<null>;
+}
+
+interface ModalBodyProps {
+  children: React.ReactNode;
+  sticky?: boolean;
+  className?: string;
+}
+
+interface ModalHeaderProps {
+  children: React.ReactNode;
+  sticky?: boolean;
+}
+
+const ModalModal = ({ active, onClickOutside, children, sticky, initialFocusRef }: ModalProps) => {
+  const focusRef = useRef<HTMLButtonElement | null>(null);
+  const { isMobile, isDesktop } = useBreakpoints();
+
+  useLayoutEffect(() => {
+    if (active) {
+      if (initialFocusRef?.current) {
+        initialFocusRef.current.focus();
+      } else {
+        if (focusRef.current) {
+          focusRef.current.focus();
+        }
+      }
+    }
+  }, [active, initialFocusRef?.current]);
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClickOutside();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [active, onClickOutside]);
+
+  const childrenArray = React.Children.toArray(children);
+
+  const footer = childrenArray.find(
+    (child) =>
+      React.isValidElement(child) &&
+      child.type === ModalActions
+  );
+
+  const enhancedFooter = React.isValidElement<{ children: React.ReactNode }>(footer)
+    ? React.cloneElement(footer, {
+      children: React.Children.map(footer.props.children, (child, index) => {
+        if (index === 0 && React.isValidElement<ButtonProps>(child)) {
+          return React.cloneElement(child, {
+            ref: focusRef
+          });
+        }
+        return child;
+      })
+    })
+    : null;
+
+  return (
+    <>
+      {isMobile && (
+        <Drawer onDismiss={onClickOutside} show={active}>
+          {React.Children.map(children, (child) =>
+            (child as React.ReactElement)?.type === Modal.Body
+              ? React.cloneElement(child as React.ReactElement<ModalBodyProps>, { sticky })
+              : child
+          )}
+        </Drawer>
+      )}
+      {isDesktop && (
+        <div
+          className={clsx(
+            "fixed inset-0 flex items-center justify-center z-[99999] duration-300",
+            active ? "bg-background-200-alpha-800" : "bg-transparent pointer-events-none"
+          )}
+          onClick={onClickOutside}
+        >
+          <Material
+            type="modal"
+            className={clsx(
+              "flex flex-col font-sans text-gray-1000 w-[540px] max-h-[min(800px,_80vh)] overflow-y-auto duration-300",
+              active ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {React.Children.map(children, (child) =>
+              (child as React.ReactElement)?.type === Modal.Body
+                ? React.cloneElement(child as React.ReactElement<ModalBodyProps>, { sticky })
+                : ((child as React.ReactElement)?.type === ModalActions && !initialFocusRef) ? enhancedFooter : child
+            )}
+          </Material>
+        </div>
+      )}
+    </>
+  );
+};
+
+const ModalBody = ({ children, sticky, className }: ModalBodyProps) => (
+  <div className={clsx("overflow-y-auto text-sm", sticky ? "px-6 pb-6" : "p-6", className)}>
+    {React.Children.map(children, (child) =>
+      (child as React.ReactElement)?.type === Modal.Header
+        ? React.cloneElement(child as React.ReactElement<ModalHeaderProps>, { sticky })
+        : child
+    )}
+  </div>
+);
+const ModalHeader = ({ children, sticky }: ModalHeaderProps) => (
+  <header className={clsx(
+    "mb-6 rounded-t-xl", sticky && "sticky top-0 bg-background-200 border-b border-gray-alpha-400 pt-5 px-6 -mx-6"
+  )}>
+    {children}
+  </header>
+);
+const ModalInset = ({ children }: { children: React.ReactNode }) => (
+  <div className="-mx-6 p-6 border-b border-t border-accents-2 bg-accents-1">{children}</div>
+);
+const ModalTitle = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="mb-6 text-2xl font-semibold tracking-[-0.029375rem]">{children}</h2>
+);
+const ModalSubtitle = ({ children }: { children: React.ReactNode }) => (
+  <p className="text-base">{children}</p>
+);
+const ModalActions = ({ children }: { children: React.ReactNode }) => (
+  <footer className="sticky bottom-0 p-4 flex justify-between shrink-0 bg-background-200 inset-0 border-t border-gray-alpha-400 rounded-b-xl">
+    {children}
+  </footer>
+);
+const ModalAction = (props: ButtonProps) => <Button {...props}>{props.children}</Button>;
+
+export const Modal = {
+  Modal: ModalModal,
+  Header: ModalHeader,
+  Inset: ModalInset,
+  Body: ModalBody,
+  Title: ModalTitle,
+  Subtitle: ModalSubtitle,
+  Actions: ModalActions,
+  Action: ModalAction
+};
+
+```
+```tsx
+shugar/button-1
+import React from "react";
+import { Spinner } from "@/components/ui/spinner-1";
+import clsx from "clsx";
+
+const sizes = [
+  {
+    tiny: "px-1.5 h-6 text-sm",
+    small: "px-1.5 h-8 text-sm",
+    medium: "px-2.5 h-10 text-sm",
+    large: "px-3.5 h-12 text-base"
+  },
+  {
+    tiny: "w-6 h-6 text-sm",
+    small: "w-8 h-8 text-sm",
+    medium: "w-10 h-10 text-sm",
+    large: "w-12 h-12 text-base"
+  }
+];
+
+const types = {
+  primary: "bg-gray-1000 hover:bg-gray-1000-h text-background-100 fill-background-100",
+  secondary: "bg-background-100 hover:bg-gray-alpha-200 text-gray-1000 fill-gray-1000 border border-gray-alpha-400",
+  tertiary: "bg-none hover:bg-gray-alpha-200 text-gray-1000 fill-gray-1000",
+  error: "bg-red-800 hover:bg-red-900 text-white fill-white",
+  warning: "bg-amber-800 hover:bg-amber-850 text-black fill-black"
+};
+
+const shapes = {
+  square: {
+    tiny: "rounded",
+    small: "rounded-md",
+    medium: "rounded-md",
+    large: "rounded-lg"
+  },
+  circle: {
+    tiny: "rounded-[100%]",
+    small: "rounded-[100%]",
+    medium: "rounded-[100%]",
+    large: "rounded-[100%]"
+  },
+  rounded: {
+    tiny: "rounded-[100px]",
+    small: "rounded-[100px]",
+    medium: "rounded-[100px]",
+    large: "rounded-[100px]"
+  }
+};
+
+export interface ButtonProps {
+  size?: keyof typeof sizes[0];
+  type?: keyof typeof types;
+  variant?: "styled" | "unstyled";
+  shape?: keyof typeof shapes;
+  svgOnly?: boolean;
+  children?: React.ReactNode;
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+  shadow?: boolean;
+  loading?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  ref?: React.Ref<HTMLButtonElement>;
+  className?: string;
+}
+
+export const Button = ({
+  size = "medium",
+  type = "primary",
+  variant = "styled",
+  shape = "square",
+  svgOnly = false,
+  children,
+  prefix,
+  suffix,
+  shadow = false,
+  loading = false,
+  disabled = false,
+  fullWidth = false,
+  onClick,
+  ref,
+  className,
+  ...rest
+}: ButtonProps) => {
+  return (
+    <button
+      ref={ref}
+      type="submit"
+      disabled={disabled}
+      onClick={onClick}
+      tabIndex={0}
+      className={clsx(
+        "flex justify-center items-center gap-0.5 duration-150",
+        sizes[+svgOnly][size],
+        (disabled || loading) ? "bg-gray-100 text-gray-700 border border-gray-400 cursor-not-allowed" : types[type],
+        shapes[shape][size],
+        shadow && "shadow-border-small border-none",
+        fullWidth && "w-full",
+        variant === "unstyled" ? "outline-none px-0 h-fit bg-transparent hover:bg-transparent text-gray-1000" : "focus:shadow-focus-ring focus:outline-0",
+        className
+      )}
+      {...rest}
+    >
+      {loading
+        ? <Spinner size={size === "large" ? 24 : 16} />
+        : prefix
+      }
+      <span className={clsx(
+        "relative overflow-hidden whitespace-nowrap overflow-ellipsis font-sans",
+        size !== "tiny" && variant !== "unstyled" && "px-1.5"
+      )}>
+        {children}
+      </span>
+      {!loading && suffix}
+    </button>
+  );
+};
+```
+```tsx
+shugar/spinner-1
+import React from "react";
+
+interface SpinnerProps {
+  size?: number;
+  color?: string;
+}
+
+const bars = [
+  {
+    animationDelay: "-1.2s",
+    transform: "rotate(.0001deg) translate(146%)"
+  },
+  {
+    animationDelay: "-1.1s",
+    transform: "rotate(30deg) translate(146%)"
+  },
+  {
+    animationDelay: "-1.0s",
+    transform: "rotate(60deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.9s",
+    transform: "rotate(90deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.8s",
+    transform: "rotate(120deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.7s",
+    transform: "rotate(150deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.6s",
+    transform: "rotate(180deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.5s",
+    transform: "rotate(210deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.4s",
+    transform: "rotate(240deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.3s",
+    transform: "rotate(270deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.2s",
+    transform: "rotate(300deg) translate(146%)"
+  },
+  {
+    animationDelay: "-0.1s",
+    transform: "rotate(330deg) translate(146%)"
+  }
+];
+
+export const Spinner = ({ size = 20, color = "#8f8f8f" }: SpinnerProps) => {
+  return (
+    <div style={{ width: size, height: size }}>
+      <div className="relative top-1/2 left-1/2" style={{ width: size, height: size }}>
+        {bars.map((item) => (
+          <div
+            key={item.transform}
+            className="absolute h-[8%] w-[24%] -left-[10%] -top-[3.9%] rounded-[5px] animate-fade-spin"
+            style={{ backgroundColor: color, ...item }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+```tsx
+shugar/material-1
+import React from "react";
+import clsx from "clsx";
+
+const types = {
+  base: "rounded-md shadow-border",
+  small: "rounded-md shadow-border-small",
+  medium: "rounded-xl shadow-border-medium",
+  large: "rounded-xl shadow-border-large",
+  tooltip: "rounded-md shadow-tooltip",
+  menu: "rounded-xl shadow-menu",
+  modal: "rounded-xl shadow-modal",
+  fullscreen: "rounded-2xl shadow-fullscreen"
+};
+
+interface MaterialProps {
+  type: keyof typeof types;
+  children: React.ReactNode;
+  className?: string;
+  ref?: React.Ref<HTMLDivElement>;
+  style?: React.CSSProperties;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+}
+
+export const Material = ({ type, children, className, ref, style, onClick }: MaterialProps) => {
+  return (
+    <div
+      className={clsx(
+        "bg-background-100",
+        types[type],
+        className
+      )}
+      ref={ref}
+      style={style}
+      onClick={onClick}
+    >
+      {children}
+    </div>
+  );
+};
+```
+```tsx
+shugar/use-breakpoints
+import { useEffect, useMemo, useState } from "react";
+
+const BREAKPOINTS = {
+  SM: 0,
+  MD: 600,
+  LG: 960,
+  XL: 1200
+};
+
+const useBreakpoints = () => {
+  const [deviceWidth, setDeviceWidth] = useState<number>(0);
+
+  const isSM = useMemo<boolean>(
+    () => deviceWidth < BREAKPOINTS.MD,
+    [deviceWidth]
+  );
+
+  const isMD = useMemo<boolean>(
+    () => deviceWidth >= BREAKPOINTS.MD && deviceWidth < BREAKPOINTS.LG,
+    [deviceWidth]
+  );
+
+  const isLG = useMemo<boolean>(
+    () => deviceWidth >= BREAKPOINTS.LG && deviceWidth < BREAKPOINTS.XL,
+    [deviceWidth]
+  );
+
+  const isXL = useMemo<boolean>(
+    () => deviceWidth >= BREAKPOINTS.XL,
+    [deviceWidth]
+  );
+
+  const isMobile = useMemo<boolean>(
+    () => deviceWidth < BREAKPOINTS.MD,
+    [deviceWidth]
+  );
+
+  const isDesktop = useMemo<boolean>(
+    () => deviceWidth >= BREAKPOINTS.MD,
+    [deviceWidth]
+  );
+
+  useEffect(() => {
+    const updateSize = () => {
+      setDeviceWidth(window.innerWidth);
+    };
+    window.addEventListener("resize", updateSize);
+    updateSize();
+
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  return {
+    isSM,
+    isMD,
+    isLG,
+    isXL,
+    isMobile,
+    isDesktop
+  };
+};
+
+export default useBreakpoints;
+```
+```tsx
+shugar/drawer
+import React, { useRef } from "react";
+import clsx from "clsx";
+import { useClickOutside } from "@/components/ui/use-click-outside";
+import { Material } from "@/components/ui/material-1";
+
+interface DrawerProps {
+  height?: number;
+  onDismiss: () => void;
+  show: boolean;
+  children: React.ReactNode;
+}
+
+export const Drawer: React.FC<DrawerProps> = ({ height, onDismiss, show, children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useClickOutside(ref, onDismiss);
+
+  return (
+    <>
+      <div className={clsx(
+        "fixed top-0 left-0 w-full h-full bg-overlay z-[99999] duration-300",
+        show ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}>
+      </div>
+      <Material
+        type="menu"
+        className={clsx(
+          "fixed bottom-0 left-0 w-full max-h-full overflow-y-auto hide-scrollbar bg-background-100 shadow-lg transition-transform duration-300 z-[999999] rounded-t-lg rounded-b-none",
+          show ? "translate-y-0" : "translate-y-full"
+        )}
+        style={{ height }}
+        ref={ref}
+      >
+        <div>{children}</div>
+      </Material>
+    </>
+  );
+};
+
+```
+```tsx
+shugar/use-click-outside
+import { RefObject, useEffect } from "react";
+
+export const useClickOutside = (ref: RefObject<any>, callback: () => void) => {
+  useEffect(() => {
+    function handleClickOutside(event: Event) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        callback();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [ref]);
+};
+```
+
+Install NPM dependencies:
+```bash
+clsx
+```
+
+Extend existing Tailwind 4 index.css with this code (or if project uses Tailwind 3, extend tailwind.config.js or globals.css):
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --color-context-card-border: var(--context-card-border);
+  --color-gray-100: var(--ds-gray-100);
+  --color-gray-900: var(--ds-gray-900);
+  --color-gray-1000: var(--ds-gray-1000);
+  --color-gray-alpha-100: var(--ds-gray-alpha-100);
+  --color-gray-alpha-400: var(--ds-gray-alpha-400);
+  --color-background-100: var(--ds-background-100);
+  --color-background-200: var(--ds-background-200);
+  --color-background-200-alpha-800: var(--ds-background-200-alpha-800);
+  --color-accents-1: var(--accents-1);
+  --color-accents-2: var(--accents-2);
+  --color-overlay: var(--ds-overlay);
+  --shadow-border: var(--ds-shadow-border);
+  --shadow-border-small: var(--ds-shadow-border-small);
+  --shadow-border-medium: var(--ds-shadow-border-medium);
+  --shadow-border-large: var(--ds-shadow-border-large);
+  --shadow-tooltip: var(--ds-shadow-tooltip);
+  --shadow-menu: var(--ds-shadow-menu);
+  --shadow-modal: var(--ds-shadow-modal);
+  --shadow-fullscreen: var(--ds-shadow-fullscreen);
+}
+
+:root {
+  --context-card-border: hsla(0, 0%, 92%, 1);
+  --ds-gray-100: hsla(0, 0%, 95%, 1);
+  --ds-gray-900: hsla(0, 0%, 40%, 1);
+  --ds-gray-alpha-100: rgba(0, 0, 0, 0.05);
+  --ds-gray-1000: hsla(0, 0%, 9%, 1);
+  --ds-gray-alpha-400: hsla(0, 0%, 0%, 0.08);
+  --ds-background-200: hsla(0, 0%, 98%, 1);
+  --ds-background-200-alpha-800: hsla(0, 0%, 98%, 0.8);
+  --accents-1: #fafafa;
+  --accents-2: #eaeaea;
+  --ds-background-100: hsla(0, 0%, 100%, 1);
+  --ds-overlay: rgba(0, 0, 0, .4);
+  --ds-shadow-border: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --ds-shadow-small: 0px 2px 2px rgba(0, 0, 0, 0.04);
+  --ds-shadow-border-small: var(--ds-shadow-border), var(--ds-shadow-small);
+  --ds-shadow-medium: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 8px -8px rgba(0, 0, 0, 0.04);
+  --ds-shadow-border-medium: var(--ds-shadow-border), var(--ds-shadow-medium);
+  --ds-shadow-large: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.04);
+  --ds-shadow-border-large: var(--ds-shadow-border), var(--ds-shadow-large);
+  --ds-shadow-tooltip: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px rgba(0, 0, 0, 0.04);
+  --ds-shadow-menu: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px -4px rgba(0, 0, 0, 0.04), 0px 16px 24px -8px rgba(0, 0, 0, 0.06);
+  --ds-shadow-modal: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04), 0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+  --ds-shadow-fullscreen: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04), 0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+}
+
+.dark {
+  --context-card-border: hsla(0, 0%, 18%, 1);
+  --ds-gray-100: hsla(0, 0%, 10%, 1);
+  --ds-gray-900: hsla(0, 0%, 63%, 1);
+  --ds-gray-alpha-100: rgba(255, 255, 255, 0.06);
+  --ds-gray-1000: hsla(0, 0%, 93%, 1);
+  --ds-gray-alpha-400: hsla(0, 0%, 100%, 0.14);
+  --ds-background-200: hsla(0, 0%, 0%, 1);
+  --ds-background-200-alpha-800: hsla(0, 0%, 0%, 0.8);
+  --accents-2: #333333;
+  --accents-1: #111111;
+  --ds-background-100: hsla(0, 0%, 4%, 1);
+  --ds-shadow-border: 0 0 0 1px rgba(255, 255, 255, 0.145);
+  --ds-shadow-small: 0px 1px 2px rgba(0, 0, 0, 0.16);
+  --ds-shadow-border-small: var(--ds-shadow-border), 0px 1px 2px rgba(0, 0, 0, 0.16);
+  --ds-shadow-medium: 0px 2px 2px rgba(0, 0, 0, 0.32), 0px 8px 8px -8px rgba(0, 0, 0, 0.16);
+  --ds-shadow-border-medium: var(--ds-shadow-border), 0px 2px 2px rgba(0, 0, 0, 0.32), 0px 8px 8px -8px rgba(0, 0, 0, 0.16);
+  --ds-shadow-large: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.04);
+  --ds-shadow-border-large: var(--ds-shadow-border), 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.04);
+  --ds-shadow-tooltip: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px rgba(0, 0, 0, 0.04);
+  --ds-shadow-menu: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px -4px rgba(0, 0, 0, 0.04), 0px 16px 24px -8px rgba(0, 0, 0, 0.06);
+  --ds-shadow-modal: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04), 0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+  --ds-shadow-fullscreen: var(--ds-shadow-border), 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04), 0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+}
+
+```
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them
